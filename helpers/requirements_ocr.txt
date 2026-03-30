@@ -1,0 +1,22 @@
+# OCR Region Test - Required Dependencies
+
+# IMPORTANT: numpy must be < 2.0 for PaddleOCR compatibility
+numpy>=1.24.0,<2.0
+
+# Screenshot capture
+mss>=9.0.0
+
+# Image processing
+Pillow>=10.0.0
+
+# OCR engine - PaddleOCR (recommended)
+paddlepaddle>=2.5.0
+paddleocr>=2.7.0
+
+# Alternative: EasyOCR (uncomment if you prefer this instead)
+# easyocr>=1.7.0
+# torch>=2.0.0
+# torchvision>=0.15.0
+
+# Environment variable loading
+python-dotenv>=1.0.0

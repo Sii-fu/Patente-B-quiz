@@ -1,0 +1,273 @@
+"""
+OCR Region Test Script (EasyOCR version)
+Alternative implementation using EasyOCR instead of PaddleOCR.
+"""
+
+from mss import mss
+from PIL import Image
+import numpy as np
+import importlib
+from typing import List, Dict
+
+
+class ScreenRegionOCR:
+    """Capture and analyze text from a specific screen region using EasyOCR."""
+    
+    def __init__(self, languages: List[str] = ['en', 'it']):
+        """
+        Initialize EasyOCR with specified languages.
+        
+        Args:
+            languages: List of language codes (e.g., ['en', 'it'])
+        """
+        print("Initializing EasyOCR engine...")
+        print(f"Languages: {', '.join(languages)}")
+        
+        try:
+            easyocr = importlib.import_module('easyocr')
+        except ModuleNotFoundError:
+            raise RuntimeError(
+                "The 'easyocr' package is not installed. Install it with: pip install easyocr[standard]"
+            ) from None
+
+        self.reader = easyocr.Reader(
+            languages,
+            gpu=False  # Set to True if you have CUDA-capable GPU
+        )
+        print("EasyOCR engine initialized.\n")
+    
+    def capture_region(self, x: int, y: int, width: int, height: int) -> Image.Image:
+        """
+        Capture a screenshot of a specific screen region.
+        
+        Args:
+            x: Left coordinate
+            y: Top coordinate
+            width: Region width
+            height: Region height
+            
+        Returns:
+            PIL Image of the captured region
+        """
+        print(f"Capturing region: x={x}, y={y}, width={width}, height={height}")
+        
+        with mss() as sct:
+            monitor = {
+                "left": x,
+                "top": y,
+                "width": width,
+                "height": height
+            }
+            
+            screenshot = sct.grab(monitor)
+            img = Image.frombytes("RGB", screenshot.size, screenshot.bgra, "raw", "BGRX")
+            
+        print(f"Screenshot captured: {img.size[0]}x{img.size[1]} pixels\n")
+        return img
+    
+    def detect_language(self, text: str) -> str:
+        """
+        Simple language detection based on character patterns.
+        
+        Args:
+            text: Text to analyze
+            
+        Returns:
+            Detected language: 'Italian', 'English', or 'Unknown'
+        """
+        if not text or len(text.strip()) < 3:
+            return "Unknown"
+        
+        text_lower = text.lower()
+        
+        # Common Italian indicators
+        italian_indicators = [
+            'è', 'à', 'ì', 'ò', 'ù',
+            ' di ', ' il ', ' la ', ' le ', ' gli ', ' dei ', ' delle ',
+            ' con ', ' per ', ' che ', ' una ', ' uno ',
+            'zione', 'mento', 'mente'
+        ]
+        
+        # Common English indicators
+        english_indicators = [
+            ' the ', ' of ', ' and ', ' to ', ' in ', ' is ', ' it ',
+            ' for ', ' with ', ' on ', ' at ', ' from ',
+            'tion', 'ing', 'ment'
+        ]
+        
+        italian_score = sum(1 for indicator in italian_indicators if indicator in text_lower)
+        english_score = sum(1 for indicator in english_indicators if indicator in text_lower)
+        
+        if italian_score > english_score and italian_score > 0:
+            return "Italian"
+        elif english_score > italian_score and english_score > 0:
+            return "English"
+        else:
+            return "Unknown"
+    
+    def extract_text_blocks(self, image: Image.Image) -> List[Dict]:
+        """
+        Extract structured text blocks from an image using EasyOCR.
+        
+        Args:
+            image: PIL Image to process
+            
+        Returns:
+            List of text blocks with metadata
+        """
+        print("Running EasyOCR analysis...")
+        
+        # Convert PIL Image to numpy array
+        img_array = np.array(image)
+        
+        # Run OCR
+        # EasyOCR returns: [bbox, text, confidence]
+        # bbox format: [[x1,y1], [x2,y2], [x3,y3], [x4,y4]]
+        results = self.reader.readtext(img_array)
+        
+        if not results:
+            print("No text detected in the image.\n")
+            return []
+        
+        # Extract and structure text blocks
+        text_blocks = []
+        
+        for idx, detection in enumerate(results):
+            bbox = detection[0]  # Bounding box coordinates
+            text = detection[1]  # Detected text
+            confidence = detection[2]  # Confidence score
+            
+            # Calculate bounding box properties
+            x_coords = [point[0] for point in bbox]
+            y_coords = [point[1] for point in bbox]
+            
+            x1, x2 = min(x_coords), max(x_coords)
+            y1, y2 = min(y_coords), max(y_coords)
+            
+            block_height = int(y2 - y1)
+            block_width = int(x2 - x1)
+            
+            # Detect language
+            language = self.detect_language(text)
+            
+            text_blocks.append({
+                'index': idx + 1,
+                'text': text,
+                'bbox': {
+                    'x1': int(x1),
+                    'y1': int(y1),
+                    'x2': int(x2),
+                    'y2': int(y2)
+                },
+                'block_height': block_height,
+                'block_width': block_width,
+                'language': language,
+                'confidence': round(confidence, 3)
+            })
+        
+        # Sort blocks by Y coordinate (top to bottom)
+        text_blocks.sort(key=lambda block: block['bbox']['y1'])
+        
+        # Re-index after sorting
+        for idx, block in enumerate(text_blocks, 1):
+            block['index'] = idx
+        
+        print(f"Detected {len(text_blocks)} text block(s).\n")
+        return text_blocks
+    
+    def print_results(self, text_blocks: List[Dict]):
+        """
+        Print text blocks in a structured, readable format.
+        
+        Args:
+            text_blocks: List of extracted text blocks
+        """
+        if not text_blocks:
+            print("=" * 70)
+            print("NO TEXT BLOCKS DETECTED")
+            print("=" * 70)
+            return
+        
+        print("=" * 70)
+        print(f"EXTRACTED TEXT BLOCKS: {len(text_blocks)} block(s)")
+        print("=" * 70)
+        print()
+        
+        for block in text_blocks:
+            print(f"[BLOCK {block['index']}]")
+            print(f"Text: \"{block['text']}\"")
+            print(f"Language: {block['language']}")
+            print(f"Bounding Box: ({block['bbox']['x1']}, {block['bbox']['y1']}, "
+                  f"{block['bbox']['x2']}, {block['bbox']['y2']})")
+            print(f"Block Height: {block['block_height']} px")
+            print(f"Block Width: {block['block_width']} px")
+            print(f"Confidence: {block['confidence']}")
+            print("-" * 70)
+            print()
+    
+    def process_region(self, x: int, y: int, width: int, height: int, 
+                       save_screenshot: bool = True):
+        """
+        Complete workflow: capture region, extract text, and display results.
+        
+        Args:
+            x: Left coordinate of region
+            y: Top coordinate of region
+            width: Width of region
+            height: Height of region
+            save_screenshot: Whether to save the captured image
+        """
+        image = self.capture_region(x, y, width, height)
+        
+        if save_screenshot:
+            screenshot_path = "captured_region_easyocr.png"
+            image.save(screenshot_path)
+            print(f"Screenshot saved to: {screenshot_path}\n")
+        
+        text_blocks = self.extract_text_blocks(image)
+        self.print_results(text_blocks)
+        
+        return text_blocks
+
+
+def main():
+    """
+    Main execution function.
+    Configure your screen region coordinates here.
+    """
+    print("=" * 70)
+    print("OCR REGION TEST - EasyOCR Version")
+    print("=" * 70)
+    print()
+    
+    # Configure your screen region
+    REGION_X = 100
+    REGION_Y = 100
+    REGION_WIDTH = 800
+    REGION_HEIGHT = 600
+    
+    print("Configuration:")
+    print(f"  Region: ({REGION_X}, {REGION_Y}) - {REGION_WIDTH}x{REGION_HEIGHT}")
+    print()
+    input("Press ENTER to capture and analyze the region...")
+    print()
+    
+    # Initialize OCR engine with Italian and English support
+    ocr_processor = ScreenRegionOCR(languages=['en', 'it'])
+    
+    # Process the region
+    ocr_processor.process_region(
+        x=REGION_X,
+        y=REGION_Y,
+        width=REGION_WIDTH,
+        height=REGION_HEIGHT,
+        save_screenshot=True
+    )
+    
+    print("=" * 70)
+    print("ANALYSIS COMPLETE")
+    print("=" * 70)
+
+
+if __name__ == "__main__":
+    main()

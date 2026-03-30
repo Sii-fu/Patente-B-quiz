@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleDisplayName</key>
+	<string>Patente B Quiz</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>Patente B Quiz</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(FLUTTER_BUILD_NAME)</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>CFBundleVersion</key>
+	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>UILaunchStoryboardName</key>
+	<string>LaunchScreen</string>
+	<key>UIMainStoryboardFile</key>
+	<string>Main</string>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
+	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
+
+	<!-- ─── Supabase Auth Deep Linking ─────────────────────────────────────── -->
+	<!-- Scheme format: io.supabase.<project-ref>                              -->
+	<!-- Matches the redirect URL configured in Supabase → Auth → URL Config   -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>supabase-auth</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<!-- Replace with your own Supabase project ref if it changes -->
+				<string>io.supabase.gtlzxkfkfzndfsuqiyge</string>
+			</array>
+		</dict>
+	</array>
+
+	<!-- ─── YouTube / Web-view Network Transport Security ──────────────────── -->
+	<!-- Required so youtube_player_flutter can load iframe embeds over HTTP.   -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+		<key>NSAllowsArbitraryLoadsInWebContent</key>
+		<true/>
+	</dict>
+
+	<!-- ─── YouTube Embedded-Views Preview (flutter_inappwebview / ytplayer) ─ -->
+	<key>io.flutter.embedded_views_preview</key>
+	<true/>
+
+	<!-- ─── Background Audio for flutter_tts ───────────────────────────────── -->
+	<!-- Allows TTS to keep speaking when the screen dims or another app plays  -->
+	<!-- audio (e.g., user locks the phone mid-lesson).                         -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>audio</string>
+	</array>
+
+	<!-- ─── AVAudioSession category (TTS + Music coexistence) ──────────────── -->
+	<!-- Sets the audio category at launch so flutter_tts doesn't silence music -->
+	<key>AVAudioSessionCategoryOptions</key>
+	<integer>3</integer>
+
+	<!-- ─── Photo Library (image_picker) ───────────────────────────────────── -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app accesses your photo library to let you upload a profile picture.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>This app uses the camera to let you take a profile photo.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>This app saves quiz images to your photo library.</string>
+
+	<!-- ─── Microphone (Admin voice recording / instructor audio explanations) ── -->
+	<key>NSMicrophoneUsageDescription</key>
+	<string>The instructor microphone is used to record voice explanations for quiz questions.</string>
+</dict>
+</plist>

@@ -1,0 +1,73 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Patente B Quiz – iOS Podfile
+# Minimum target: iOS 13.0 (required by Supabase, Drift, Sign in with Apple)
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Uncomment this line to define a global platform for your project
+platform :ios, '13.0'
+
+# CocoaPods analytics sends network stats synchronously affecting flutter build latency.
+ENV['COCOAPODS_DISABLE_STATS'] = 'true'
+
+project 'Runner', {
+  'Debug' => :debug,
+  'Profile' => :release,
+  'Release' => :release,
+}
+
+def flutter_root
+  generated_xcode_build_settings_path = File.expand_path(File.join('..', 'Flutter', 'Generated.xcconfig'), __FILE__)
+  unless File.exist?(generated_xcode_build_settings_path)
+    raise "#{generated_xcode_build_settings_path} must exist. If you're running pod install manually, make sure flutter pub get is executed first"
+  end
+
+  File.foreach(generated_xcode_build_settings_path) do |line|
+    matches = line.match(/FLUTTER_ROOT\=(.*)/)
+    return matches[1].strip if matches
+  end
+  raise "FLUTTER_ROOT not found in #{generated_xcode_build_settings_path}. Try deleting Generated.xcconfig and running flutter pub get"
+end
+
+require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelper'), flutter_root)
+
+flutter_ios_podfile_setup
+
+target 'Runner' do
+  use_frameworks!
+  use_modular_headers!
+
+  flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+
+  target 'RunnerTests' do
+    inherit! :search_paths
+  end
+end
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Post-install: enforce iOS 13.0 across ALL pods, disable Bitcode
+# ─────────────────────────────────────────────────────────────────────────────
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    flutter_additional_ios_build_settings(target)
+
+    target.build_configurations.each do |config|
+      # ── Enforce iOS 13 deployment target for every pod ──────────────────────
+      # Prevents build errors from pods that default to a lower target.
+      xcconfig_path = config.base_xcconfig_path
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+
+      # ── Disable Bitcode (Apple removed support in Xcode 14+) ────────────────
+      config.build_settings['ENABLE_BITCODE'] = 'NO'
+
+      # ── Suppress "module was not found" warnings for generated umbrella headers
+      config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+
+      # ── Fix code signing for simulator builds ────────────────────────────────
+      config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO' if target.name.end_with?('Tests')
+
+      # ── Silence arm64 simulator warnings on Apple Silicon Macs ───────────────
+      config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64' unless
+        ENV['FLUTTER_BUILD_MODE'] == 'release'
+    end
+  end
+end

@@ -1,0 +1,49 @@
+
+1. OPEN PDF
+2. START LOOP (From Page 0 to End):
+
+   3. GET all Text Blocks on the PAGE and SORT them top-to-bottom.
+
+   4. LOOP through every Text Block:
+
+      -------------------------------------------------------
+      LOGIC A: DETECT A NEW LESSON (CHAPTER)
+      -------------------------------------------------------
+      IF (Block starts with "Lezione") AND (Length < 100 characters):
+          # apply something better than just he lezione text detection
+          
+          -> EXTRACT Lesson Number and Name
+          -> TRANSLATE Name
+          -> INSERT into 'theory_chapters' table
+          -> SET 'Current_Chapter_ID' to this new ID
+          -> now start detecting the theory cards under this chapter
+                -------------------------------------------------------
+                LOGIC B: DETECT A THEORY CARD (The actual content)
+                -------------------------------------------------------
+                ELSE IF (Current_Chapter_ID is set) 
+                        AND (Block is UPPERCASE)        <-- e.g., "DOSSO"
+                        AND (Block is BOLD)             <-- This often fails in PDFs
+                        AND (Block is NOT "Lezione"):
+
+                    -> SET this block as 'CARD TITLE'
+                    
+                    -> LOOK AT NEXT BLOCK:
+                        IF Next Block is normal text:
+                            -> SET Next Block as 'CARD BODY'
+                    
+                    -> SEARCH FOR IMAGE:
+                        Get Y-Coordinate (Vertical height) of Title.
+                        Loop through all images on page.
+                        IF Image Y-Coordinate is close to Title Y-Coordinate:
+                            -> UPLOAD Image to Storage
+                            -> GET Image URL
+                    
+                    -> TRANSLATE Title and Body
+                    -> INSERT into 'theory_cards' table
+
+          -> PAUSE (Wait for user to click Continue)
+      -------------------------------------------------------
+      LOGIC C: IGNORE EVERYTHING ELSE
+      -------------------------------------------------------
+      ELSE:
+          Skip block (This is why your descriptions are missing)

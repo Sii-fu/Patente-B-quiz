@@ -1,0 +1,520 @@
+THEORY CARD TO SUBTOPIC MATCH REPORT
+====================================
+
+High Confidence (>= 90%): 148
+Medium Confidence (80-89%): 48
+Low Confidence (< 80%): 314
+
+DETAILED LIST:
+Score | Theory Card Title  ==>  Predicted Subtopic
+--------------------------------------------------------------------------------
+[100%] ATTRAVERSAMENTO PEDONALE  ==>  Attraversamento pedonale
+[100%] ATTRAVERSAMENTO CICLABILE  ==>  Attraversamento ciclabile
+[100%] STRETTOIA SIMMETRICA  ==>  Strettoia simmetrica
+[100%] PONTE MOBILE  ==>  Ponte mobile
+[100%] STRADA SDRUCCIOLEVOLE  ==>  Strada sdrucciolevole
+[100%] DOPPIO SENSO DI CIRCOLAZIONE  ==>  Doppio senso di circolazione
+[100%] MATERIALE INSTABILE SULLA STRADA  ==>  Materiale instabile sulla strada
+[100%] FORTE VENTO LATERALE  ==>  Forte vento laterale
+[100%] PERICOLO DI INCENDIO  ==>  Pericolo di incendio
+[100%] ALTRI PERICOLI  ==>  Altri pericoli
+[100%] DARE PRECEDENZA  ==>  Dare precedenza
+[100%] DIVIETO DI SEGNALAZIONI ACUSTICHE  ==>  Divieto di segnalazioni acustiche
+[100%] PREAVVISO DI DARE PRECEDENZA  ==>  Preavviso di dare precedenza
+[100%] INTERSEZIONE CON PRECEDENZA A DESTRA  ==>  Intersezione con precedenza a destra
+[100%] INTERSEZIONE CON DIRITTO DI PRECEDENZA  ==>  Intersezione con diritto di precedenza
+[100%] CONFLUENZA A DESTRA  ==>  Confluenza a destra
+[100%] CONFLUENZA A SINISTRA  ==>  Confluenza a sinistra
+[100%] DIRITTO DI PRECEDENZA  ==>  Diritto di precedenza
+[100%] FINE DEL DIRITTO DI PRECEDENZA  ==>  Fine del diritto di precedenza
+[100%] DARE PRECEDENZA NEI SENSI UNICI ALTERNATI  ==>  Dare precedenza nei sensi unici alternati
+[100%] PASSAGGIO A LIVELLO CON BARRIERE O SEMIBARRIERE  ==>  Passaggio a livello con barriere o semibarriere
+[100%] STRADA  ==>  Strada
+[100%] CARREGGIATA  ==>  Carreggiata
+[100%] CORSIA  ==>  Corsia
+[100%] CORSIA DI ACCELERAZIONE  ==>  Corsia di accelerazione
+[100%] CORSIA DI DECELERAZIONE  ==>  Corsia di decelerazione
+[100%] INTERSEZIONE (INCROCIO) A LIVELLI SFALSATI  ==>  Intersezione (incrocio) a livelli sfalsati
+[100%] INTERSEZIONE (INCROCIO) A RASO  ==>  Intersezione (incrocio) a raso
+[100%] BANCHINA  ==>  Banchina
+[100%] MARCIAPIEDE  ==>  Marciapiede
+[100%] ATTRAVERSAMENTO PEDONALE  ==>  Attraversamento pedonale
+[100%] SALVAGENTE  ==>  Salvagente
+[100%] ISOLA DI TRAFFICO  ==>  Isola di traffico
+[100%] PASSAGGIO A LIVELLO  ==>  Passaggio a livello
+[100%] AREA PEDONALE  ==>  Area pedonale
+[100%] ZONA A TRAFFICO LIMITATO  ==>  Zona a traffico limitato
+[100%] STRADA DEFORMATA  ==>  Strada deformata
+[100%] DOSSO  ==>  Dosso
+[100%] CUNETTA  ==>  Cunetta
+[100%] DIRITTO DI PRECEDENZA NEI SENSI UNICI ALTERNATI  ==>  Diritto di precedenza nei sensi unici alternati
+[100%] DIVIETO DI TRANSITO  ==>  Divieto di transito
+[100%] SENSO VIETATO  ==>  Senso vietato
+[100%] DIVIETO DI SORPASSO  ==>  Divieto di sorpasso
+[100%] PASSAGGIO A LIVELLO SENZA BARRIERE  ==>  Passaggio a livello senza barriere
+[100%] CROCE DI S. ANDREA  ==>  Croce di S. Andrea
+[100%] DOPPIA CROCE DI S. ANDREA  ==>  Doppia croce di S. Andrea
+[100%] ATTRAVERSAMENTO TRANVIARIO  ==>  Attraversamento tranviario
+[100%] VIA LIBERA  ==>  Via libera
+[100%] DIVIETO DI SOSTA  ==>  Divieto di sosta
+[100%] PASSO CARRABILE  ==>  Passo carrabile
+[100%] SOSTA CONSENTITA A PARTICOLARI CATEGORIE  ==>  Sosta consentita a particolari categorie
+[100%] DIVIETO DI FERMATA  ==>  Divieto di fermata
+[100%] PARCHEGGIO  ==>  Parcheggio
+[100%] PREAVVISO DI PARCHEGGIO  ==>  Preavviso di parcheggio
+[100%] ROTATORIA  ==>  Rotatoria
+[100%] CATENE DA NEVE OBBLIGATORIE  ==>  Catene da neve obbligatorie
+[100%] PERCORSO PEDONALE  ==>  Percorso pedonale
+[100%] PISTA CICLABILE  ==>  Pista ciclabile
+[100%] FINE PISTA CICLABILE  ==>  Fine pista ciclabile
+[100%] SENSO UNICO PARALLELO  ==>  Senso unico parallelo
+[100%] SENSO UNICO FRONTALE  ==>  Senso unico frontale
+[100%] PREAVVISO DI DIRAMAZIONE URBANA  ==>  Preavviso di diramazione urbana
+[100%] PREAVVISO DI DIRAMAZIONE AUTOSTRADALE  ==>  Preavviso di diramazione autostradale
+[100%] INIZIO CENTRO ABITATO  ==>  Inizio centro abitato
+[100%] AREA PEDONALE  ==>  Area pedonale
+[100%] ZONA A TRAFFICO LIMITATO  ==>  Zona a traffico limitato
+[100%] INIZIO STRADA EXTRAURBANA PRINCIPALE  ==>  Inizio strada extraurbana principale
+[100%] INVERSIONE DI MARCIA  ==>  Inversione di marcia
+[100%] PREAVVISO DI INFORMAZIONI TURISTICO-ALBERGHIERE  ==>  Preavviso di informazioni turistico-alberghiere
+[100%] ATTRAVERSAMENTO PEDONALE  ==>  Attraversamento pedonale
+[100%] ATTRAVERSAMENTO CICLABILE  ==>  Attraversamento ciclabile
+[100%] SCUOLABUS  ==>  Scuolabus
+[100%] STRADA SENZA USCITA  ==>  Strada senza uscita
+[100%] PONTE  ==>  Ponte
+[100%] PREAVVISO DI STRADA SENZA USCITA  ==>  Preavviso di strada senza uscita
+[100%] VELOCITÀ CONSIGLIATA  ==>  Velocità consigliata
+[100%] STRADA RISERVATA AI VEICOLI A MOTORE  ==>  Strada riservata ai veicoli a motore
+[100%] SVOLTA A SINISTRA INDIRETTA  ==>  Svolta a sinistra indiretta
+[100%] CAMPEGGIO  ==>  Campeggio
+[100%] ASSISTENZA MECCANICA  ==>  Assistenza meccanica
+[100%] RIFORNIMENTO  ==>  Rifornimento
+[100%] AUTO AL SEGUITO  ==>  Auto al seguito
+[100%] AREA ATTREZZATA CON IMPIANTI DI SCARICO  ==>  Area attrezzata con impianti di scarico
+[100%] POLIZIA STRADALE  ==>  Polizia stradale
+[100%] PREAVVISO DI DEVIAZIONE  ==>  Preavviso di deviazione
+[100%] LAVORI  ==>  Lavori
+[100%] PREAVVISO DI DEVIAZIONE  ==>  Preavviso di deviazione
+[100%] CONO  ==>  Cono
+[100%] DELINEATORI MODULARI DI CURVA  ==>  Delineatori modulari di curva
+[100%] DISTANZA  ==>  Distanza
+[100%] ESTESA  ==>  Estesa
+[100%] LIMITAZIONE  ==>  Limitazione
+[100%] ECCEZIONE  ==>  Eccezione
+[100%] INIZIO  ==>  Inizio
+[100%] FINE  ==>  Fine
+[100%] SEGNI ORIZZONTALI IN RIFACIMENTO  ==>  Segni orizzontali in rifacimento
+[100%] INCIDENTE  ==>  Incidente
+[100%] ATTRAVERSAMENTO DI BINARI  ==>  Attraversamento di binari
+[100%] SGOMBRANEVE IN AZIONE  ==>  Sgombraneve in azione
+[100%] ZONA SOGGETTA AD ALLAGAMENTO  ==>  Zona soggetta ad allagamento
+[100%] CODA  ==>  Coda
+[100%] MEZZI DI LAVORO IN AZIONE  ==>  Mezzi di lavoro in azione
+[100%] STRADA SDRUCCIOLEVOLE PER GHIACCIO  ==>  Strada sdrucciolevole per ghiaccio
+[100%] STRADA SDRUCCIOLEVOLE PER PIOGGIA  ==>  Strada sdrucciolevole per pioggia
+[100%] AUTOCARRI IN RALLENTAMENTO  ==>  Autocarri in rallentamento
+[100%] ZONA RIMOZIONE COATTA  ==>  Zona rimozione coatta
+[100%] TORNANTE  ==>  Tornante
+[100%] NUMERO DEL TORNANTE  ==>  Numero del tornante
+[100%] SEMAFORI VEICOLARI DI CORSIA  ==>  Semafori veicolari di corsia
+[100%] SEMAFORI PER VEICOLI DI TRASPORTO PUBBLICO  ==>  Semafori per veicoli di trasporto pubblico
+[100%] ISOLA DI TRAFFICO  ==>  Isola di traffico
+[100%] STRADA EXTRAURBANA PRINCIPALE  ==>  Strada extraurbana principale
+[100%] AUTOSTRADA  ==>  Autostrada
+[100%] CATADIOTTRI  ==>  Catadiottri
+[100%] SIMBOLO DEGLI INDICATORI DI DIREZIONE  ==>  Simbolo degli indicatori di direzione
+[100%] PANNELLO PER CARICHI SPORGENTI  ==>  Pannello per carichi sporgenti
+[98%] PREAVVISO DI DIREZIONE OBBLIGATORIA A SINISTRA  ==>  Preavviso di direzione obbligatoria: a sinistra
+[98%] PREAVVISO DI DIREZIONE OBBLIGATORIA A DESTRA  ==>  Preavviso di direzione obbligatoria: a destra
+[98%] DIREZIONE OBBLIGATORIA A SINISTRA  ==>  Direzione obbligatoria: a sinistra
+[98%] PASSAGGIO OBBLIGATORIO A SINISTRA  ==>  Passaggio obbligatorio: a sinistra
+[98%] DIREZIONE OBBLIGATORIA A DESTRA  ==>  Direzione obbligatoria: a destra
+[98%] PASSAGGIO OBBLIGATORIO A DESTRA  ==>  Passaggio obbligatorio: a destra
+[98%] DIREZIONE OBBLIGATORIA DIRITTO  ==>  Direzione obbligatoria: diritto
+[97%] PROGRESSIVA DISTANZIOMETRICA AUTOSTRADALE  ==>  Progressiva distanziometrica (autostradale)
+[97%] DELINEATORE PER STRADE DI MONTAGNA  ==>  Delineatori per strade di montagna
+[96%] DIREZIONI CONSENTITE DIRITTO E SINISTRA  ==>  Direzioni consentite: diritto e a sinistra
+[96%] PARCHEGGIO DI SCAMBIO CON LINEE AUTOBUS  ==>  Parcheggio di scambio con linee di autobus
+[96%] CADUTA MASSI DA SINISTRA  ==>  Caduta massi (da sinistra)
+[95%] CADUTA MASSI DA DESTRA  ==>  Caduta massi (da destra)
+[95%] LA LUCE GIALLA FISSA DEL SEMAFORO  ==>  Luce gialla fissa del semaforo
+[94%] INTERSEZIONE A "T" CON DIRITTO DI PRECEDENZA A SINISTRA  ==>  Intersezione a T con diritto di precedenza (sinistra)
+[94%] FINE DEL PERCORSO PEDONALE E CICLABILE  ==>  Fine percorso pedonale e ciclabile
+[94%] SIMBOLO PROIETTORI ANABBAGLIANTI  ==>  Simbolo dei proiettori anabbaglianti
+[93%] SBOCCO SU MOLO O SU ARGINE  ==>  Sbocco su molo o argine
+[93%] LA LUCE ROSSA DEL SEMAFORO  ==>  Luce rossa del semaforo
+[93%] DELINEATORE SPECIALE DI OSTACOLO  ==>  Delineatori speciali di ostacolo
+[93%] PULIZIA MECCANICA DELLA STRADA  ==>  Pulizia meccanica delle strade
+[92%] ALT-STAZIONE  ==>  ALT - Stazione
+[92%] FINE DEL DIVIETO DI SORPASSO  ==>  Fine divieto di sorpasso
+[91%] PREAVVISO DI FERMARSI E DARE PRECEDENZA (STOP)  ==>  Preavviso di fermarsi e dare precedenza
+[91%] FINE DEL PERCORSO PEDONALE  ==>  Fine percorso pedonale
+[91%] ALT-POLIZIA  ==>  ALT - Polizia
+[91%] USO DEI PROIETTORI ANABBAGLIANTI  ==>  Simbolo dei proiettori anabbaglianti
+[90%] ALT-DOGANA  ==>  ALT - Dogana
+[90%] SIMBOLO PROIETTORI ABBAGLIANTI  ==>  Simbolo dei proiettori anabbaglianti
+[90%] PERCORSO UNICO PEDONALE E CICLABILE  ==>  Percorso pedonale e ciclabile
+[90%] DELINEATORE DI CURVA STRETTA O DI TORNANTE  ==>  Delineatori di curve strette o di tornanti
+[90%] ANDAMENTO DELLA STRADA PRINCIPALE  ==>  Andamento strada principale
+[89%] STRISCIA TRASVERSALE CONTINUA  ==>  Striscia bianca trasversale continua
+[88%] INTERSEZIONE A "T" CON DIRITTO DI PRECEDENZA A DESTRA  ==>  Intersezione a T con diritto di precedenza (sinistra)
+[88%] PISTA CICLABILE CONTIGUA (ACCANTO) AL MARCIAPIEDE  ==>  Pista ciclabile contigua al marciapiede
+[88%] DIREZIONI CONSENTITE DIRITTO E DESTRA  ==>  Direzioni consentite: diritto e a sinistra
+[88%] SUONO PROLUNGATO DEL FISCHIETTO DA PARTE DEL VIGILE  ==>  Suono prolungato del fischietto da parte degli agenti
+[88%] SEMAFORO PEDONALE  ==>  Semafori pedonali
+[88%] FERMARSI E DARE PRECEDENZA (STOP)  ==>  Fermarsi e dare precedenza
+[88%] USO CORSIE DISPONIBILI  ==>  Uso delle corsie disponibili
+[88%] USO DEGLI INDICATORI DI DIREZIONE (FRECCE)  ==>  Uso degli indicatori di direzione
+[87%] USO DEI PROIETTORI ABBAGLIANTI  ==>  Simbolo dei proiettori anabbaglianti
+[87%] BARRIERE NORMALI  ==>  Barriera normale
+[86%] SISTEMI DI RITENUTA PER BAMBINI  ==>  Sistemi di ritenuta per trasporto bambini
+[85%] DOPPIA CURVA, LA PRIMA A SINISTRA  ==>  Doppia curva pericolosa, la prima a sinistra
+[85%] L'AIRBAG  ==>  Airbag
+[85%] STRISCIA LONGITUDINALE CONTINUA E DISCONTINUA  ==>  Strisce longitudinali (continue/discontinue)
+[85%] LIMITE MASSIMO DI VELOCITÀ DI 80 KM/H  ==>  Limite massimo di velocità (80)
+[85%] PERCORSO RISERVATO AI QUADRUPEDI DA SOMA E DA SELLA  ==>  Percorso riservato agli animali da soma e da sella
+[85%] DISTANZIAMENTO MINIMO OBBLIGATORIO DI 70 METRI  ==>  Distanziamento minimo obbligatorio
+[85%] DIREZIONI CONSENTITE DESTRA E SINISTRA  ==>  Direzioni consentite: diritto e a sinistra
+[85%] FINE CENTRO ABITATO  ==>  Inizio centro abitato
+[84%] DOPPIA CURVA, LA PRIMA A DESTRA  ==>  Doppia curva pericolosa, la prima a destra
+[84%] SEGNALE DI IDENTIFICAZIONE STRADA COMUNALE  ==>  Identificazione strada comunale
+[84%] FINE DELLA PISTA CICLABILE CONTIGUA (ACCANTO) AL MARCIAPIEDE  ==>  Fine pista ciclabile contigua al marciapiede
+[84%] SEGNALE DI IDENTIFICAZIONE STRADA STATALE  ==>  Identificazione strada statale
+[84%] PREAVVISO DI CONFINE DI STATO TRA PAESI DELLA COMUNITÀ EUROPEA  ==>  Preavviso di confine di stato con paese dell’Unione Europea
+[83%] LANTERNE SEMAFORICHE PER CORSIE REVERSIBILI  ==>  Semafori per corsie reversibili
+[83%] FASCE ORARIE DEI GIORNI LAVORATIVI  ==>  Fascia oraria (giorni lavorativi)
+[83%] FINE DEL PERCORSO RISERVATO AI QUADRUPEDI DA SOMA E DA SELLA  ==>  Fine percorso riservato agli animali da soma e da sella
+[82%] FINE DEL LIMITE MASSIMO DI VELOCITÀ DI 50 KM/H  ==>  Fine limite massimo di velocità (50)
+[82%] SIMBOLO DELLA BATTERIA  ==>  Spia della batteria
+[82%] USO DELLE LENTI  ==>  Uso delle luci
+[82%] SEGNALE DI IDENTIFICAZIONE AUTOSTRADA  ==>  Identificazione autostrada
+[82%] LUCE BIANCA DELLA TARGA  ==>  Luce della targa
+[81%] LIMITE MINIMO DI VELOCITÀ DI 30 KM/H  ==>  Limite minimo di velocità
+[81%] FASCE ORARIE DEI GIORNI FESTIVI  ==>  Fascia oraria (giorni festivi)
+[81%] FRECCE BIANCHE DIREZIONALI  ==>  Frecce direzionali
+[81%] SVOLTA A SINISTRA  ==>  Svolta a destra
+[80%] PREAVVISO DI DEVIAZIONE OBBLIGATORIA PER AUTOCARRI IN TRANSITO  ==>  Preavviso deviazione autocarri in transito
+[80%] LA SOSPENSIONE DELLA PATENTE  ==>  Sospensione della patente di guida
+[80%] LAMPEGGIO SIMULTANEO DEGLI INDICATORI DI DIREZIONE  ==>  Simbolo degli indicatori di direzione
+[80%] STRETTOIA ASIMMETRICA A DESTRA  ==>  Strettoia simmetrica
+[80%] DOCUMENTI DA ESIBIRE AGLI AGENTI:  ==>  “Documenti da esibire” a richiesta degli agenti
+[80%] DIVIETO DI TRANSITO AI VEICOLI A TRAZIONE ANIMALE  ==>  Transito vietato ai veicoli a trazione animale
+[80%] FINE DEL LIMITE MINIMO DI VELOCITÀ DI 30 KM/H  ==>  Fine limite minimo di velocità
+[80%] CONFINE DI STATO TRA PAESI DELLA COMUNITÀ EUROPEA  ==>  Confine di stato con paese dell’Unione Europea
+[80%] SEGNALE DI ITINERARIO EXTRAURBANO  ==>  Itinerario extraurbano
+[80%] DELINEATORI NORMALI DI MARGINE PER STRADE A DOPPIO SENSO  ==>  Delineatori di margine (per strada o carreggiate a doppio senso)
+[80%] CINTURE DI SICUREZZA  ==>  Uso delle cinture di sicurezza
+[79%] DELINEATORI NORMALI DI MARGINE PER STRADE A SENSO UNICO  ==>  Delineatori di margine (per strada o carreggiate a senso unico)
+[79%] LANTERNA SEMAFORICA VEICOLARE NORMALE  ==>  Semaforo veicolare normale
+[79%] PREAVVISO DI DEVIAZIONE CONSIGLIATA  ==>  Preavviso di deviazione
+[79%] LA REVISIONE DELLA PATENTE  ==>  Revisione della patente di guida
+[79%] SEGNALE DI CONFERMA AUTOSTRADALE  ==>  Conferma autostradale
+[79%] DIVIETO DI TRANSITO AI PEDONI  ==>  Divieto di transito
+[79%] REGOLAZIONE FLESSIBILE DELLA SOSTA IN CENTRO ABITATO  ==>  Regolazione flessibile della sosta
+[78%] SOSPENSIONI E AMMORTIZZATORI  ==>  Organi di sospensione - Ammortizzatori
+[78%] SIMBOLO DELLA PRESSIONE BASSA DELL'OLIO  ==>  Spia della pressione dell’olio
+[78%] LIMITI MASSIMI DI VELOCITÀ SU STRADE EXTRAURBANE SECONDARIE  ==>  Limiti massimi su strade extraurbane (Veicoli vari)
+[77%] PREAVVISO DI CIRCOLAZIONE ROTATORIA  ==>  Preavviso di incrocio urbano con circolazione rotatoria
+[77%] STATO DI SHOCK  ==>  Stato di shock (Cause)
+[77%] LIMITI MASSIMI DI VELOCITÀ GENERALI  ==>  Limiti massimi generali di velocità (Segnale)
+[76%] STRETTOIA ASIMMETRICA A SINISTRA  ==>  Strettoia simmetrica
+[76%] SEGNALE DI LOCALIZZAZIONE TERRITORIALE (NOME FIUME)  ==>  Localizzazione territoriale (fiume Arno)
+[76%] NEI CENTRI ABITATI  ==>  Inizio centro abitato
+[76%] LA REVOCA DELLA PATENTE  ==>  Revoca della patente di guida
+[76%] DIVIETO DI TRANSITO ALLE MACCHINE AGRICOLE  ==>  Transito vietato alle macchine agricole
+[76%] GALLERIA AUTOSTRADALE  ==>  Conferma autostradale
+[76%] CONTINUAZIONE  ==>  Continua
+[76%] LA STRISCIA BIANCA CONTINUA  ==>  Striscia bianca continua di mezzeria
+[76%] FUORI DEI CENTRI ABITATI  ==>  Uso delle luci fuori dei centri abitati
+[76%] DIVIETO DI SOSTA TEMPORANEO  ==>  Divieto di sosta temporaneo (pulizia strade)
+[75%] CURVA A DESTRA  ==>  Svolta a destra
+[75%] ISCRIZIONI E SIMBOLI SULLA PAVIMENTAZIONE STRADALE  ==>  Iscrizioni regolamentari sulla pavimentazione
+[75%] CURVA A SINISTRA  ==>  Confluenza a sinistra
+[75%] PER LIMITARE I CONSUMI DI CARBURANTE OCCORRE:  ==>  Limitazione dei consumi di carburante
+[75%] RESPONSABILITÀ PENALE E CIVILE  ==>  Responsabilità del danno in sede civile
+[75%] DIVIETO DI TRANSITO AI VEICOLI A BRACCIA  ==>  Transito vietato ai veicoli a braccia
+[75%] DIVIETO DI TRANSITO AI VEICOLI A MOTORE TRAINANTI UN RIMORCHIO  ==>  Transito vietato ai veicoli trainanti un rimorchio
+[74%] DIVIETO DI TRANSITO AI MOTOCICLI  ==>  Divieto di transito
+[74%] DIVIETO DI TRANSITO AGLI AUTOBUS  ==>  Divieto di transito
+[74%] SEGNALE DI PREAVVISO DI INTERSEZIONI RAVVICINATE URBANE  ==>  Preavviso di incroci ravvicinati urbani
+[74%] ACCENSIONE DELLE LUCI  ==>  Uso delle luci
+[74%] USO CORSIE  ==>  Uso corsie urbane
+[74%] USO CORSIE  ==>  Uso corsie urbane
+[74%] USO CORSIE  ==>  Uso corsie urbane
+[73%] DISTANZA DI SICUREZZA  ==>  Rispetto della distanza di sicurezza
+[72%] SEGNALE DI PREAVVISO DI INTERSEZIONE URBANA  ==>  Preavviso di diramazione urbana
+[72%] LA STRISCIA BIANCA DISCONTINUA (TRATTEGGIATA)  ==>  Striscia bianca discontinua di mezzeria (1)
+[72%] CORSIE DI CANALIZZAZIONE  ==>  Corsia di accelerazione
+[72%] CORSIE DI CANALIZZAZIONE  ==>  Corsia di accelerazione
+[72%] CORSIE DI CANALIZZAZIONE  ==>  Corsia di accelerazione
+[71%] ATTRAVERSAMENTI PEDONALI (DIRETTI ED OBLIQUI)  ==>  Attraversamento pedonale (Regole)
+[71%] SU STRADA SDRUCCIOLEVOLE, COPERTA DI NEVE O GHIACCIO BISOGNA:  ==>  Strada sdrucciolevole per ghiaccio
+[70%] LIMITI MASSIMI DI VELOCITÀ SU STRADE EXTRAURBANE PRINCIPALI  ==>  Limiti massimi su strade extraurbane (Veicoli vari)
+[70%] DIVIETO DI TRANSITO PER AUTOTRENI ED AUTOARTICOLATI  ==>  Divieto di transito per particolari categorie
+[70%] DIVIETO DI SORPASSO PER GLI AUTOCARRI CHE SUPERANO 3,5 T.  ==>  Divieto di sorpasso per veicoli oltre 3,5t
+[70%] LIMITI MASSIMI DI VELOCITÀ IN AUTOSTRADA  ==>  Limite massimo di velocità (80)
+[70%] SEGNALE MOBILE TRIANGOLARE DI PERICOLO  ==>  Segnalazione di veicolo fermo (segnale mobile triangolare di pericolo)
+[70%] BANCHINA PERICOLOSA  ==>  Discesa pericolosa
+[70%] IN CASO DI FORTE VENTO LATERALE È OPPORTUNO:  ==>  Forte vento laterale (comportamento)
+[70%] RESPONSABILITÀ CIVILE  ==>  Responsabilità del danno in sede civile
+[69%] LE LUCI ROSSE LAMPEGGIANTI ALTERNATIVAMENTE  ==>  Luci rosse lampeggianti
+[69%] STRISCIA LONGITUDINALE DISCONTINUA E CONTINUA  ==>  Strisce longitudinali (continue/discontinue)
+[69%] PANNELLI DISTANZIOMETRICI  ==>  Pannelli distanziometrici ai passaggi a livello
+[69%] DELINEATORE PER INTERSEZIONE (INCROCIO) A "T"  ==>  Intersezione (incrocio) a raso
+[69%] LIMITI DI VELOCITÀ GENERALI  ==>  Limite minimo di velocità
+[69%] USO DELLE LUCI DI POSIZIONE  ==>  Uso delle corsie disponibili
+[68%] PROIETTORE ABBAGLIANTE  ==>  Simbolo dei proiettori anabbaglianti
+[68%] FINE DEL DIVIETO DI SORPASSO PER GLI AUTOCARRI CHE SUPERANO 3,5 T.  ==>  Fine divieto di sorpasso per veicoli merci oltre 3,5t
+[68%] LA DOPPIA STRISCIA CONTINUA  ==>  Doppia striscia bianca continua di mezzeria
+[68%] FRECCE DI RIENTRO  ==>  Frecce direzionali
+[68%] PANNELLI ARANCIONI PER TRASPORTO MERCI PERICOLOSE  ==>  Transito vietato merci pericolose
+[68%] FERMATA AUTOBUS  ==>  Fermata autobus (extraurbano)
+[68%] SIMBOLO DEL SEGNALE DI EMERGENZA  ==>  Sosta di emergenza
+[67%] PREAVVISO DI SEMAFORO ORIZZONTALE  ==>  Preavviso di deviazione
+[67%] SEGNALE DI PREAVVISO DI INTERSEZIONE URBANA CON ROTATORIA  ==>  Preavviso di incrocio urbano con circolazione rotatoria
+[67%] SONO ESCLUSI DALLA CIRCOLAZIONE IN AUTOSTRADA:  ==>  Immissione nel flusso della circolazione in retromarcia
+[66%] ATTENZIONE AGLI ANIMALI DOMESTICI VAGANTI (LIBERI)  ==>  Animali domestici vaganti
+[66%] ATTENZIONE AGLI ANIMALI SELVATICI VAGANTI (LIBERI)  ==>  Animali selvatici vaganti
+[66%] PRONTO SOCCORSO  ==>  Localizzazione pronto soccorso
+[66%] S.O.S.  ==>  SOS
+[66%] PREAVVISO DI SEMAFORO TEMPORANEO  ==>  Preavviso di incrocio urbano
+[66%] STRISCE DI GUIDA SULLE INTERSEZIONI  ==>  Striscia di guida negli incroci
+[66%] STRISCE DI GUIDA SULLE INTERSEZIONI  ==>  Striscia di guida negli incroci
+[66%] STRISCIA DI DELIMITAZIONE  ==>  Corsia di decelerazione
+[66%] LA FERMATA  ==>  Arresto e fermata
+[66%] RITIRO DELLA CARTA DI CIRCOLAZIONE  ==>  Ritiro della patente di guida
+[66%] DIREZIONE OBBLIGATORIA PER AUTOTRENI ED AUTOARTICOLATI  ==>  Direzione obbligatoria per i veicoli indicati nel cartello
+[65%] DELINEATORI PER GALLERIE A SENSO UNICO  ==>  Delineatori di margine per gallerie
+[65%] LANTERNE SEMAFORICHE SPECIALI DI ONDA VERDE  ==>  Semafori di “onda verde”
+[65%] SONO AMMESSI A CIRCOLARE IN AUTOSTRADA:  ==>  Sorpasso in autostrada
+[65%] LA SVOLTA A DESTRA SI EFFETTUA:  ==>  Svolta a sinistra indiretta
+[65%] LIMITI MASSIMI DI VELOCITÀ PER PARTICOLARI VEICOLI  ==>  Limiti massimi generali di velocità (Segnale)
+[65%] È OBBLIGATORIO RIDURRE LA VELOCITÀ E SE OCCORRE FERMARSI:  ==>  Casi specifici in cui occorre ridurre la velocità e all’occorrenza fermarsi
+[65%] LA SCRITTA "STOP" SULLA PAVIMENTAZIONE  ==>  Iscrizioni regolamentari sulla pavimentazione
+[64%] SEGNALE DI IDENTIFICAZIONE ITINERARIO INTERNAZIONALE  ==>  Itinerario internazionale
+[64%] DISCESA PERICOLOSA CON PENDENZA DEL 10 %  ==>  Discesa pericolosa (comportamento)
+[64%] CON LA PATENTE DI CATEGORIA B SI POSSONO GUIDARE  ==>  Patente di categoria BE
+[64%] DIVIETO DI TRANSITO AI VEICOLI CHE TRASPORTANO MERCI PERICOLOSE  ==>  Transito vietato merci pericolose
+[64%] IL RITIRO IMMEDIATO DELLA PATENTE  ==>  Ritiro della patente di guida
+[64%] TRANSITABILITÀ (TRATTO TERMINALE DELLA STRADA O PASSO CHIUSO)  ==>  Transitabilità (Passo chiuso)
+[64%] DISPOSITIVI DI SEGNALAZIONE ACUSTICA (CLACSON, TROMBE)  ==>  Divieto di segnalazioni acustiche
+[64%] PREAVVISO DI SEMAFORO VERTICALE  ==>  Preavviso di informazioni turistico-alberghiere
+[64%] OSPEDALE  ==>  Percorso pedonale
+[64%] TELEFONO  ==>  Telefono pubblico
+[64%] LA SOSTA  ==>  Piazzola di sosta
+[63%] L'USO CORRETTO DELLA STRADA COMPORTA CHE:  ==>  Uso responsabile della strada (Comportamenti in fila)
+[63%] ASSUNZIONE DI ALCOOL E GUIDA IN STATO DI EBBREZZA (UBRIACHEZZA)  ==>  Assunzione di alcool: effetti sulla guida - Stato emotivo alterato
+[63%] RESPONSABILITÀ PENALE  ==>  Responsabilità del danno in sede civile
+[63%] FASCE ORARIE DI TUTTI I GIORNI  ==>  Fascia oraria (ogni giorno)
+[63%] IN CASO DI NEBBIA FITTA È OPPORTUNO:  ==>  Comportamenti in caso di nebbia fitta
+[62%] IL SORPASSO IN PROSSIMITÀ DI UN DOSSO È CONSENTITO:  ==>  Casi in cui è ammesso il sorpasso in prossimità dei dossi
+[62%] SIMBOLO DEL FRENO DI STAZIONAMENTO  ==>  Impianto frenante - Servofreno e freno di stazionamento
+[62%] CON LA PATENTE DI CATEGORIA A SI POSSONO GUIDARE  ==>  Patente di categoria A
+[62%] INGOMBRO DELLA CARREGGIATA  ==>  Fermata sul margine destro della carreggiata
+[62%] PANNELLO APPLICATO SUI VEICOLI OPERATRICI  ==>  Passaggio obbligatorio, per veicoli operativi
+[62%] DIREZIONE CONSIGLIATA AGLI AUTOCARRI  ==>  Direzione autocarri consigliata
+[62%] VARIAZIONE CORSIE DISPONIBILI (IN AUMENTO)  ==>  Variazione corsie autostradali (da 3 a 2)
+[62%] ALLA PARTENZA DAL MARGINE DELLA CARREGGIATA OCCORRE:  ==>  Fermata sul margine destro della carreggiata
+[62%] ORDINE DI PRECEDENZA: R - A - T.  ==>  Ordine di precedenza nell'intersezione n. 604
+[62%] ORDINE DI PRECEDENZA: E - C - L.  ==>  Ordine di precedenza nell'intersezione n. 604
+[62%] ORDINE DI PRECEDENZA: L - C - H.  ==>  Ordine di precedenza nell'intersezione n. 604
+[62%] ORDINE DI PRECEDENZA: R - D - F.  ==>  Ordine di precedenza nell'intersezione n. 604
+[62%] ORDINE DI PRECEDENZA: R - A - C.  ==>  Ordine di precedenza nell'intersezione n. 604
+[62%] ORDINE DI PRECEDENZA: R - D - B.  ==>  Ordine di precedenza nell'intersezione n. 604
+[62%] ORDINE DI PRECEDENZA: R - A - C.  ==>  Ordine di precedenza nell'intersezione n. 604
+[62%] ORDINE DI PRECEDENZA: R - A - C.  ==>  Ordine di precedenza nell'intersezione n. 604
+[62%] ORDINE DI PRECEDENZA: A - E - B.  ==>  Ordine di precedenza nell'intersezione n. 604
+[62%] ORDINE DI PRECEDENZA: E - C - M.  ==>  Ordine di precedenza nell'intersezione n. 604
+[62%] ORDINE DI PRECEDENZA: T - P - M.  ==>  Ordine di precedenza nell'intersezione n. 604
+[62%] ORDINE DI PRECEDENZA: T - O - A.  ==>  Ordine di precedenza nell'intersezione n. 604
+[62%] ORDINE DI PRECEDENZA: T - A - S.  ==>  Ordine di precedenza nell'intersezione n. 604
+[62%] ORDINE DI PRECEDENZA: N - A - R.  ==>  Ordine di precedenza nell'intersezione n. 604
+[62%] ORDINE DI PRECEDENZA: R - D - A.  ==>  Ordine di precedenza nell'intersezione n. 604
+[62%] IN CASO DI INCIDENTE STRADALE IL CONDUCENTE DEVE:  ==>  Cause di incidenti legate al comportamento del conducente
+[62%] SEGNALE DI CORSIA  ==>  Semafori veicolari di corsia
+[61%] SIMBOLO DEL CLACSON  ==>  Sistemazione del carico
+[61%] ORDINE DI PRECEDENZA: L - E - N - R.  ==>  Ordine di precedenza nell'intersezione n. 604
+[61%] ORDINE DI PRECEDENZA: S - A - E - R.  ==>  Ordine di precedenza nell'intersezione n. 604
+[61%] SORPASSO  ==>  Dosso
+[61%] MERGENZA  ==>  Sosta di emergenza
+[61%] È OBBLIGATORIO DARE LA PRECEDENZA A DESTRA E A SINISTRA:  ==>  Preavviso di direzione obbligatoria: a destra e a sinistra
+[61%] IN CASO DI TRAFFICO INTENSO IL CONDUCENTE DEVE:  ==>  Comportamenti in caso di traffico intenso
+[61%] PASSAGGI CONSENTITI  ==>  Passaggi consentiti (a destra e a sinistra)
+[61%] IL TRAINO DI UN VEICOLO IN AVARIA (GUASTO)  ==>  Traino di un rimorchio o di un veicolo in avaria: modalità e sanzioni
+[61%] IN CASO DI PIOGGIA OCCORRE:  ==>  Comportamenti in caso di pioggia
+[60%] LE STRISCE LUNGO L'ASSE (IL CENTRO) DELLA CARREGGIATA  ==>  Cantiere mobile con restringimento della carreggiata
+[60%] IN UNA STRADA A DOPPIO SENSO LA STRISCIA BIANCA DISCONTINUA  ==>  Doppia striscia bianca continua di mezzeria
+[60%] ORDINE DI PRECEDENZA: B - T - S.  ==>  Diritto di precedenza
+[60%] ORDINE DI PRECEDENZA: P - B - C.  ==>  Diritto di precedenza
+[60%] ORDINE DI PRECEDENZA: A - C - L.  ==>  Diritto di precedenza
+[60%] ORDINE DI PRECEDENZA: H - D - B.  ==>  Diritto di precedenza
+[60%] ORDINE DI PRECEDENZA: B - H - C.  ==>  Diritto di precedenza
+[60%] SU UNA STRADA:  ==>  Strada
+[60%] SPIE ROSSE  ==>  Spie di colore rosso
+[60%] SPORTO COSE DI MASSA A PIENO CARICO OLTRE 3,5 T.  ==>  Divieto di sorpasso per veicoli oltre 3,5t
+[59%] NELLA FASE DI RIENTRO DAL SORPASSO BISOGNA:  ==>  Fine divieto di sorpasso
+[59%] SEMAFORO PER VELOCIPEDI (BICICLETTE)  ==>  Semafori per ciclisti
+[59%] INQUINAMENTO ATMOSFERICO PRODOTTO DAI VEICOLI  ==>  Riduzione dell’inquinamento atmosferico (Tecniche di guida)
+[59%] CHI GUIDA UN VEICOLO AD ELEVATE PRESTAZIONI DEVE COMUNQUE:  ==>  Comportamenti vari alla guida di veicoli, anche se ad elevate prestazioni
+[59%] È AMMESSA LA MARCIA PER FILE PARALLELE:  ==>  Marcia per file parallele - Svolta a sinistra
+[59%] IL DIVIETO DI SOSTA PUÒ ESSERE SEGNALATO CON:  ==>  Divieto di sosta e di fermata
+[59%] SIMBOLO DEL LUNOTTO TERMICO  ==>  Simbolo della segnalazione luminosa di pericolo
+[59%] IN CASO DI SORPASSO DI NOTTE SU STRADA A DOPPIO SENSO:  ==>  Delineatori di margine (per strada o carreggiate a doppio senso)
+[59%] ORDINE DI PRECEDENZA: R - B - D - T.  ==>  Ordine di precedenza nell'intersezione n. 604
+[59%] ORDINE DI PRECEDENZA: S - B - L - D.  ==>  Ordine di precedenza nell'intersezione n. 604
+[59%] ORDINE DI PRECEDENZA: D - P - B - N.  ==>  Ordine di precedenza nell'intersezione n. 604
+[59%] ORDINE DI PRECEDENZA: T - G - P - B.  ==>  Ordine di precedenza nell'intersezione n. 604
+[59%] IL SORPASSO È VIETATO:  ==>  Sorpasso in autostrada
+[59%] STATO DI INCOSCIENZA  ==>  Stato di shock (Sintomi)
+[58%] DIVIETO DI TRANSITO AI VELOCIPEDI (BICICLETTE)  ==>  Transito vietato alle biciclette
+[58%] AEROMOBILI A BASSA QUOTA  ==>  Aeromobili
+[58%] LE STRISCE BIANCHE CONTINUE AI MARGINI (BORDI) DELLA CARREGGIATA  ==>  Cantiere mobile con restringimento della carreggiata
+[58%] DIVIETO DI TRANSITO AGLI AUTOCARRI CHE SUPERANO 3,5 T.  ==>  Divieto di transito per particolari categorie
+[58%] DIVIETO DI TRANSITO AGLI AUTOCARRI CHE SUPERANO 6,5 T.  ==>  Divieto di transito per particolari categorie
+[58%] POSSIAMO TROVARE UNA LUCE GIALLA LAMPEGGIANTE  ==>  Luce gialla lampeggiante dei semafori
+[58%] TRASPORTO DI PERSONE  ==>  Organi di sospensione
+[58%] CONDIZIONI AVVERSE DEL TEMPO  ==>  Condizioni per effettuare il sorpasso
+[58%] PROIETTORE ANABBAGLIANTE ASIMMETRICO ERRATO  ==>  Simbolo dei proiettori anabbaglianti
+[58%] SPOSTAMENTO DEL CARICO IN AVANTI  ==>  Posizionamento del veicolo in caso di sosta (1)
+[58%] LA SOSTA È VIETATA  ==>  Senso vietato
+[57%] SUI PNEUMATICI OCCORRE SPESSO VERIFICARE:  ==>  Pneumatici - Scelta e verifiche periodiche
+[57%] LO SPAZIO MINIMO DI ARRESTO DI UN VEICOLO:  ==>  Spazio (distanza) totale di arresto (Condizioni)
+[57%] LE STRISCE BIANCHE LATERALI DISCONTINUE (TRATTEGGIATE)  ==>  Striscia bianca discontinua di mezzeria (1)
+[57%] LA VELOCITÀ DEVE ESSERE REGOLATA  ==>  Velocità consigliata
+[57%] VARIAZIONE CORSIE DISPONIBILI (IN DIMINUZIONE)  ==>  Variazione corsie autostradali (da 3 a 2)
+[57%] LANTERNE SEMAFORICHE GIALLE LAMPEGGIANTI  ==>  Luce gialla lampeggiante dei semafori
+[57%] UN PARCHEGGIO AUTORIZZATO  ==>  Parcheggio
+[57%] SIMBOLO DEI FENDINEBBIA ANTERIORI  ==>  Simbolo degli indicatori di direzione
+[56%] CORPO ESTRANEO IN UN OCCHIO  ==>  Trattamento di un ferito che presenta un corpo estraneo in un occhio
+[56%] TRAUMA ALLA GABBIA TORACICA  ==>  Trattamento di un ferito che presenta un trauma alla gabbia toracica
+[56%] ORDINE DI PRECEDENZA: D - C - A - H.  ==>  Ordine di precedenza nell'intersezione n. 604
+[56%] ORDINE DI PRECEDENZA: H - D - B - L.  ==>  Ordine di precedenza nell'intersezione n. 604
+[56%] ORDINE DI PRECEDENZA: P - D - B - L.  ==>  Ordine di precedenza nell'intersezione n. 604
+[56%] ORDINE DI PRECEDENZA: H - A - F - L.  ==>  Ordine di precedenza nell'intersezione n. 604
+[56%] ORDINE DI PRECEDENZA: C - R - A - H.  ==>  Ordine di precedenza nell'intersezione n. 604
+[56%] PROIETTORE ANABBAGLIANTE ASIMMETRICO CORRETTO  ==>  Simbolo dei proiettori anabbaglianti
+[56%] ATTENZIONE AI BAMBINI  ==>  Attraversamento di binari
+[56%] ORDINE DI PRECEDENZA: A - E - V - H - C.  ==>  Ordine di precedenza nell'intersezione n. 604
+[56%] SIMBOLO DEI FENDINEBBIA POSTERIORI  ==>  Simbolo degli indicatori di direzione
+[56%] MANUTENZIONE DELL'IMPIANTO DI ILLUMINAZIONE  ==>  Valutazione della distanza di sicurezza
+[56%] VIGILE CON LE BRACCIA DISTESE ORIZZONTALMENTE A 90 GRADI  ==>  Vigile con braccia aperte perpendicolarmente
+[56%] MASSA A PIENO CARICO OLTRE 3,5 T.  ==>  Divieto di sorpasso per veicoli oltre 3,5t
+[55%] SIMBOLO DELLA RISERVA CARBURANTE  ==>  Simbolo dei proiettori anabbaglianti
+[55%] VIGILE IN POSIZIONE DI ALT  ==>  Vigile con un braccio alzato
+[55%] È VIETATO IN QUANTO COSTITUISCE PERICOLO PER LA CIRCOLAZIONE:  ==>  Pericolo o intralcio per la circolazione
+[55%] LO STERZO DIVENTA PIÙ DURO DEL NORMALE:  ==>  Organi dello sterzo - Servosterzo e anomalie
+[55%] POSTEGGIO PER TAXI  ==>  Poggiatesta
+[55%] INQUINAMENTO DA RUMORE  ==>  Riduzione dell’inquinamento acustico
+[55%] LUCI DI SOSTA (O DI STAZIONAMENTO)  ==>  Divieto di sorpasso (comportamento)
+[55%] CON LA PATENTE DELLA SOTTOCATEGORIA A1 SI POSSONO GUIDARE  ==>  Patente di categoria A1
+[55%] DURATA E CONFERMA DI VALIDITÀ DELLA PATENTE DI CATEGORIA B  ==>  Patente di categoria B
+[54%] SEGNI GIALLI E NERI  ==>  Segni orizzontali in rifacimento
+[54%] PRESEGNALE DI CANTIERE MOBILE  ==>  Patente di categoria B
+[54%] DIVIETO DI TRANSITO AGLI AUTOVEICOLI E MOTOVEICOLI CON 3 O PIÙ RUOTE  ==>  Divieto di transito per particolari categorie
+[54%] L'INQUINAMENTO ATMOSFERICO PRODOTTO DAI VEICOLI CON MOTORE DIESEL  ==>  Riduzione dell’inquinamento atmosferico (Tecniche di guida)
+[54%] PRIMO SOCCORSO  ==>  Localizzazione pronto soccorso
+[54%] NA) DIPENDE  ==>  Marciapiede
+[54%] MENTE:  ==>  Ponte
+[54%] IL CARICO DEVE ESSERE SISTEMATO SUL VEICOLO IN MODO DA:  ==>  Trasporto di persone e animali sui veicoli: modalità
+[54%] SALITA RIPIDA CON PENDENZA DEL 10 %  ==>  Salita ripida
+[54%] NELLE AUTOSTRADE È VIETATO:  ==>  Conferma autostradale
+[54%] ORDINE DI PRECEDENZA: C - A - L - R - E.  ==>  Ordine di precedenza nell'intersezione n. 604
+[54%] IL SORPASSO IN PROSSIMITÀ DI UN INCROCIO È CONSENTITO:  ==>  Casi in cui è ammesso il sorpasso in prossimità dei dossi
+[54%] FERITA SANGUINANTE (EMORRAGIA)  ==>  Fermata sul margine destro della carreggiata
+[53%] SIMBOLO DEL TERGICRISTALLO  ==>  Simbolo degli indicatori di direzione
+[53%] PUÒ RITENERSI UTILE PER LA SICUREZZA:  ==>  Uso delle cinture di sicurezza
+[53%] IL SORPASSO A DESTRA È CONSENTITO:  ==>  Curva pericolosa a destra (comportamento)
+[53%] SIMBOLO FUNZIONAMENTO DIFETTOSO DEL SISTEMA FRENANTE  ==>  Posizionamento del veicolo in caso di sosta (Senso Unico)
+[53%] IN CASO DI MAL TEMPO PRIMA DI PARTIRE BISOGNA:  ==>  Uso degli indicatori di direzione
+[53%] SISTEMA ANTI BLOCCAGGIO RUOTE (A.B.S.)  ==>  Impianto frenante - A.B.S.
+[53%] VIGILE IN POSIZIONE DI AVANTI  ==>  Inversione di marcia
+[53%] USTIONI (BRUCIATURE)  ==>  Inversione di marcia (Regole)
+[52%] FACILMENTE INFIAMMABILI  ==>  Fine limite minimo di velocità
+[52%] CHI ACCUSA SEGNI DI STANCHEZZA DEVE:  ==>  Corretto comportamento di un conducente che accusi segni di stanchezza
+[52%] LO SPAZIO PER LA MANOVRA DI SORPASSO:  ==>  Valutazione della distanza di sicurezza
+[52%] SIMBOLO DELLA TEMPERATURA ECCESSIVA DELL'ACQUA  ==>  Spia della pressione dell’olio
+[52%] SU TUTTE LE STRADE È VIETATO:  ==>  Senso vietato
+[52%] PER EVITARE IL PRODURSI DI INCIDENTI BISOGNA:  ==>  Pericolo di incendio
+[52%] PER EVITARE IL PRODURSI DI INCIDENTI BISOGNA:  ==>  Pericolo di incendio
+[52%] CIÒ CHE CONTRADDISTINGUE GLI ADDETTI AL SERVIZIO DI POLIZIA È:  ==>  Segni distintivi degli agenti di polizia stradale
+[52%] IL MANCATO SENSO DEL PERICOLO DURANTE LA GUIDA PUÒ ESSERE DATO DA:  ==>  Cautele varie durante la guida
+[52%] PER ASSICURARE STABILITÀ AL VEICOLO IN CURVA È OPPORTUNO:  ==>  Forze che agiscono sul veicolo in curva
+[52%] PER ASSICURARE STABILITÀ AL VEICOLO IN CURVA È OPPORTUNO:  ==>  Forze che agiscono sul veicolo in curva
+[52%] LIVELLO SU UN RAMO DELL'INTERSEZIONE  ==>  Traino di un rimorchio - Manutenzione
+[52%] FRATTURA AGLI ARTI (GAMBE O BRACCIA)  ==>  Transito vietato ai veicoli a braccia
+[51%] STRADA EXTRAURBANA A DOPPIO SENSO CON QUATTRO CORSIE  ==>  Strada extraurbana principale
+[51%] QUANDO SI VIENE SORPASSATI BISOGNA:  ==>  Divieto di sorpasso
+[51%] PER CONTROLLARE LO SBANDAMENTO DEL VEICOLO È OPPORTUNO:  ==>  Posizionamento del veicolo in caso di sosta (Senso Unico)
+[51%] PER CONTROLLARE LO SBANDAMENTO DEL VEICOLO È OPPORTUNO:  ==>  Posizionamento del veicolo in caso di sosta (Senso Unico)
+[51%] PER INDIVIDUARE I TESTIMONI PRESENTI AL SINISTRO (INCIDENTE STRADALE)  ==>  Responsabilità civile connessa al sinistro stradale
+[51%] TO PER UNA CATEGORIA DI VEICOLI SU UN RAMO DELL'INTERSEZIONE  ==>  Limitazione di transito a una categoria di veicoli per cantiere stradale
+[51%] LA SOSTA DI AUTOVEICOLI IN DOPPIA FILA  ==>  Semafori veicolari di corsia
+[51%] IN UNA STRADA A SENSO UNICO CON LA STRISCIA BIANCA DISCONTINUA  ==>  Doppia striscia bianca continua di mezzeria
+[51%] SEGNALI DI VELOCITÀ DA APPLICARE SUI VEICOLI  ==>  Gare di velocità (divieto)
+[51%] SIMBOLO DI SBRINAMENTO DEL PARABREZZA  ==>  Simbolo degli indicatori di direzione
+[51%] SONO CAUSA DI RUMORE:  ==>  Sosta di emergenza
+[51%] SE IL VEICOLO IN FASE DI FRENATURA TENDE A SBANDARE  ==>  Posizionamento del veicolo in caso di sosta (1)
+[51%] SE IL VEICOLO IN FASE DI FRENATURA TENDE A SBANDARE  ==>  Posizionamento del veicolo in caso di sosta (1)
+[50%] DOPO UN INCIDENTE STRADALE OCCORRE:  ==>  Polizia stradale
+[50%] PERCHÈ GLI ORGANI DI STERZO CONTRIBUISCANO ALLA SICUREZZA:  ==>  Organi dello sterzo - Servosterzo e anomalie
+[50%] LUNGHEZZA SUPERIORE A 10 METRI  ==>  Curva pericolosa a destra
+[50%] AQUAPLANING (PERDITA DI ADERENZA)  ==>  Fine del diritto di precedenza
+[50%] VIGILE IN POSIZIONE DI ATTENZIONE  ==>  Avaria in autostrada e richiesta di assistenza
+[50%] IL VEICOLO S MUOVENDOSI IN RETROMARCIA DEVE:  ==>  Immissione nel flusso della circolazione in retromarcia
+[50%] METRI  ==>  Ciclomotori
+[50%] PIAZZOLA SU VIABILITÀ ORDINARIA  ==>  Piazzola di sosta
+[50%] DISTRIBUTORE CARBURANTE  ==>  Uso corsie urbane
+[50%] CORRE:  ==>  Corsia
+[50%] SE UN PEDONE, FUORI DELLE STRISCE, NON CI DA LA PRECEDENZA BISOGNA:  ==>  Intersezione a T con diritto di precedenza (sinistra)
+[50%] ASSICURAZIONE R.C.A. (RESPONSABILITÀ CIVILE AUTO)  ==>  Responsabilità civile connessa al sinistro stradale
+[49%] STRADA A TRE CARREGGIATE E OTTO CORSIE  ==>  Delineatori di margine (per strada o carreggiate a senso unico)
+[49%] CONVOGLI MILITARI E CORTEI  ==>  Iscrizioni regolamentari e Rallentatori
+[49%] CAUSE PRINCIPALI DI INCIDENTI POSSONO ESSERE:  ==>  Pericolo di incendio
+[49%] PNEUMATICI CON BATTISTRADA USURATO  ==>  Pneumatici - Pressione corretta
+[49%] PER ARRESTARE IL VEICOLO NEL MINOR SPAZIO POSSIBILE OCCORRE:  ==>  Condizioni per effettuare il sorpasso e operazioni da compiere
+[49%] PER INDIVIDUARE PERSONE E/O VEICOLI COINVOLTI IN UN INCIDENTE  ==>  Fine divieto di sorpasso per veicoli merci oltre 3,5t
+[49%] SULLA STABILITÀ DEL VEICOLO IN MARCIA INFLUISCE POSITIVAMENTE:  ==>  Parcheggio del veicolo in zona regolamentata
+[49%] SULLA STABILITÀ DEL VEICOLO IN MARCIA INFLUISCE POSITIVAMENTE:  ==>  Parcheggio del veicolo in zona regolamentata
+[48%] SEGNALE DI CORSIA CHIUSA (CHIUSURA CORSIA DI DESTRA)  ==>  Doppia curva pericolosa, la prima a destra
+[48%] ZEBRATURE SULLA PAVIMENTAZIONE STRADALE (ISOLA DI TRAFFICO)  ==>  Effetti dell’alimentazione sull’idoneità della guida
+[48%] LI DI CONTAMINARE L'ACQUA  ==>  Continua
+[48%] SE, GIUNGENDO AD UN INCROCIO, SI SBAGLIA CORSIA OCCORRE:  ==>  Comportamento ad un incrocio urbano
+[48%] SIMBOLO DEL TERGI-LAVACRISTALLO  ==>  Sistemazione del carico
+[48%] MASSIMALI DELLA POLIZZA R.C.A.  ==>  Segni distintivi degli agenti di polizia stradale
+[48%] IN PROSSIMITÀ O IN CORRISPONDENZA DEGLI INCROCI È VIETATO:  ==>  Striscia di guida negli incroci: comportamento
+[48%] GIUNGENDO IN PROSSIMITÀ DI UN INCROCIO SI DEVE:  ==>  Delineatori di incroci a “T”
+[48%] IL CASCO  ==>  Isola di traffico
+[47%] SONO ESENTATI (ESCLUSI) DALL'OBBLIGO DI INDOSSARE LE CINTURE  ==>  Esenzioni dall’uso delle cinture di sicurezza
+[47%] INQUINAMENTO PRODOTTO DAI VEICOLI CON MOTORE A SCOPPIO (BENZINA)  ==>  Transito vietato ai veicoli a braccia
+[47%] PER RIDURRE IL RUMORE È NECESSARIO:  ==>  Spie di colore rosso
+[47%] I FARMACI PER IL MAL D'AUTO  ==>  Marcia per file parallele - Svolta a sinistra
+[47%] IN UN INCIDENTE CHI È CIVILMENTE OBBLIGATO A RISARCIRE I DANNI  ==>  Catene da neve obbligatorie
+[47%] PER EVITARE IL PRODURSI DI INCIDENTI BISOGNA CONTROLLARE:  ==>  Primo soccorso alle vittime di incidenti stradali
+[47%] PER EVITARE IL PRODURSI DI INCIDENTI BISOGNA CONTROLLARE:  ==>  Primo soccorso alle vittime di incidenti stradali
+[47%] ALL'INGRESSO E ALL'USCITA DELLE GALLERIE È OPPORTUNO:  ==>  Comportamento all’uscita da una proprietà privata
+[46%] CON FRENI SQUILIBRATI PUÒ AVVENIRE IN FRENATA:  ==>  Organi di sospensione - Inefficienza
+[46%] QUANDO SI VUOLE CAMBIARE CORSIA O DIREZIONE:  ==>  Cambio di corsia (Regole generali)
+[46%] L'ELEVATA PERICOLOSITÀ DEL SORPASSO È DETERMINATA DA:  ==>  Curva pericolosa a destra
+[46%] SEGNI A STRISCE OBLIQUE BIANCHE E NERE ALTERNATE POSSONO INDICARE:  ==>  Comportamenti vari alla guida di veicoli, anche se ad elevate prestazioni
+[46%] LA INSUFFICIENTE TENUTA DI STRADA DEL VEICOLO PUÒ DIPENDERE:  ==>  Fine divieto di sorpasso per veicoli merci oltre 3,5t
+[46%] LA INSUFFICIENTE TENUTA DI STRADA DEL VEICOLO PUÒ DIPENDERE:  ==>  Fine divieto di sorpasso per veicoli merci oltre 3,5t
+[45%] DOPO UN INCIDENTE STRADALE SI DEVE CHIAMARE LA POLIZIA:  ==>  Comportamento in presenza di auto della polizia
+[44%] GUIDA SOTTO L'INFLUENZA DI SOSTANZE STUPEFACENTI  ==>  Uso delle cinture di sicurezza (Sanzioni)
+[44%] INCONTRANDO IL SEMAFORO A TRE LUCI È CONSENTITO IL PASSAGGIO:  ==>  Impianto frenante - Servofreno e freno di stazionamento
+[44%] LA SQUILIBRATURA DEI FRENI PUÒ DIPENDERE DA:  ==>  Divieto di fermata - Divieto di fermata e di sosta
+[44%] NEVE)  ==>  Fine
+[44%] I PNEUMATICI CON LESIONI SUI FIANCHI (LATI) CHE INTERESSANO LE TELE:  ==>  Pneumatici - Pressione corretta
+[43%] QUANDO IL SEMAFORO EMETTE LUCE VERDE NELLA NOSTRA DIREZIONE:  ==>  Rispetto della distanza di sicurezza
+[43%] L'ADERENZA (CONTATTO) DELLE RUOTE SUL MANTO STRADALE È RIDOTTA DA:  ==>  Stato di emergenza sulle autostrade
+[43%] L'ADERENZA (CONTATTO) DELLE RUOTE SUL MANTO STRADALE È RIDOTTA DA:  ==>  Stato di emergenza sulle autostrade
+[43%] SE LO STERZO VIBRA FORTEMENTE PUÒ DIPENDERE:  ==>  Organi dello sterzo - Servosterzo e anomalie
+[42%] DOCUMENTI CHE DEVE RILASCIARE L'IMPRESA ASSICURATRICE:  ==>  Divieti di danneggiare e/o sporcare strade e ambiente
+[42%] PER MANTENERE I FRENI EFFICIENTI OCCORRE SPESSO CONTROLLARE:  ==>  Cause di incidenti legate al comportamento del conducente
+[42%] DEBBONO ESSERE TENUTI IL PIÙ POSSIBILE VICINO AL MARGINE DESTRO:  ==>  Fine pista ciclabile contigua al marciapiede
+[42%] CONTRATTO CON FORMULA "BONUS-MALUS"  ==>  Identificazione strada comunale
+[42%] SE SI STANNO SEGUENDO TERAPIE (CURE) CON FARMACI AD AZIONE SEDATIVA  ==>  Spazio (distanza) percorso in 1 secondo in funzione della velocità
+[41%] SE, PER UN GUASTO, FUNZIONANO SOLO I FRENI POSTERIORI OCCORRE:  ==>  Arresto forzato sui binari ferroviari (Approfondimento)
+[40%] 2,30 METRI  ==>  Strettoia simmetrica
+[37%] GNA:  ==>  ALT - Dogana
+[36%] A 6,5 T.  ==>  ALT - Stazione
+[27%] 7,00 T.  ==>  Transito vietato massa > 7,00t
