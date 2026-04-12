@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:just_audio/just_audio.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/question.dart';
 import '../../models/quiz_session.dart';
@@ -58,6 +59,14 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
   bool _showingFeedback = false;
   bool? _currentAnswerCorrect;
   bool _showExplanation = false;
+  
+  // Custom audio player state
+  AudioPlayer? _audioPlayer;
+  bool _isCustomAudioPlaying = false;
+  bool _isCustomAudioLoading = false;
+  
+  // TTS state
+  bool _isTtsSpeaking = false;
 
   @override
   void initState() {
@@ -76,6 +85,7 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
     _pageController.dispose();
     _questionNumbersScrollController.dispose();
     _ttsHelper.stop();
+    _audioPlayer?.dispose();
     super.dispose();
   }
 
@@ -438,47 +448,115 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
     
     if (_currentPage >= _questions.length) return;
     
+    // Stop custom audio if playing
+    if (_isCustomAudioPlaying) {
+      await _audioPlayer?.pause();
+      setState(() => _isCustomAudioPlaying = false);
+    }
+    
+    // Toggle TTS if already speaking
+    if (_isTtsSpeaking) {
+      _ttsHelper.stop();
+      setState(() => _isTtsSpeaking = false);
+      return;
+    }
+    
     final question = _questions[_currentPage];
     final text = question.getText(_currentQuestionLanguage);
     
-    // Use TtsHelper with robust language handling
-    final success = await _ttsHelper.speak(text, _currentQuestionLanguage);
+    setState(() => _isTtsSpeaking = true);
     
-    // Show feedback
-    if (!mounted) return;
-    final l10n = AppLocalizations.of(context)!;
-    ScaffoldMessenger.of(context).clearSnackBars();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(
-              success ? Icons.volume_up : Icons.volume_off,
-              color: Theme.of(context).colorScheme.onPrimary,
-            ),
-            const SizedBox(width: 8),
-            Text(success ? l10n.quizPlayingAudio : l10n.quizAudioNotAvailable),
-          ],
-        ),
-        duration: const Duration(seconds: 1),
-        backgroundColor: success ? null : Theme.of(context).colorScheme.tertiary,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    // Use TtsHelper with robust language handling
+    await _ttsHelper.speak(text, _currentQuestionLanguage, awaitCompletion: true);
+    
+    if (mounted) {
+      setState(() => _isTtsSpeaking = false);
+    }
   }
 
-  Future<void> _handleCustomAudioPlaceholder() async {
+  Future<void> _toggleCustomAudio() async {
     HapticFeedback.mediumImpact();
-    // Stop any ongoing TTS to avoid overlap; actual custom-audio implementation will be added later.
-    _ttsHelper.stop();
-
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Custom audio placeholder — not implemented yet'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    
+    if (_currentPage >= _questions.length) return;
+    
+    final question = _questions[_currentPage];
+    final audioUrl = question.explanationAudioUrl;
+    
+    // Check if audio is available
+    if (audioUrl == null || audioUrl.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No custom audio available for this question'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
+    
+    // Stop TTS if speaking
+    if (_isTtsSpeaking) {
+      _ttsHelper.stop();
+      setState(() => _isTtsSpeaking = false);
+    }
+    
+    // Initialize audio player if needed
+    if (_audioPlayer == null) {
+      _audioPlayer = AudioPlayer();
+      
+      _audioPlayer!.playerStateStream.listen((state) {
+        if (mounted) {
+          setState(() {
+            _isCustomAudioPlaying = state.playing;
+            if (state.playing) _isCustomAudioLoading = false;
+          });
+        }
+      });
+      
+      _audioPlayer!.processingStateStream.listen((state) {
+        if (mounted) {
+          setState(() {
+            if (state == ProcessingState.ready) {
+              _isCustomAudioLoading = false;
+            } else if (state == ProcessingState.completed) {
+              _isCustomAudioPlaying = false;
+            }
+          });
+        }
+      });
+    }
+    
+    try {
+      if (_isCustomAudioPlaying) {
+        await _audioPlayer!.pause();
+      } else {
+        // Check if we need to load new audio (different question or not loaded)
+        final currentSource = _audioPlayer!.audioSource;
+        if (currentSource == null) {
+          setState(() => _isCustomAudioLoading = true);
+          await _audioPlayer!.setUrl(audioUrl);
+        }
+        await _audioPlayer!.play();
+      }
+    } catch (e) {
+      debugPrint('❌ Audio playback error: $e');
+      setState(() => _isCustomAudioLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error playing audio: $e')),
+        );
+      }
+    }
+  }
+  
+  // Reset audio player when changing questions
+  void _resetAudioPlayer() {
+    _audioPlayer?.stop();
+    _audioPlayer?.dispose();
+    _audioPlayer = null;
+    _isCustomAudioPlaying = false;
+    _isCustomAudioLoading = false;
   }
 
   String _formatTime(int seconds) {
@@ -857,8 +935,16 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
                 controller: _pageController,
                 physics: const BouncingScrollPhysics(),
                 onPageChanged: (index) {
+                  // Reset audio player when changing questions
+                  _resetAudioPlayer();
+                  // Stop TTS when changing questions
+                  if (_isTtsSpeaking) {
+                    _ttsHelper.stop();
+                  }
+                  
                   setState(() {
                     _currentPage = index;
+                    _isTtsSpeaking = false;
                     // Keep feedback visible if question was already answered in immediate mode
                     if (widget.immediateAnswerFeedback && _userAnswers.containsKey(index)) {
                       _showingFeedback = true;
@@ -912,50 +998,65 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
 
                               const SizedBox(height: 24),
 
-                              // Audio Buttons: TTS + Placeholder custom audio
+                              // Audio Buttons: TTS + Custom audio
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   // TTS Button
-                                  InkWell(
+                                  GestureDetector(
                                     onTap: _speakQuestion,
-                                    borderRadius: BorderRadius.circular(30),
-                                    child: Container(
-                                      padding: const EdgeInsets.all(12),
+                                    child: AnimatedContainer(
+                                      duration: const Duration(milliseconds: 200),
+                                      width: 56,
+                                      height: 56,
                                       decoration: BoxDecoration(
                                         shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: Colors.black26,
-                                          width: 2,
-                                        ),
+                                        color: _isTtsSpeaking 
+                                            ? theme.colorScheme.primary 
+                                            : theme.colorScheme.primary.withOpacity(0.1),
                                       ),
-                                      child: const Icon(
-                                        Icons.volume_up,
+                                      child: Icon(
+                                        _isTtsSpeaking ? Icons.pause : Icons.volume_up,
                                         size: 28,
-                                        color: Colors.black54,
+                                        color: _isTtsSpeaking 
+                                            ? Colors.white 
+                                            : theme.colorScheme.primary,
                                       ),
                                     ),
                                   ),
                                   const SizedBox(width: 16),
-                                  // Placeholder Button (custom audio / premium)
-                                  InkWell(
-                                    onTap: _handleCustomAudioPlaceholder,
-                                    borderRadius: BorderRadius.circular(30),
-                                    child: Container(
-                                      padding: const EdgeInsets.all(12),
+                                  // Custom Audio Button
+                                  GestureDetector(
+                                    onTap: _toggleCustomAudio,
+                                    child: AnimatedContainer(
+                                      duration: const Duration(milliseconds: 200),
+                                      width: 56,
+                                      height: 56,
                                       decoration: BoxDecoration(
                                         shape: BoxShape.circle,
-                                        color: Colors.deepPurple.withOpacity(0.1),
-                                        border: Border.all(
-                                          color: Colors.deepPurple.withOpacity(0.35),
-                                          width: 2,
-                                        ),
+                                        color: _isCustomAudioPlaying 
+                                            ? AppTheme.successGreen 
+                                            : (question.explanationAudioUrl != null && question.explanationAudioUrl!.isNotEmpty)
+                                                ? AppTheme.successGreen.withOpacity(0.1)
+                                                : Colors.grey.withOpacity(0.1),
                                       ),
-                                      child: Icon(
-                                        Icons.record_voice_over,
-                                        size: 28,
-                                        color: Colors.deepPurple,
-                                      ),
+                                      child: _isCustomAudioLoading
+                                          ? Padding(
+                                              padding: const EdgeInsets.all(14),
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2.5,
+                                                valueColor: AlwaysStoppedAnimation(AppTheme.successGreen),
+                                              ),
+                                            )
+                                          : Icon(
+                                              _isCustomAudioPlaying ? Icons.stop : Icons.record_voice_over,
+                                              size: 28,
+                                              color: _isCustomAudioPlaying 
+                                                  ? Colors.white 
+                                                  : (question.explanationAudioUrl != null && question.explanationAudioUrl!.isNotEmpty)
+                                                      ? AppTheme.successGreen
+                                                      : Colors.grey,
+                                            ),
                                     ),
                                   ),
                                 ],

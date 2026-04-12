@@ -11,6 +11,7 @@ class TheoryCard {
   final String? textEn;
   final String? textBn;
   final String? imageUrl;
+  final String? audioExplanationUrl;
   final int displayOrder;
   final DateTime createdAt;
 
@@ -25,6 +26,7 @@ class TheoryCard {
     this.textEn,
     this.textBn,
     this.imageUrl,
+    this.audioExplanationUrl,
     required this.displayOrder,
     required this.createdAt,
   });
@@ -66,6 +68,7 @@ class TheoryCard {
       textEn: json['text_en'] as String?,
       textBn: json['text_bn'] as String?,
       imageUrl: json['image_url'] as String?,
+      audioExplanationUrl: json['audio_explanation_url'] as String?,
       displayOrder: json['display_order'] as int,
       createdAt: DateTime.parse(json['created_at'] as String),
     );
@@ -84,6 +87,7 @@ class TheoryCard {
       'text_en': textEn,
       'text_bn': textBn,
       'image_url': imageUrl,
+      'audio_explanation_url': audioExplanationUrl,
       'display_order': displayOrder,
       'created_at': createdAt.toIso8601String(),
     };
@@ -102,6 +106,7 @@ class TheoryCard {
       textEn: map['text_en'] as String?,
       textBn: map['text_bn'] as String?,
       imageUrl: map['image_url'] as String?,
+      audioExplanationUrl: map['audio_explanation_url'] as String?,
       displayOrder: map['display_order'] as int,
       createdAt: DateTime.parse(map['created_at'] as String),
     );
@@ -120,6 +125,7 @@ class TheoryCard {
       'text_en': textEn,
       'text_bn': textBn,
       'image_url': imageUrl,
+      'audio_explanation_url': audioExplanationUrl,
       'display_order': displayOrder,
       'created_at': createdAt.toIso8601String(),
     };

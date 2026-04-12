@@ -888,4 +888,28 @@ class AdminRepository {
       return false;
     }
   }
+
+  /// Update theory card's audio URL using secure RPC function
+  Future<bool> updateTheoryCardAudioUrl({
+    required int cardId,
+    required String audioUrl,
+  }) async {
+    try {
+      debugPrint('🎙️ Calling RPC: update_theory_card_audio($cardId, $audioUrl)');
+      
+      final result = await _supabase.rpc(
+        'update_theory_card_audio',
+        params: {
+          'p_card_id': cardId,
+          'p_audio_url': audioUrl,
+        },
+      );
+      
+      debugPrint('✅ RPC response: $result');
+      return result == true;
+    } catch (e) {
+      debugPrint('❌ RPC error: $e');
+      return false;
+    }
+  }
 }

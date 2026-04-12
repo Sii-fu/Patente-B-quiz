@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:photo_view/photo_view.dart';
+import 'package:just_audio/just_audio.dart';
 import '../../models/theory_card.dart';
 import '../../models/question.dart';
 import '../../models/subtopic.dart';
@@ -40,6 +41,15 @@ class _TheoryCardQuizScreenState extends State<TheoryCardQuizScreen> {
   
   // Track language for each question individually
   final Map<int, String> _questionLanguages = {};
+  
+  // Audio player for custom audio
+  final Map<int, AudioPlayer> _audioPlayers = {};
+  final Map<int, bool> _isAudioPlaying = {};
+  final Map<int, bool> _isAudioLoading = {};
+  
+  // TTS state tracking
+  int? _currentTtsQuestionId;
+  bool _isTtsSpeaking = false;
 
   @override
   void initState() {
@@ -52,6 +62,10 @@ class _TheoryCardQuizScreenState extends State<TheoryCardQuizScreen> {
   void dispose() {
     _ttsHelper.stop();
     _searchController.dispose();
+    // Dispose all audio players
+    for (final player in _audioPlayers.values) {
+      player.dispose();
+    }
     super.dispose();
   }
 
@@ -89,6 +103,7 @@ class _TheoryCardQuizScreenState extends State<TheoryCardQuizScreen> {
           explanationIt: q['explanation_it'] as String?,
           explanationEn: q['explanation_en'] as String?,
           explanationBn: q['explanation_bn'] as String?,
+          explanationAudioUrl: q['explanation_audio_url'] as String?,
           difficultyLevel: q['difficulty_level'] as int? ?? 1,
           createdAt: DateTime.parse(q['created_at'] as String),
           subtopic: subtopicData != null
@@ -116,30 +131,122 @@ class _TheoryCardQuizScreenState extends State<TheoryCardQuizScreen> {
   Future<void> _speakQuestion(Question question) async {
     HapticFeedback.mediumImpact();
     
+    // Stop any custom audio playing
+    _stopAllCustomAudio();
+    
+    // If already speaking this question, stop
+    if (_isTtsSpeaking && _currentTtsQuestionId == question.id) {
+      _ttsHelper.stop();
+      setState(() {
+        _isTtsSpeaking = false;
+        _currentTtsQuestionId = null;
+      });
+      return;
+    }
+    
+    // Stop previous TTS if speaking another question
+    if (_isTtsSpeaking) {
+      _ttsHelper.stop();
+    }
+    
     final questionLang = _questionLanguages[question.id] ?? 'it';
     final text = question.getText(questionLang);
     
-    final success = await _ttsHelper.speak(text, questionLang);
+    setState(() {
+      _isTtsSpeaking = true;
+      _currentTtsQuestionId = question.id;
+    });
     
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).clearSnackBars();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(
-              success ? Icons.volume_up : Icons.volume_off,
-              color: Colors.white,
-            ),
-            const SizedBox(width: 8),
-            Text(success ? 'Playing audio...' : 'Audio not available'),
-          ],
-        ),
-        duration: const Duration(seconds: 1),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: success ? AppTheme.primaryGreen : Colors.orange,
-      ),
-    );
+    final success = await _ttsHelper.speak(text, questionLang, awaitCompletion: true);
+    
+    if (mounted) {
+      setState(() {
+        _isTtsSpeaking = false;
+        _currentTtsQuestionId = null;
+      });
+    }
+  }
+
+  void _stopAllCustomAudio() {
+    for (final entry in _audioPlayers.entries) {
+      entry.value.pause();
+    }
+    setState(() {
+      _isAudioPlaying.clear();
+    });
+  }
+
+  Future<void> _toggleCustomAudio(Question question) async {
+    HapticFeedback.lightImpact();
+    
+    final audioUrl = question.explanationAudioUrl;
+    if (audioUrl == null || audioUrl.isEmpty) return;
+    
+    // Stop TTS if speaking
+    if (_isTtsSpeaking) {
+      _ttsHelper.stop();
+      setState(() {
+        _isTtsSpeaking = false;
+        _currentTtsQuestionId = null;
+      });
+    }
+    
+    // Stop other audio players
+    for (final entry in _audioPlayers.entries) {
+      if (entry.key != question.id) {
+        entry.value.pause();
+        _isAudioPlaying[entry.key] = false;
+      }
+    }
+    
+    // Get or create audio player for this question
+    if (!_audioPlayers.containsKey(question.id)) {
+      final player = AudioPlayer();
+      _audioPlayers[question.id] = player;
+      
+      player.playerStateStream.listen((state) {
+        if (mounted) {
+          setState(() {
+            _isAudioPlaying[question.id] = state.playing;
+            if (state.playing) _isAudioLoading[question.id] = false;
+          });
+        }
+      });
+      
+      player.processingStateStream.listen((state) {
+        if (mounted) {
+          setState(() {
+            if (state == ProcessingState.ready) {
+              _isAudioLoading[question.id] = false;
+            } else if (state == ProcessingState.completed) {
+              _isAudioPlaying[question.id] = false;
+            }
+          });
+        }
+      });
+    }
+    
+    final player = _audioPlayers[question.id]!;
+    
+    try {
+      if (_isAudioPlaying[question.id] == true) {
+        await player.pause();
+      } else {
+        if (player.audioSource == null) {
+          setState(() => _isAudioLoading[question.id] = true);
+          await player.setUrl(audioUrl);
+        }
+        await player.play();
+      }
+    } catch (e) {
+      debugPrint('❌ Audio playback error: $e');
+      setState(() => _isAudioLoading[question.id] = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error playing audio: $e')),
+        );
+      }
+    }
   }
 
   void _showImageDialog(String imageUrl, String title) {
@@ -632,37 +739,14 @@ class _TheoryCardQuizScreenState extends State<TheoryCardQuizScreen> {
 
                 const SizedBox(height: 16),
 
-                // Action Buttons Row
+                // Audio Controls Row
+                _buildAudioControlsRow(question, theme),
+
+                const SizedBox(width: 12),
+                // Language Toggle Button
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    // Read Aloud Button
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () => _speakQuestion(question),
-                        icon: Icon(
-                          Icons.volume_up,
-                          size: 20,
-                          color: theme.colorScheme.primary,
-                        ),
-                        label: Text(
-                          l10n.readAloud,
-                          style: TextStyle(
-                            color: theme.colorScheme.primary,
-                            fontSize: 14,
-                          ),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(
-                            color: theme.colorScheme.primary,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    // Language Toggle Button
                     InkWell(
                       onTap: () {
                         HapticFeedback.selectionClick();
@@ -925,6 +1009,94 @@ class _TheoryCardQuizScreenState extends State<TheoryCardQuizScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildAudioControlsRow(Question question, ThemeData theme) {
+    final hasCustomAudio = question.explanationAudioUrl != null && 
+                           question.explanationAudioUrl!.isNotEmpty;
+    final isTtsActive = _isTtsSpeaking && _currentTtsQuestionId == question.id;
+    final isCustomAudioActive = _isAudioPlaying[question.id] == true;
+    final isCustomAudioLoading = _isAudioLoading[question.id] == true;
+
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(
+          children: [
+            Icon(Icons.headphones, color: theme.colorScheme.primary, size: 18),
+            const SizedBox(width: 8),
+            Text(
+              'Audio',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
+            const Spacer(),
+            // TTS Button
+            _buildAudioButton(
+              theme: theme,
+              icon: isTtsActive ? Icons.pause : Icons.play_arrow,
+              isActive: isTtsActive,
+              isLoading: false,
+              onTap: () => _speakQuestion(question),
+              color: theme.colorScheme.primary,
+            ),
+            const SizedBox(width: 8),
+            // Custom Audio Button
+            _buildAudioButton(
+              theme: theme,
+              icon: isCustomAudioActive ? Icons.stop : Icons.record_voice_over,
+              isActive: isCustomAudioActive,
+              isLoading: isCustomAudioLoading,
+              onTap: hasCustomAudio ? () => _toggleCustomAudio(question) : null,
+              color: hasCustomAudio ? AppTheme.successGreen : theme.colorScheme.outline,
+              enabled: hasCustomAudio,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAudioButton({
+    required ThemeData theme,
+    required IconData icon,
+    required bool isActive,
+    required bool isLoading,
+    required VoidCallback? onTap,
+    required Color color,
+    bool enabled = true,
+  }) {
+    return GestureDetector(
+      onTap: enabled ? onTap : null,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          color: isActive ? color : (enabled ? color.withOpacity(0.1) : theme.colorScheme.outline.withOpacity(0.1)),
+          shape: BoxShape.circle,
+        ),
+        child: isLoading
+            ? Padding(
+                padding: const EdgeInsets.all(10),
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  valueColor: AlwaysStoppedAnimation(isActive ? Colors.white : color),
+                ),
+              )
+            : Icon(
+                icon,
+                color: isActive ? Colors.white : (enabled ? color : theme.colorScheme.outline),
+                size: 22,
+              ),
       ),
     );
   }
