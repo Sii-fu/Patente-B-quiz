@@ -14,8 +14,7 @@ class VocabularyScreen extends StatefulWidget {
   State<VocabularyScreen> createState() => _VocabularyScreenState();
 }
 
-class _VocabularyScreenState extends State<VocabularyScreen>
-    with SingleTickerProviderStateMixin {
+class _VocabularyScreenState extends State<VocabularyScreen> {
   final VocabularyRepository _repo = VocabularyRepository();
   final TtsHelper _ttsHelper = TtsHelper();
   final TextEditingController _searchController = TextEditingController();
@@ -25,14 +24,11 @@ class _VocabularyScreenState extends State<VocabularyScreen>
   Set<int> _starredIds = {};
   bool _isLoading = true;
   String? _error;
-
-  late TabController _tabController;
+  bool _showOnlyStarred = false;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-    _tabController.addListener(() => setState(() {}));
     _ttsHelper.init();
     _loadData();
     _searchController.addListener(_onSearchChanged);
@@ -40,7 +36,6 @@ class _VocabularyScreenState extends State<VocabularyScreen>
 
   @override
   void dispose() {
-    _tabController.dispose();
     _searchController.dispose();
     _ttsHelper.stop();
     super.dispose();
@@ -105,8 +100,9 @@ class _VocabularyScreenState extends State<VocabularyScreen>
   }
 
   List<VocabularyWord> get _displayList {
-    final source =
-        _tabController.index == 1 ? _filteredWords.where((w) => _starredIds.contains(w.id)).toList() : _filteredWords;
+    final source = _showOnlyStarred
+        ? _filteredWords.where((w) => _starredIds.contains(w.id)).toList()
+        : _filteredWords;
     return source;
   }
 
@@ -151,7 +147,19 @@ class _VocabularyScreenState extends State<VocabularyScreen>
                         fontSize: 13,
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      icon: Icon(
+                        _showOnlyStarred ? Icons.star_rounded : Icons.star_outline_rounded,
+                        color: _showOnlyStarred ? Colors.amber : theme.colorScheme.onPrimary,
+                        size: 26,
+                      ),
+                      onPressed: () {
+                        HapticFeedback.selectionClick();
+                        setState(() => _showOnlyStarred = !_showOnlyStarred);
+                      },
+                    ), 
+                    const SizedBox(width: 8),
                   ],
                 ),
               ),
@@ -194,42 +202,7 @@ class _VocabularyScreenState extends State<VocabularyScreen>
                 ),
               ),
 
-              // ── Tabs ────────────────────────────────────────────────────     
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.onPrimary.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: TabBar(
-                    controller: _tabController,
-                    indicator: BoxDecoration(
-                      color: theme.colorScheme.onPrimary,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    indicatorSize: TabBarIndicatorSize.tab,
-                    labelColor: theme.colorScheme.primary,
-                    unselectedLabelColor: theme.colorScheme.onPrimary,
-                    dividerColor: Colors.transparent,
-                    tabs: [
-                      Tab(text: l10n.vocabAllWords),
-                      Tab(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.star, size: 16),
-                            const SizedBox(width: 4),
-                            Text(l10n.vocabStarred),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
 
               // ── Body ────────────────────────────────────────────────────
               Expanded(
@@ -305,7 +278,7 @@ class _VocabularyScreenState extends State<VocabularyScreen>
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.3)),
             const SizedBox(height: 16),
             Text(
-              _tabController.index == 1
+              _showOnlyStarred
                   ? l10n.vocabNoStarred
                   : l10n.vocabNoResults,
               style: TextStyle(

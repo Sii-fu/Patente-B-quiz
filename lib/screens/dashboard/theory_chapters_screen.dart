@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../models/theory_chapter.dart';
 import '../../services/theory_service.dart';
-import '../../database/database_provider.dart';
 import '../../utils/theme.dart';
 import '../../utils/localization_helper.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -33,9 +32,7 @@ class _TheoryChaptersScreenState extends State<TheoryChaptersScreen> {
 
   Future<void> _initializeService() async {
     try {
-      final db = DatabaseProvider.instance;
-      final supabase = Supabase.instance.client;
-      _theoryService = TheoryService(db, supabase);
+      _theoryService = TheoryService.online();
 
       await _loadData();
     } catch (e) {

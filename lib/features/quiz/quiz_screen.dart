@@ -60,6 +60,10 @@ class _QuizScreenState extends State<QuizScreen> {
   bool _isCustomAudioPlaying = false;
   bool _isCustomAudioBuffering = false;
 
+  // TTS audio player (for pre-recorded audio URLs)
+  AudioPlayer? _ttsAudioPlayer;
+  bool _isTtsPlaying = false;
+
   @override
   void initState() {
     super.initState();
@@ -80,6 +84,7 @@ class _QuizScreenState extends State<QuizScreen> {
     _questionNumbersScrollController.dispose();
     _ttsHelper.stop();
     _audioPlayer.dispose();
+    _ttsAudioPlayer?.dispose();
     super.dispose();
   }
 
@@ -257,27 +262,7 @@ class _QuizScreenState extends State<QuizScreen> {
 
       // Show appropriate feedback based on submission status
       if (mounted) {
-        if (submissionResult.isOffline) {
-          // Saved to offline queue
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  Icon(Icons.cloud_off, color: Theme.of(context).colorScheme.onSecondary),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'You are offline. Result saved to queue.',
-                      style: const TextStyle(fontWeight: FontWeight.w500),
-                    ),
-                  ),
-                ],
-              ),
-              backgroundColor: Theme.of(context).colorScheme.secondary,
-              duration: const Duration(seconds: 4),
-            ),
-          );
-        } else if (submissionResult.isOnline) {
+        if (submissionResult.isOnline) {
           // Successfully uploaded to cloud
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -689,32 +674,77 @@ class _QuizScreenState extends State<QuizScreen> {
     
     if (_currentPage >= _questions.length) return;
     
+    // Toggle off if already playing
+    if (_isTtsPlaying) {
+      await _ttsAudioPlayer?.stop();
+      setState(() => _isTtsPlaying = false);
+      return;
+    }
+    
     final question = _questions[_currentPage];
-    final text = question.getText(_currentQuestionLanguage);
+    final audioUrl = question.getAudioUrl(_currentQuestionLanguage);
     
-    // Use TtsHelper with robust language handling
-    final success = await _ttsHelper.speak(text, _currentQuestionLanguage);
-    
-    // Show feedback
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).clearSnackBars();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(
-              success ? Icons.volume_up : Icons.volume_off,
-              color: Theme.of(context).colorScheme.onPrimary,
-            ),
-            const SizedBox(width: 8),
-            Text(success ? 'Playing audio...' : 'Audio not available'),
-          ],
+    // Try to play from URL first, fall back to TTS if no URL available
+    if (audioUrl != null && audioUrl.isNotEmpty) {
+      await _playTtsFromUrl(audioUrl);
+    } else {
+      // Fallback to device TTS
+      final text = question.getText(_currentQuestionLanguage);
+      final success = await _ttsHelper.speak(text, _currentQuestionLanguage);
+      
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(
+                success ? Icons.volume_up : Icons.volume_off,
+                color: Theme.of(context).colorScheme.onPrimary,
+              ),
+              const SizedBox(width: 8),
+              Text(success ? 'Playing audio...' : 'Audio not available'),
+            ],
+          ),
+          duration: const Duration(seconds: 1),
+          backgroundColor: success ? null : Theme.of(context).colorScheme.secondary,
+          behavior: SnackBarBehavior.floating,
         ),
-        duration: const Duration(seconds: 1),
-        backgroundColor: success ? null : Theme.of(context).colorScheme.secondary,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+      );
+    }
+  }
+
+  Future<void> _playTtsFromUrl(String audioUrl) async {
+    // Initialize TTS audio player if needed
+    if (_ttsAudioPlayer == null) {
+      _ttsAudioPlayer = AudioPlayer();
+      
+      _ttsAudioPlayer!.playerStateStream.listen((state) {
+        if (mounted) {
+          setState(() => _isTtsPlaying = state.playing);
+        }
+      });
+      
+      _ttsAudioPlayer!.processingStateStream.listen((state) {
+        if (mounted && state == ProcessingState.completed) {
+          setState(() => _isTtsPlaying = false);
+        }
+      });
+    }
+    
+    try {
+      setState(() => _isTtsPlaying = true);
+      await _ttsAudioPlayer!.setUrl(audioUrl);
+      await _ttsAudioPlayer!.play();
+    } catch (e) {
+      debugPrint('❌ TTS audio playback error: $e');
+      setState(() => _isTtsPlaying = false);
+      
+      // Fallback to device TTS on error
+      final question = _questions[_currentPage];
+      final text = question.getText(_currentQuestionLanguage);
+      await _ttsHelper.speak(text, _currentQuestionLanguage);
+    }
   }
 
   Future<void> _playCustomAudio(String audioUrl) async {

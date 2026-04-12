@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/category.dart';
 import '../../models/topic.dart';
 import '../../utils/theme.dart';
 import '../../services/quiz_repository.dart';
 import '../../services/repository_provider.dart';
-import '../../database/database_provider.dart';
 import 'subtopics_list_screen.dart';
 
 class TopicsListScreen extends StatefulWidget {
@@ -32,7 +29,6 @@ class _TopicsListScreenState extends State<TopicsListScreen> {
   String? _error;
   String _currentLanguage = 'it';
   bool _isSearching = false;
-  bool _isOfflineMode = false;
   late QuizRepository _repository;
 
   @override
@@ -43,23 +39,7 @@ class _TopicsListScreenState extends State<TopicsListScreen> {
 
   Future<void> _initializeRepository() async {
     _repository = RepositoryProvider.quizRepository;
-    await _checkConnectivity();
     _loadTopics();
-  }
-
-  Future<void> _checkConnectivity() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final isContentDownloaded = prefs.getBool('is_content_downloaded') ?? false;
-      final connectivityResult = await Connectivity().checkConnectivity();
-      final isOnline = connectivityResult != ConnectivityResult.none;
-      
-      setState(() {
-        _isOfflineMode = !isOnline || isContentDownloaded;
-      });
-    } catch (e) {
-      debugPrint('Error checking connectivity: $e');
-    }
   }
 
   @override
@@ -231,40 +211,6 @@ class _TopicsListScreenState extends State<TopicsListScreen> {
                               ],
                             ),
                           ),
-                          // Online/Offline Indicator
-                          if (_isOfflineMode)
-                            Tooltip(
-                              message: 'Using Local Database',
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withValues(alpha: 0.2),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.wifi_off,
-                                      color: theme.colorScheme.onPrimary,
-                                      size: 16,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      'Offline',
-                                      style: TextStyle(
-                                        color: theme.colorScheme.onPrimary,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
                           const SizedBox(width: 8),
                           IconButton(
                             icon: Icon(Icons.search, color: theme.colorScheme.onPrimary),

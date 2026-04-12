@@ -43,6 +43,10 @@ class _QuizQuestionsScreenState extends State<QuizQuestionsScreen> {
   final Set<int> _visibleExplanations = {};
   final Map<int, String> _questionLanguages = {};
 
+  // Audio player for question TTS from URL
+  AudioPlayer? _ttsAudioPlayer;
+  bool _isTtsPlaying = false;
+
   @override
   void initState() {
     super.initState();
@@ -63,6 +67,7 @@ class _QuizQuestionsScreenState extends State<QuizQuestionsScreen> {
   @override
   void dispose() {
     _ttsHelper.stop();
+    _ttsAudioPlayer?.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -76,7 +81,7 @@ class _QuizQuestionsScreenState extends State<QuizQuestionsScreen> {
 
       final response = await _supabase
           .from('questions')
-          .select('id, text_it, text_en, text_bn, image_url, is_true, explanation_it, explanation_en, explanation_bn, difficulty_level, explanation_audio_url')
+          .select('id, text_it, text_en, text_bn, image_url, is_true, explanation_it, explanation_en, explanation_bn, difficulty_level, explanation_audio_url, audio_it_url, audio_en_url, audio_bn_url')
           .eq('subtopic_id', widget.subtopicId)
           .order('id', ascending: true);
 
@@ -143,8 +148,48 @@ class _QuizQuestionsScreenState extends State<QuizQuestionsScreen> {
     });
   }
 
-  Future<void> _speakText(String text, String languageCode) async {
-    await _ttsHelper.speak(text, languageCode);
+  Future<void> _speakText(String text, String languageCode, {String? audioUrl}) async {
+    // Toggle off if already playing
+    if (_isTtsPlaying) {
+      await _ttsAudioPlayer?.stop();
+      setState(() => _isTtsPlaying = false);
+      return;
+    }
+    
+    // Try to play from URL first, fall back to device TTS
+    if (audioUrl != null && audioUrl.isNotEmpty) {
+      await _playTtsFromUrl(audioUrl);
+    } else {
+      await _ttsHelper.speak(text, languageCode);
+    }
+  }
+
+  Future<void> _playTtsFromUrl(String audioUrl) async {
+    // Initialize TTS audio player if needed
+    if (_ttsAudioPlayer == null) {
+      _ttsAudioPlayer = AudioPlayer();
+      
+      _ttsAudioPlayer!.playerStateStream.listen((state) {
+        if (mounted) {
+          setState(() => _isTtsPlaying = state.playing);
+        }
+      });
+      
+      _ttsAudioPlayer!.processingStateStream.listen((state) {
+        if (mounted && state == ProcessingState.completed) {
+          setState(() => _isTtsPlaying = false);
+        }
+      });
+    }
+    
+    try {
+      setState(() => _isTtsPlaying = true);
+      await _ttsAudioPlayer!.setUrl(audioUrl);
+      await _ttsAudioPlayer!.play();
+    } catch (e) {
+      debugPrint('❌ TTS audio playback error: $e');
+      setState(() => _isTtsPlaying = false);
+    }
   }
 
   void _showImageFullscreen(String imageUrl) {
@@ -348,6 +393,19 @@ class _QuizQuestionsScreenState extends State<QuizQuestionsScreen> {
     final correctColor = AppTheme.successGreen;
     final incorrectColor = AppTheme.errorRed;
     final audioUrl = question['explanation_audio_url'] as String?;
+    
+    // Get question audio URL based on language
+    String? questionAudioUrl;
+    switch (questionLang) {
+      case 'en':
+        questionAudioUrl = question['audio_en_url'] as String? ?? question['audio_it_url'] as String?;
+        break;
+      case 'bn':
+        questionAudioUrl = question['audio_bn_url'] as String? ?? question['audio_it_url'] as String?;
+        break;
+      default:
+        questionAudioUrl = question['audio_it_url'] as String?;
+    }
 
     return GestureDetector(
       onTap: _isAdmin ? () => _navigateToEdit(question) : null,
@@ -387,7 +445,7 @@ class _QuizQuestionsScreenState extends State<QuizQuestionsScreen> {
                   IconButton(
                     icon: const Icon(Icons.volume_up, size: 20),
                     color: theme.colorScheme.primary,
-                    onPressed: () => _speakText(questionText, questionLang),
+                    onPressed: () => _speakText(questionText, questionLang, audioUrl: questionAudioUrl),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                   ),

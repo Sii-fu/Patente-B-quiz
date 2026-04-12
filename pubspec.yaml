@@ -28,11 +28,9 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
-  drift: ^2.7.0  # For Local Database
-  sqlite3_flutter_libs: ^0.5.7 # For Local Database
   path_provider: ^2.0.15
   path: ^1.8.3
-  connectivity_plus: ^5.0.0 # To check internet
+  connectivity_plus: ^5.0.0 # To check internet (online-only mode)
   flutter_cache_manager: ^3.4.1
   flutter:
     sdk: flutter
@@ -76,8 +74,7 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
   flutter_launcher_icons: ^0.14.4
-  drift_dev: ^2.7.0
-  build_runner: ^2.4.0
+  build_runner: ^2.4.0  # Kept for l10n generation
 # The following section is specific to Flutter packages.
 flutter:
 

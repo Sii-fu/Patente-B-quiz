@@ -1,49 +1,33 @@
+import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../database/local_db.dart';
 import '../models/theory_chapter.dart';
 import '../models/theory_card.dart';
-import 'package:drift/drift.dart' as drift;
 
 /// Service for managing theory content (chapters, cards, progress tracking)
-/// Fetches data directly from Supabase (no local DB caching for content)
-/// Only progress tracking is stored locally
+/// 100% Online - Fetches all data directly from Supabase
+/// Progress tracking is stored locally via SharedPreferences
 class TheoryService {
-  final AppDatabase _db;
   final SupabaseClient _supabase;
  
   // SharedPreferences keys for progress tracking
   static const String _lastReadChapterKey = 'last_read_chapter_id';
   static const String _lastReadCardKey = 'last_read_card_id';
+  static const String _readCardsKey = 'theory_read_cards'; // Map<chapterId, List<cardId>>
 
-  TheoryService(this._db, this._supabase);
+  TheoryService(this._supabase);
+  
+  /// Factory constructor for easy initialization without AppDatabase
+  factory TheoryService.online({SupabaseClient? supabaseClient}) {
+    return TheoryService(supabaseClient ?? Supabase.instance.client);
+  }
 
   // ====== CHAPTER OPERATIONS ======
 
-  /// Get all theory chapters (uses local DB cache if available, otherwise fetches from Supabase)
+  /// Get all theory chapters directly from Supabase
   Future<List<TheoryChapter>> getAllChapters() async {
     try {
-      // Try to load from local DB first (cache)
-      final localChapters = await _db.getAllTheoryChapters();
-      
-      if (localChapters.isNotEmpty) {
-        print('📦 Using cached chapters from local DB (${localChapters.length} chapters)');
-        return localChapters.map((lc) {
-          return TheoryChapter(
-            id: lc.id,
-            relatedQuizTopicId: lc.relatedQuizTopicId,
-            nameIt: lc.nameIt,
-            nameEn: lc.nameEn,
-            nameBn: lc.nameBn,
-            imageUrl: lc.imageUrl,
-            displayOrder: lc.displayOrder,
-            createdAt: lc.createdAt,
-          );
-        }).toList();
-      }
-
-      // If no local chapters, fetch from Supabase and cache them
-      print('📖 No cached chapters, fetching from Supabase...');
+      print('📖 Fetching chapters from Supabase...');
       final response = await _supabase
           .from('theory_chapters')
           .select()
@@ -78,24 +62,7 @@ class TheoryService {
         );
       }).toList();
 
-      // Cache chapters in local DB for next time
-      print('💾 Caching ${chapters.length} chapters to local DB...');
-      for (final chapter in chapters) {
-        await _db.upsertTheoryChapter(
-          LocalTheoryChaptersCompanion(
-            id: drift.Value(chapter.id),
-            relatedQuizTopicId: drift.Value(chapter.relatedQuizTopicId),
-            nameIt: drift.Value(chapter.nameIt),
-            nameEn: drift.Value(chapter.nameEn),
-            nameBn: drift.Value(chapter.nameBn),
-            imageUrl: drift.Value(chapter.imageUrl),
-            displayOrder: drift.Value(chapter.displayOrder),
-            createdAt: drift.Value(chapter.createdAt),
-          ),
-        );
-      }
-      print('✅ Chapters cached successfully');
-
+      print('✅ Loaded ${chapters.length} chapters from Supabase');
       return chapters;
     } catch (e, stackTrace) {
       print('❌ Error fetching chapters: $e');
@@ -219,22 +186,61 @@ class TheoryService {
     }
   }
 
-  // ====== PROGRESS TRACKING ======
+  // ====== PROGRESS TRACKING (SharedPreferences) ======
+
+  /// Get all read cards data from SharedPreferences
+  Future<Map<int, Set<int>>> _getAllReadCardsData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonStr = prefs.getString(_readCardsKey);
+    if (jsonStr == null) return {};
+    
+    try {
+      final Map<String, dynamic> decoded = json.decode(jsonStr);
+      final result = <int, Set<int>>{};
+      decoded.forEach((key, value) {
+        final chapterId = int.tryParse(key);
+        if (chapterId != null && value is List) {
+          result[chapterId] = value.map((e) => e as int).toSet();
+        }
+      });
+      return result;
+    } catch (e) {
+      print('❌ Error parsing read cards data: $e');
+      return {};
+    }
+  }
+
+  /// Save all read cards data to SharedPreferences
+  Future<void> _saveAllReadCardsData(Map<int, Set<int>> data) async {
+    final prefs = await SharedPreferences.getInstance();
+    final Map<String, List<int>> toEncode = {};
+    data.forEach((chapterId, cardIds) {
+      toEncode[chapterId.toString()] = cardIds.toList();
+    });
+    await prefs.setString(_readCardsKey, json.encode(toEncode));
+  }
 
   /// Mark a specific card as read
   Future<void> markCardAsRead(int chapterId, int cardId) async {
-    await _db.markCardAsRead(chapterId, cardId);
+    final allData = await _getAllReadCardsData();
+    allData.putIfAbsent(chapterId, () => <int>{}).add(cardId);
+    await _saveAllReadCardsData(allData);
     await _saveLastReadPosition(chapterId, cardId);
   }
 
   /// Get progress percentage for a chapter (0-100)
   Future<double> getChapterProgress(int chapterId) async {
-    return await _db.getChapterProgress(chapterId);
+    final totalCards = await getCardCountForChapter(chapterId);
+    if (totalCards == 0) return 0.0;
+    
+    final readCards = await getReadCardIds(chapterId);
+    return (readCards.length / totalCards) * 100;
   }
 
   /// Get read card IDs for a chapter
   Future<List<int>> getReadCardIds(int chapterId) async {
-    return await _db.getReadCardIds(chapterId);
+    final allData = await _getAllReadCardsData();
+    return allData[chapterId]?.toList() ?? [];
   }
 
   /// Check if a specific card has been read
@@ -318,9 +324,8 @@ class TheoryService {
 
   /// Clear all progress (for reset/debug)
   Future<void> clearAllProgress() async {
-    await _db.clearTheoryProgress();
-    
     final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_readCardsKey);
     await prefs.remove(_lastReadChapterKey);
     await prefs.remove(_lastReadCardKey);
   }
@@ -350,7 +355,7 @@ class TheoryService {
   Future<List<ChapterWithProgress>> getAllChaptersWithProgress() async {
     print('📊 Fetching all chapters with progress (optimized)...');
     
-    // Step 1: Get all chapters (cached locally, fast)
+    // Step 1: Get all chapters from Supabase
     final chapters = await getAllChapters();
     if (chapters.isEmpty) return [];
     
@@ -367,15 +372,9 @@ class TheoryService {
       cardCountsMap[chapterId] = (cardCountsMap[chapterId] ?? 0) + 1;
     }
     
-    // Step 3: Get all read cards from local DB in ONE query
-    print('📊 Fetching read progress from local DB...');
-    final allReadCards = await _db.getAllTheoryProgress();
-    
-    // Group by chapter
-    final readCardsMap = <int, Set<int>>{};
-    for (final progress in allReadCards) {
-      readCardsMap.putIfAbsent(progress.chapterId, () => <int>{}).add(progress.cardId);
-    }
+    // Step 3: Get all read cards from SharedPreferences
+    print('📊 Fetching read progress from SharedPreferences...');
+    final readCardsMap = await _getAllReadCardsData();
     
     // Step 4: Build results (all in memory, super fast)
     final results = <ChapterWithProgress>[];
@@ -392,7 +391,7 @@ class TheoryService {
       ));
     }
 
-    print('✅ Completed progress fetch for ${results.length} chapters in 3 queries (was ${chapters.length * 4})');
+    print('✅ Completed progress fetch for ${results.length} chapters');
     return results;
   }
 

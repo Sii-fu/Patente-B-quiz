@@ -1,12 +1,12 @@
 import 'package:shared_preferences/shared_preferences.dart';
-import '../database/local_db.dart';
-import '../database/database_provider.dart';
 
 /// Service to manage dashboard statistics including:
 /// - Daily streak tracking
 /// - Overall progress calculation
 /// - Completed chapters count
 /// - Error tracking
+/// 
+/// 100% Online - All stats stored in SharedPreferences
 class DashboardStatsService {
   static const String _keyLastStudyDate = 'last_study_date';
   static const String _keyCurrentStreak = 'current_streak';
@@ -18,9 +18,8 @@ class DashboardStatsService {
   static const String _keyCompletedChapters = 'completed_chapters_ids';
   
   SharedPreferences? _prefs;
-  final AppDatabase database;
   
-  DashboardStatsService({required this.database});
+  DashboardStatsService();
   
   /// Initialize the service - must be called before using
   Future<void> init() async {
@@ -28,8 +27,8 @@ class DashboardStatsService {
   }
   
   /// Factory method to create an initialized instance
-  static Future<DashboardStatsService> create({AppDatabase? database}) async {
-    final service = DashboardStatsService(database: database ?? DatabaseProvider.instance);
+  static Future<DashboardStatsService> create() async {
+    final service = DashboardStatsService();
     await service.init();
     return service;
   }
@@ -193,29 +192,6 @@ class DashboardStatsService {
     return completedChapterIds.contains(chapterId);
   }
   
-  /// Get chapter completion based on reading progress from database
-  Future<int> getCompletedChaptersFromDB() async {
-    try {
-      final chapters = await database.getAllTheoryChapters();
-      
-      int completedCount = 0;
-      for (final chapter in chapters) {
-        final progress = await database.getChapterProgress(chapter.id);
-        // Consider chapter completed if 80%+ is read
-        if (progress >= 80.0) {
-          completedCount++;
-          // Also mark in local prefs for offline access
-          await markChapterCompleted(chapter.id);
-        }
-      }
-      
-      return completedCount;
-    } catch (e) {
-      // Fallback to locally stored count
-      return completedChaptersCount;
-    }
-  }
-  
   // ====== DASHBOARD DATA MODEL ======
   
   /// Get all dashboard stats at once
@@ -225,14 +201,11 @@ class DashboardStatsService {
     // Check streak on load
     await checkAndUpdateStreak();
     
-    // Get completed chapters from DB if available
-    final chaptersFromDB = await getCompletedChaptersFromDB();
-    
     return DashboardStats(
       streak: currentStreak,
       longestStreak: longestStreak,
       progressPercentage: progressPercentage,
-      completedChapters: chaptersFromDB > 0 ? chaptersFromDB : completedChaptersCount,
+      completedChapters: completedChaptersCount,
       totalQuizzesTaken: totalQuizzesTaken,
       totalErrors: totalErrors,
       totalCorrectAnswers: totalCorrectAnswers,

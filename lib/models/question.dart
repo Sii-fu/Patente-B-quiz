@@ -1,4 +1,3 @@
-import '../database/local_db.dart';
 import 'subtopic.dart';
 
 class Question {
@@ -15,6 +14,9 @@ class Question {
   final String? explanationEn;
   final String? explanationBn;
   final String? explanationAudioUrl;
+  final String? audioItUrl;
+  final String? audioEnUrl;
+  final String? audioBnUrl;
   final int difficultyLevel;
   final DateTime createdAt;
 
@@ -32,6 +34,9 @@ class Question {
     this.explanationEn,
     this.explanationBn,
     this.explanationAudioUrl,
+    this.audioItUrl,
+    this.audioEnUrl,
+    this.audioBnUrl,
     this.difficultyLevel = 1,
     required this.createdAt,
   });
@@ -56,29 +61,11 @@ class Question {
       explanationEn: json['explanation_en'] as String?,
       explanationBn: json['explanation_bn'] as String?,
       explanationAudioUrl: json['explanation_audio_url'] as String?,
+      audioItUrl: json['audio_it_url'] as String?,
+      audioEnUrl: json['audio_en_url'] as String?,
+      audioBnUrl: json['audio_bn_url'] as String?,
       difficultyLevel: json['difficulty_level'] as int? ?? 1,
       createdAt: DateTime.parse(json['created_at'] as String),
-    );
-  }
-
-  /// Create Question from Drift LocalQuestion (for offline mode)
-  factory Question.fromLocalQuestion(LocalQuestion local) {
-    return Question(
-      id: local.id,
-      topicId: null, // Not available in LocalQuestion
-      subtopicId: local.subtopicId,
-      subtopic: null, // Would need to join separately if needed
-      textIt: local.textIt,
-      textEn: local.textEn,
-      textBn: local.textBn,
-      imageUrl: local.imageUrl,
-      isTrue: local.isTrue,
-      explanationIt: local.explanationIt,
-      explanationEn: null, // Not in local DB
-      explanationBn: null, // Not in local DB
-      explanationAudioUrl: null, // Not in local DB
-      difficultyLevel: 1, // Not stored locally
-      createdAt: DateTime.now(), // Not stored locally
     );
   }
 
@@ -97,6 +84,9 @@ class Question {
       'explanation_en': explanationEn,
       'explanation_bn': explanationBn,
       'explanation_audio_url': explanationAudioUrl,
+      'audio_it_url': audioItUrl,
+      'audio_en_url': audioEnUrl,
+      'audio_bn_url': audioBnUrl,
       'difficulty_level': difficultyLevel,
       'created_at': createdAt.toIso8601String(),
     };
@@ -123,6 +113,18 @@ class Question {
         return explanationBn ?? explanationIt;
       default:
         return explanationIt;
+    }
+  }
+
+  // Get localized audio URL for question text
+  String? getAudioUrl(String languageCode) {
+    switch (languageCode) {
+      case 'en':
+        return audioEnUrl ?? audioItUrl;
+      case 'bn':
+        return audioBnUrl ?? audioItUrl;
+      default:
+        return audioItUrl;
     }
   }
 }

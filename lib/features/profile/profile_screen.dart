@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
 import '../../l10n/app_localizations.dart';
 import '../../utils/theme.dart';
 import '../../utils/constants.dart';
@@ -24,12 +21,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   
   bool _isLoading = true;
   bool _isSaving = false;
-  bool _isOffline = false;
   Profile? _profile;
   String? _userEmail;
   String _selectedLicenseType = 'B';
-  
-  static const String _cachedProfileKey = 'cached_profile_data';
 
   @override
   void initState() {
@@ -53,40 +47,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       _userEmail = user.email;
 
-      // Check connectivity
-      final hasConnection = await _hasInternetConnection();
-      
-      if (hasConnection) {
-        // Online: Fetch from Supabase
-        try {
-          final response = await Supabase.instance.client
-              .from('profiles')
-              .select()
-              .eq('id', user.id)
-              .single();
+      final response = await Supabase.instance.client
+          .from('profiles')
+          .select()
+          .eq('id', user.id)
+          .single();
 
-          final profile = Profile.fromJson(response);
-          
-          // Cache the profile data for offline use
-          await _cacheProfileData(profile);
-          
-          setState(() {
-            _profile = profile;
-            _nameController.text = profile.fullName ?? '';
-            _phoneController.text = profile.username ?? '';
-            _selectedLicenseType = profile.licenseType;
-            _isOffline = false;
-            _isLoading = false;
-          });
-        } catch (e) {
-          // If online fetch fails, try cache
-          await _loadCachedProfile();
-        }
-      } else {
-        // Offline: Load from cache
-        setState(() => _isOffline = true);
-        await _loadCachedProfile();
-      }
+      final profile = Profile.fromJson(response);
+      
+      setState(() {
+        _profile = profile;
+        _nameController.text = profile.fullName ?? '';
+        _phoneController.text = profile.username ?? '';
+        _selectedLicenseType = profile.licenseType;
+        _isLoading = false;
+      });
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -100,72 +75,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  /// Check if device has internet connectivity
-  Future<bool> _hasInternetConnection() async {
-    try {
-      final result = await Connectivity().checkConnectivity();
-      return result != ConnectivityResult.none;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  /// Cache profile data locally for offline access
-  Future<void> _cacheProfileData(Profile profile) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final profileJson = json.encode(profile.toJson());
-      await prefs.setString(_cachedProfileKey, profileJson);
-    } catch (e) {
-      // Cache failure is non-critical
-    }
-  }
-
-  /// Load profile from local cache
-  Future<void> _loadCachedProfile() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final cachedData = prefs.getString(_cachedProfileKey);
-      
-      if (cachedData != null) {
-        final profileJson = json.decode(cachedData);
-        final profile = Profile.fromJson(profileJson);
-        
-        setState(() {
-          _profile = profile;
-          _nameController.text = profile.fullName ?? '';
-          _phoneController.text = profile.username ?? '';
-          _selectedLicenseType = profile.licenseType;
-          _isLoading = false;
-        });
-      } else {
-        setState(() => _isLoading = false);
-      }
-    } catch (e) {
-      setState(() => _isLoading = false);
-    }
-  }
-
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
 
     HapticFeedback.mediumImpact();
-    
-    // Check connectivity first
-    final hasConnection = await _hasInternetConnection();
-    
-      if (!hasConnection) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(AppLocalizations.of(context)!.profileOfflineError),
-            backgroundColor: Colors.orange,
-            duration: const Duration(seconds: 4),
-          ),
-        );
-      }
-      return;
-    }
     
     try {
       final user = Supabase.instance.client.auth.currentUser;
@@ -252,30 +165,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       body: Column(
         children: [
-          // Offline Banner
-          if (_isOffline)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              color: Colors.orange.withOpacity(0.9),
-              child: Row(
-                children: [
-                  const Icon(Icons.wifi_off, color: Colors.white, size: 20),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      l10n.profileOfflineMode,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          
           // Main Content
           Expanded(
             child: _isLoading

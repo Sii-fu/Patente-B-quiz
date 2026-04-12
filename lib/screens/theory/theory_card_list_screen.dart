@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../models/theory_card.dart';
 import '../../services/theory_service.dart';
-import '../../database/database_provider.dart';
 import '../../utils/theme.dart';
 import '../../utils/localization_helper.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -35,9 +34,7 @@ class _TheoryCardListScreenState extends State<TheoryCardListScreen> {
     });
 
     try {
-      final db = DatabaseProvider.instance;
-      final supabase = Supabase.instance.client;
-      _theoryService = TheoryService(db, supabase);
+      _theoryService = TheoryService.online();
 
       // Load all cards from all chapters
       await _loadAllTheoryCards();

@@ -8,12 +8,8 @@ import '../utils/retry_helper.dart';
 class QuizRepository {
   final SupabaseClient _supabase;
 
-  QuizRepository({
-    SupabaseClient? supabaseClient,
-    // Deprecated: These parameters are no longer used but kept for backward compatibility
-    dynamic database,
-    dynamic connectivity,
-  }) : _supabase = supabaseClient ?? Supabase.instance.client;
+  QuizRepository({SupabaseClient? supabaseClient})
+      : _supabase = supabaseClient ?? Supabase.instance.client;
 
   // ====== MAIN FETCH METHODS ======
 
@@ -204,35 +200,16 @@ class QuizRepository {
         .select('id');
 
     final data = List<Map<String, dynamic>>.from(response);
-    return QuestionStats(totalQuestions: data.length, source: DataSource.supabase);
-  }
-
-  /// Check if connected to internet (for backward compatibility)
-  Future<bool> hasInternetConnection() async {
-    return true; // App is online-only
-  }
-
-  /// Get current data source (for backward compatibility)
-  Future<DataSource> getCurrentDataSource() async {
-    return DataSource.supabase;
+    return QuestionStats(totalQuestions: data.length);
   }
 }
 
-// ====== ENUMS & MODELS ======
-
-enum DataSource {
-  local, // Deprecated - kept for backward compatibility
-  supabase,
-}
+// ====== MODELS ======
 
 class QuestionStats {
   final int totalQuestions;
-  final DataSource source;
 
-  QuestionStats({
-    required this.totalQuestions,
-    this.source = DataSource.supabase,
-  });
+  QuestionStats({required this.totalQuestions});
 
   @override
   String toString() => '$totalQuestions questions from Supabase';
@@ -240,7 +217,6 @@ class QuestionStats {
 
 enum SubmissionStatus {
   submitted,
-  savedOffline, // Deprecated - kept for backward compatibility
   failed,
 }
 
@@ -258,23 +234,5 @@ class SubmissionResult {
   });
 
   bool get isOnline => status == SubmissionStatus.submitted;
-  bool get isOffline => false; // App is online-only now
   bool get hasFailed => status == SubmissionStatus.failed;
-}
-
-// Backward compatibility - SyncResult is no longer used
-class SyncResult {
-  final int syncedCount;
-  final int failedCount;
-  final String message;
-
-  SyncResult({
-    required this.syncedCount,
-    required this.failedCount,
-    required this.message,
-  });
-
-  bool get hasSuccess => syncedCount > 0;
-  bool get hasFailures => failedCount > 0;
-  int get totalAttempted => syncedCount + failedCount;
 }

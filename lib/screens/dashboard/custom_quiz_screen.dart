@@ -65,8 +65,12 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
   bool _isCustomAudioPlaying = false;
   bool _isCustomAudioLoading = false;
   
+  // Audio player for question TTS audio (from URL)
+  AudioPlayer? _ttsAudioPlayer;
+  
   // TTS state
   bool _isTtsSpeaking = false;
+  String? _playingLanguage; // Track which language is currently playing
 
   @override
   void initState() {
@@ -86,6 +90,7 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
     _questionNumbersScrollController.dispose();
     _ttsHelper.stop();
     _audioPlayer?.dispose();
+    _ttsAudioPlayer?.dispose();
     super.dispose();
   }
 
@@ -454,23 +459,77 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
       setState(() => _isCustomAudioPlaying = false);
     }
     
-    // Toggle TTS if already speaking
+    // Toggle off if already speaking
     if (_isTtsSpeaking) {
-      _ttsHelper.stop();
+      await _ttsAudioPlayer?.stop();
       setState(() => _isTtsSpeaking = false);
       return;
     }
     
     final question = _questions[_currentPage];
-    final text = question.getText(_currentQuestionLanguage);
+    final audioUrl = question.getAudioUrl(_currentQuestionLanguage);
     
-    setState(() => _isTtsSpeaking = true);
+    // Try to play from URL first, fall back to TTS if no URL available
+    if (audioUrl != null && audioUrl.isNotEmpty) {
+      await _playAudioFromUrl(audioUrl);
+    } else {
+      // Fallback to device TTS
+      final text = question.getText(_currentQuestionLanguage);
+      setState(() => _isTtsSpeaking = true);
+      await _ttsHelper.speak(text, _currentQuestionLanguage, awaitCompletion: true);
+      if (mounted) {
+        setState(() => _isTtsSpeaking = false);
+      }
+    }
+  }
+  
+  Future<void> _playAudioFromUrl(String audioUrl) async {
+    // Initialize TTS audio player if needed
+    if (_ttsAudioPlayer == null) {
+      _ttsAudioPlayer = AudioPlayer();
+      
+      _ttsAudioPlayer!.playerStateStream.listen((state) {
+        if (mounted) {
+          setState(() {
+            _isTtsSpeaking = state.playing;
+          });
+        }
+      });
+      
+      _ttsAudioPlayer!.processingStateStream.listen((state) {
+        if (mounted && state == ProcessingState.completed) {
+          setState(() {
+            _isTtsSpeaking = false;
+            _playingLanguage = null; // Reset playing language when done
+          });
+        }
+      });
+    }
     
-    // Use TtsHelper with robust language handling
-    await _ttsHelper.speak(text, _currentQuestionLanguage, awaitCompletion: true);
-    
-    if (mounted) {
-      setState(() => _isTtsSpeaking = false);
+    try {
+      setState(() => _isTtsSpeaking = true);
+      debugPrint('🎧 Loading audio from URL: $audioUrl');
+      await _ttsAudioPlayer!.setUrl(audioUrl);
+      debugPrint('▶️ Playing audio from URL');
+      await _ttsAudioPlayer!.play();
+    } catch (e) {
+      debugPrint('❌ TTS audio playback error: $e');
+      setState(() {
+        _isTtsSpeaking = false;
+        _playingLanguage = null;
+      });
+      
+      // Fallback to device TTS on error
+      final question = _questions[_currentPage];
+      final text = question.getText(_currentQuestionLanguage);
+      setState(() => _isTtsSpeaking = true);
+      await _ttsHelper.speak(text, _currentQuestionLanguage, awaitCompletion: true);
+      if (mounted) {
+        setState(() {
+          _isTtsSpeaking = false;
+          _playingLanguage = null;
+        });
+      }
     }
   }
 
@@ -549,6 +608,57 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
       }
     }
   }
+
+  Future<void> _playLanguageAudio(String languageCode) async {
+    HapticFeedback.mediumImpact();
+    
+    if (_currentPage >= _questions.length) return;
+    
+    // If already playing this exact language, stop it
+    if (_isTtsSpeaking && _playingLanguage == languageCode) {
+      await _ttsAudioPlayer?.stop();
+      setState(() {
+        _isTtsSpeaking = false;
+        _playingLanguage = null;
+      });
+      return;
+    }
+    
+    // Stop any currently playing audio
+    if (_isTtsSpeaking) {
+      await _ttsAudioPlayer?.stop();
+    }
+    if (_isCustomAudioPlaying) {
+      await _audioPlayer?.pause();
+      setState(() => _isCustomAudioPlaying = false);
+    }
+    
+    // DO NOT change _currentQuestionLanguage - only play audio
+    // Track which language is playing for UI feedback
+    setState(() => _playingLanguage = languageCode);
+    
+    final question = _questions[_currentPage];
+    final audioUrl = question.getAudioUrl(languageCode);
+    
+    debugPrint('🎵 Playing audio for language: $languageCode, URL: $audioUrl');
+    
+    // Try to play from URL first, fall back to TTS if no URL available
+    if (audioUrl != null && audioUrl.isNotEmpty) {
+      await _playAudioFromUrl(audioUrl);
+    } else {
+      debugPrint('⚠️ No audio URL found, falling back to TTS');
+      // Fallback to device TTS
+      final text = question.getText(languageCode);
+      setState(() => _isTtsSpeaking = true);
+      await _ttsHelper.speak(text, languageCode, awaitCompletion: true);
+      if (mounted) {
+        setState(() {
+          _isTtsSpeaking = false;
+          _playingLanguage = null;
+        });
+      }
+    }
+  }
   
   // Reset audio player when changing questions
   void _resetAudioPlayer() {
@@ -557,6 +667,11 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
     _audioPlayer = null;
     _isCustomAudioPlaying = false;
     _isCustomAudioLoading = false;
+    
+    // Also reset TTS audio player
+    _ttsAudioPlayer?.stop();
+    _isTtsSpeaking = false;
+    _playingLanguage = null; // Reset playing language
   }
 
   String _formatTime(int seconds) {
@@ -621,81 +736,119 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
             ),
             const SizedBox(height: 20),
             
-            // English Translation
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey[300]!),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.language, color: theme.colorScheme.primary, size: 20),
-                      const SizedBox(width: 8),
-                      Text(
-                        l10n.quizEnglish,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
+            // Scrollable content
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // English Translation
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey[300]!),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    question.getText('en'),
-                    style: const TextStyle(
-                      fontSize: 15,
-                      height: 1.5,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.language, color: theme.colorScheme.primary, size: 20),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  l10n.quizEnglish,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              // Audio button for English
+                              IconButton(
+                                icon: Icon(
+                                  _isTtsSpeaking && _playingLanguage == 'en'
+                                      ? Icons.stop_circle
+                                      : Icons.volume_up,
+                                  size: 24,
+                                ),
+                                color: theme.colorScheme.primary,
+                                onPressed: () => _playLanguageAudio('en'),
+                                tooltip: 'Play English audio',
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            question.getText('en'),
+                            style: const TextStyle(
+                              fontSize: 15,
+                              height: 1.5,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Bangla Translation
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey[300]!),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.language, color: theme.colorScheme.primary, size: 20),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  l10n.quizBangla,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              // Audio button for Bangla
+                              IconButton(
+                                icon: Icon(
+                                  _isTtsSpeaking && _playingLanguage == 'bn'
+                                      ? Icons.stop_circle
+                                      : Icons.volume_up,
+                                  size: 24,
+                                ),
+                                color: theme.colorScheme.primary,
+                                onPressed: () => _playLanguageAudio('bn'),
+                                tooltip: 'Play Bangla audio',
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            question.getText('bn'),
+                            style: const TextStyle(
+                              fontSize: 15,
+                              height: 1.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 20),
+                  ],
+                ),
               ),
             ),
-            
-            const SizedBox(height: 16),
-            
-            // Bangla Translation
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey[300]!),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.language, color: theme.colorScheme.primary, size: 20),
-                      const SizedBox(width: 8),
-                      Text(
-                        l10n.quizBangla,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    question.getText('bn'),
-                    style: const TextStyle(
-                      fontSize: 15,
-                      height: 1.5,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            
-            const SizedBox(height: 20),
           ],
         ),
       ),

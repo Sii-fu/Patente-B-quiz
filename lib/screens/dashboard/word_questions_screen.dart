@@ -18,6 +18,7 @@ class _WordQuestionsScreenState extends State<WordQuestionsScreen> {
   final VocabularyRepository _repo = VocabularyRepository();
 
   late Future<List<Question>> _questionsFuture;
+  String _selectedLanguage = 'it'; // 'it', 'en', 'bn'
 
   @override
   void initState() {
@@ -74,6 +75,17 @@ class _WordQuestionsScreenState extends State<WordQuestionsScreen> {
                           ),
                         ],
                       ),
+                    ),
+                    // Language toggle buttons
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildLanguageButton('IT', 'it', theme),
+                        const SizedBox(width: 4),
+                        _buildLanguageButton('EN', 'en', theme),
+                        const SizedBox(width: 4),
+                        _buildLanguageButton('বাংলা', 'bn', theme),
+                      ],
                     ),
                   ],
                 ),
@@ -244,7 +256,7 @@ class _WordQuestionsScreenState extends State<WordQuestionsScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildHighlightedText(
-                    question.textIt,
+                    question.getText(_selectedLanguage),
                     widget.targetWord,
                     theme,
                   ),
@@ -291,6 +303,46 @@ class _WordQuestionsScreenState extends State<WordQuestionsScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  /// Builds a language toggle button
+  Widget _buildLanguageButton(String label, String languageCode, ThemeData theme) {
+    final isSelected = _selectedLanguage == languageCode;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          setState(() {
+            _selectedLanguage = languageCode;
+          });
+        },
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? theme.colorScheme.onPrimary.withValues(alpha: 0.25)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: theme.colorScheme.onPrimary.withValues(
+                alpha: isSelected ? 1.0 : 0.3,
+              ),
+              width: isSelected ? 2 : 1,
+            ),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: theme.colorScheme.onPrimary,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+              fontSize: 11,
+            ),
+          ),
         ),
       ),
     );

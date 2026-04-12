@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
+import 'package:just_audio/just_audio.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/question.dart';
 import '../../models/quiz_session.dart';
@@ -43,6 +44,9 @@ class _ResultReviewScreenState extends State<ResultReviewScreen> {
   final Map<int, String> _questionLanguages = {}; // Track language per question
   bool _isSpeaking = false;
   int? _speakingQuestionIndex;
+  
+  // Audio player for TTS from URL
+  AudioPlayer? _ttsAudioPlayer;
 
   @override
   void initState() {
@@ -54,12 +58,14 @@ class _ResultReviewScreenState extends State<ResultReviewScreen> {
   @override
   void dispose() {
     _ttsHelper.stop();
+    _ttsAudioPlayer?.dispose();
     super.dispose();
   }
 
-  Future<void> _speak(String text, String languageCode, int questionIndex) async {
+  Future<void> _speak(String text, String languageCode, int questionIndex, {String? audioUrl}) async {
     if (_isSpeaking && _speakingQuestionIndex == questionIndex) {
       _ttsHelper.stop();
+      await _ttsAudioPlayer?.stop();
       setState(() {
         _isSpeaking = false;
         _speakingQuestionIndex = null;
@@ -72,22 +78,60 @@ class _ResultReviewScreenState extends State<ResultReviewScreen> {
       _speakingQuestionIndex = questionIndex;
     });
     
-    final success = await _ttsHelper.speak(text, languageCode);
-    
-    if (!success) {
-      setState(() {
-        _isSpeaking = false;
-        _speakingQuestionIndex = null;
-      });
+    // Try to play from URL first, fall back to device TTS
+    if (audioUrl != null && audioUrl.isNotEmpty) {
+      await _playTtsFromUrl(audioUrl);
     } else {
-      // Auto-reset after speaking completes
-      Future.delayed(const Duration(seconds: 3), () {
+      final success = await _ttsHelper.speak(text, languageCode);
+      
+      if (!success) {
+        setState(() {
+          _isSpeaking = false;
+          _speakingQuestionIndex = null;
+        });
+      } else {
+        // Auto-reset after speaking completes
+        Future.delayed(const Duration(seconds: 3), () {
+          if (mounted) {
+            setState(() {
+              _isSpeaking = false;
+              _speakingQuestionIndex = null;
+            });
+          }
+        });
+      }
+    }
+  }
+
+  Future<void> _playTtsFromUrl(String audioUrl) async {
+    // Initialize TTS audio player if needed
+    if (_ttsAudioPlayer == null) {
+      _ttsAudioPlayer = AudioPlayer();
+      
+      _ttsAudioPlayer!.playerStateStream.listen((state) {
         if (mounted) {
+          setState(() => _isSpeaking = state.playing);
+        }
+      });
+      
+      _ttsAudioPlayer!.processingStateStream.listen((state) {
+        if (mounted && state == ProcessingState.completed) {
           setState(() {
             _isSpeaking = false;
             _speakingQuestionIndex = null;
           });
         }
+      });
+    }
+    
+    try {
+      await _ttsAudioPlayer!.setUrl(audioUrl);
+      await _ttsAudioPlayer!.play();
+    } catch (e) {
+      debugPrint('❌ TTS audio playback error: $e');
+      setState(() {
+        _isSpeaking = false;
+        _speakingQuestionIndex = null;
       });
     }
   }
@@ -401,6 +445,7 @@ class _ResultReviewScreenState extends State<ResultReviewScreen> {
   ) {
     final questionLanguage = _getQuestionLanguage(questionIndex, defaultLanguage);
     final questionText = question.getText(questionLanguage);
+    final audioUrl = question.getAudioUrl(questionLanguage);
     final isSpeakingThis = _isSpeaking && _speakingQuestionIndex == questionIndex;
 
     // Get available languages for this question
@@ -540,7 +585,7 @@ class _ResultReviewScreenState extends State<ResultReviewScreen> {
                         ),
                         onPressed: () {
                           HapticFeedback.selectionClick();
-                          _speak(questionText, questionLanguage, questionIndex);
+                          _speak(questionText, questionLanguage, questionIndex, audioUrl: audioUrl);
                         },
                       ),
                     ),
