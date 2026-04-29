@@ -7,6 +7,8 @@ import '../../../models/profile.dart';
 /// Repository for all admin-related database operations
 class AdminRepository {
   final SupabaseClient _supabase = Supabase.instance.client;
+  static const String _theoryImagesBucket = 'theory-images';
+  static const String _videoThumbnailsBucket = 'video-thumbnails';
 
   // ==================== AUTH & PROFILE ====================
 
@@ -739,7 +741,7 @@ class AdminRepository {
     try {
       final response = await _supabase
           .from('videos')
-          .select('*, video_categories(*)')
+          .select()
           .order('display_order')
           .timeout(const Duration(seconds: 10));
       return List<Map<String, dynamic>>.from(response);
@@ -783,7 +785,7 @@ class AdminRepository {
   /// Create or update a video
   Future<bool> upsertVideo({
     int? id,
-    required int categoryId,
+    int? categoryId,
     required String titleIt,
     String? titleEn,
     String? titleBn,
@@ -816,6 +818,29 @@ class AdminRepository {
     }
   }
 
+  /// Upload video thumbnail image to the dedicated [video-thumbnails] bucket.
+  /// Returns the public URL on success, or null on failure.
+  Future<String?> uploadVideoThumbnail(
+    List<int> bytes, {
+    String? originalFileName,
+  }) async {
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final user = _supabase.auth.currentUser;
+    if (user == null) {
+      debugPrint('Error uploading video thumbnail: User not authenticated');
+      return null;
+    }
+
+    final rawName = (originalFileName ?? '').trim();
+    final extensionMatch = RegExp(r'\.([a-zA-Z0-9]+)$').firstMatch(rawName);
+    final extension = extensionMatch != null
+        ? extensionMatch.group(1)!.toLowerCase()
+        : (RegExp(r'^[a-zA-Z0-9]+$').hasMatch(rawName) ? rawName.toLowerCase() : 'jpg');
+
+    final fileName = 'videos/${user.id}/$timestamp.$extension';
+    return uploadImage(_videoThumbnailsBucket, fileName, bytes);
+  }
+
   /// Delete a video
   Future<bool> deleteVideo(int id) async {
     try {
@@ -827,10 +852,28 @@ class AdminRepository {
     }
   }
 
+  /// Delete a file from a Supabase Storage bucket by its object path.
+  Future<bool> deleteStorageFile(String bucket, String path) async {
+    try {
+      await _supabase.storage.from(bucket).remove([path]);
+      return true;
+    } catch (e) {
+      debugPrint('Error deleting storage file: $e');
+      return false;
+    }
+  }
+
   // ==================== UTILITIES ====================
 
   /// Upload image to Supabase Storage
   Future<String?> uploadImage(String bucket, String fileName, List<int> bytes) async {
+    final user = _supabase.auth.currentUser;
+    debugPrint('uploadImage called: bucket=$bucket file=$fileName user=${user?.id} bytes=${bytes.length}');
+    if (user == null) {
+      debugPrint('Error uploading image: User not authenticated');
+      return null;
+    }
+
     try {
       await _supabase.storage.from(bucket).uploadBinary(
         fileName,
@@ -840,11 +883,34 @@ class AdminRepository {
       
       // Get public URL
       final publicUrl = _supabase.storage.from(bucket).getPublicUrl(fileName);
+      debugPrint('uploadImage success: $publicUrl');
       return publicUrl;
-    } catch (e) {
-      debugPrint('Error uploading image: $e');
+    } catch (e, st) {
+      debugPrint('Error uploading image: $e\n$st');
       return null;
     }
+  }
+
+  /// Upload theory card image to the dedicated [theory-images] bucket.
+  /// Returns the public URL on success, or null on failure.
+  Future<String?> uploadTheoryCardImage(
+    List<int> bytes, {
+    String? originalFileName,
+  }) async {
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final user = _supabase.auth.currentUser;
+    if (user == null) {
+      debugPrint('Error uploading theory image: User not authenticated');
+      return null;
+    }
+
+    final rawName = (originalFileName ?? '').trim();
+    final extensionMatch = RegExp(r'\.([a-zA-Z0-9]+)$').firstMatch(rawName);
+    final extension = extensionMatch != null
+        ? extensionMatch.group(1)!.toLowerCase()
+        : (RegExp(r'^[a-zA-Z0-9]+$').hasMatch(rawName) ? rawName.toLowerCase() : 'jpg');
+    final fileName = 'theory_cards/${user.id}/$timestamp.$extension';
+    return uploadImage(_theoryImagesBucket, fileName, bytes);
   }
 
   /// Upload audio to Supabase Storage

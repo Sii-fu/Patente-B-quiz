@@ -8,7 +8,8 @@ import '../services/admin_repository.dart';
 import '../users/user_management_screen.dart';
 import '../quizzes/admin_categories_screen.dart';
 import '../theory/admin_theory_chapters_screen.dart';
-import '../videos/admin_video_categories_screen.dart';
+import '../videos/admin_videos_screen.dart';
+import '../homework/admin_homework_management_screen.dart';
 import '../../../screens/dashboard/settings_screen.dart';
 
 /// Admin Dashboard Screen
@@ -126,7 +127,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           title: l10n.adminVideos,
                           subtitle: l10n.adminVideoManagementDesc,
                           color: Colors.purple,
-                          onTap: () => _navigateTo(const AdminVideoCategoriesScreen()),
+                          onTap: () => _navigateTo(const AdminVideosScreen()),
+                        ),
+                        _buildDashboardCard(
+                          icon: Icons.assignment,
+                          title: 'Homework',
+                          subtitle: 'Manage homework sets',
+                          color: theme.colorScheme.primary,
+                          onTap: () =>
+                              _navigateTo(const AdminHomeworkManagementScreen()),
                         ),
                       ]),
                     ),

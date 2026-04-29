@@ -1,5 +1,11 @@
 /// TheoryChapter model - Represents a lesson/chapter in the theory book
 /// Matches the 'theory_chapters' table in Supabase
+int _parseDisplayOrder(dynamic value) {
+  if (value is int) return value;
+  if (value is String) return int.tryParse(value) ?? 0;
+  return 0;
+}
+
 class TheoryChapter {
   final int id;
   final int? relatedQuizTopicId; // Optional link to quiz topics
@@ -42,7 +48,7 @@ class TheoryChapter {
       nameEn: json['name_en'] as String?,
       nameBn: json['name_bn'] as String?,
       imageUrl: json['image_url'] as String?,
-      displayOrder: json['display_order'] as int,
+      displayOrder: _parseDisplayOrder(json['display_order']),
       createdAt: DateTime.parse(json['created_at'] as String),
     );
   }
@@ -70,7 +76,7 @@ class TheoryChapter {
       nameEn: map['name_en'] as String?,
       nameBn: map['name_bn'] as String?,
       imageUrl: map['image_url'] as String?,
-      displayOrder: map['display_order'] as int,
+      displayOrder: _parseDisplayOrder(map['display_order']),
       createdAt: DateTime.parse(map['created_at'] as String),
     );
   }

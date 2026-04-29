@@ -7,6 +7,7 @@ import '../../../utils/theme.dart';
 import '../../../providers/language_provider.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../models/profile.dart';
+import '../../../services/secure_storage_service.dart';
 import '../../admin/dashboard/admin_dashboard_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -69,22 +70,24 @@ class _SplashScreenState extends State<SplashScreen> {
 
     if (!mounted) return;
 
-    final prefs = await SharedPreferences.getInstance();
+    final secureStorage = SecureStorageService.instance;
 
     // Auto-complete setup with default Patente B license (skip Setup Wizard)
-    final isFirstTime = prefs.getBool(AppConstants.keyFirstTimeUser) ?? true;
+    final isFirstTime =
+        await secureStorage.readBool(AppConstants.keyFirstTimeUser) ?? true;
     if (isFirstTime) {
-      await prefs.setBool(AppConstants.keyFirstTimeUser, false);
-      await prefs.setString(AppConstants.keyLicenseType, 'B');
-      await prefs.setString(AppConstants.keyDrivingSchoolCode, '');
-      await prefs.setBool(AppConstants.keyCompletedSetup, true);
+      await secureStorage.writeBool(AppConstants.keyFirstTimeUser, false);
+      await secureStorage.writeString(AppConstants.keyLicenseType, 'B');
+      await secureStorage.writeString(AppConstants.keyDrivingSchoolCode, '');
+      await secureStorage.writeBool(AppConstants.keyCompletedSetup, true);
     }
 
-    final completedSetup = prefs.getBool(AppConstants.keyCompletedSetup) ?? false;
+    final completedSetup =
+        await secureStorage.readBool(AppConstants.keyCompletedSetup) ?? false;
     if (!completedSetup) {
-      await prefs.setString(AppConstants.keyLicenseType, 'B');
-      await prefs.setString(AppConstants.keyDrivingSchoolCode, '');
-      await prefs.setBool(AppConstants.keyCompletedSetup, true);
+      await secureStorage.writeString(AppConstants.keyLicenseType, 'B');
+      await secureStorage.writeString(AppConstants.keyDrivingSchoolCode, '');
+      await secureStorage.writeBool(AppConstants.keyCompletedSetup, true);
     }
 
     // Check B: Is there an active Supabase session?
@@ -181,7 +184,7 @@ class _SplashScreenState extends State<SplashScreen> {
         const SizedBox(height: 40),
         // App Name
         Text(
-          l10n?.appTitle ?? 'Patente B Quiz',
+          l10n?.appTitle ?? 'Desh Bangla Patente',
           textAlign: TextAlign.center,
           style: theme.textTheme.displaySmall?.copyWith(
             color: theme.colorScheme.onPrimary,

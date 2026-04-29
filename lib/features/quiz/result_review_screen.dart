@@ -390,7 +390,6 @@ class _ResultReviewScreenState extends State<ResultReviewScreen> {
                       HapticFeedback.mediumImpact();
                       _ttsHelper.stop();
                       Navigator.pop(context);
-                      Navigator.pop(context);
                     },
                     icon: const Icon(Icons.home),
                     label: Text(l10n.resultHome),

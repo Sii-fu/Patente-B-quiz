@@ -96,11 +96,11 @@ class Question {
   String getText(String languageCode) {
     switch (languageCode) {
       case 'en':
-        return textEn ?? textIt;
+        return _firstNonBlankString([textEn, textIt, textBn]) ?? '';
       case 'bn':
-        return textBn ?? textIt;
+        return _firstNonBlankString([textBn, textIt, textEn]) ?? '';
       default:
-        return textIt;
+        return _firstNonBlankString([textIt, textEn, textBn]) ?? '';
     }
   }
 
@@ -108,11 +108,11 @@ class Question {
   String? getExplanation(String languageCode) {
     switch (languageCode) {
       case 'en':
-        return explanationEn ?? explanationIt;
+        return _firstNonBlankString([explanationEn, explanationIt, explanationBn]);
       case 'bn':
-        return explanationBn ?? explanationIt;
+        return _firstNonBlankString([explanationBn, explanationIt, explanationEn]);
       default:
-        return explanationIt;
+        return _firstNonBlankString([explanationIt, explanationEn, explanationBn]);
     }
   }
 
@@ -120,11 +120,21 @@ class Question {
   String? getAudioUrl(String languageCode) {
     switch (languageCode) {
       case 'en':
-        return audioEnUrl ?? audioItUrl;
+        return _firstNonBlankString([audioEnUrl, audioItUrl, audioBnUrl]);
       case 'bn':
-        return audioBnUrl ?? audioItUrl;
+        return _firstNonBlankString([audioBnUrl, audioItUrl, audioEnUrl]);
       default:
-        return audioItUrl;
+        return _firstNonBlankString([audioItUrl, audioEnUrl, audioBnUrl]);
     }
+  }
+
+  static String? _firstNonBlankString(List<String?> values) {
+    for (final value in values) {
+      final trimmed = value?.trim();
+      if (trimmed != null && trimmed.isNotEmpty) {
+        return trimmed;
+      }
+    }
+    return null;
   }
 }

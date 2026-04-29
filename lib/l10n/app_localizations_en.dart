@@ -1818,4 +1818,89 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get wordQuestionsFound => 'questions found';
+
+  @override
+  String get homeworkTitle => 'Homework';
+
+  @override
+  String get homeworkActiveNow => 'Active Now';
+
+  @override
+  String get homeworkUpcoming => 'Upcoming';
+
+  @override
+  String get homeworkCompleted => 'Completed';
+
+  @override
+  String get homeworkStart => 'Start Homework';
+
+  @override
+  String get homeworkViewDetails => 'Details';
+
+  @override
+  String get homeworkViewResult => 'Result';
+
+  @override
+  String get homeworkLeaderboard => 'Leaderboard';
+
+  @override
+  String get homeworkRetry => 'Retry';
+
+  @override
+  String get homeworkTimeRemaining => 'Time remaining';
+
+  @override
+  String get homeworkStartsIn => 'Starts in';
+
+  @override
+  String get homeworkSubmitted => 'Submitted';
+
+  @override
+  String get homeworkStatus => 'Status';
+
+  @override
+  String get homeworkQuestionCount => 'Questions';
+
+  @override
+  String get homeworkTimeLimit => 'Time limit';
+
+  @override
+  String get homeworkStartDate => 'Start';
+
+  @override
+  String get homeworkEndDate => 'End';
+
+  @override
+  String get homeworkRetryAllowed => 'Retry allowed';
+
+  @override
+  String get homeworkYes => 'Yes';
+
+  @override
+  String get homeworkNo => 'No';
+
+  @override
+  String get homeworkNoItems => 'No homework available.';
+
+  @override
+  String get homeworkStartLabel => 'Start Homework';
+
+  @override
+  String get homeworkStartWarningTitle => 'Confirm Start';
+
+  @override
+  String get homeworkStartWarningMessage =>
+      'This homework can only be attempted once. Are you sure you want to start?';
+
+  @override
+  String get homeworkFailedToStart => 'Failed to start homework';
+
+  @override
+  String get homeworkBackToList => 'Back to Homework';
+
+  @override
+  String get homeworkReviewAnswers => 'Review Answers';
+
+  @override
+  String get homeworkRank => 'Rank';
 }

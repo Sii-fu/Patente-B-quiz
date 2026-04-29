@@ -216,7 +216,7 @@ class AppLocalizationsIt extends AppLocalizations {
       'La password deve contenere almeno un numero';
 
   @override
-  String get homeTitle => 'Patente B Quiz';
+  String get homeTitle => 'Desh Bangla Patente';
 
   @override
   String get homeLogout => 'Esci';
@@ -1834,4 +1834,89 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get wordQuestionsFound => 'domande trovate';
+
+  @override
+  String get homeworkTitle => 'Compiti';
+
+  @override
+  String get homeworkActiveNow => 'Attivi ora';
+
+  @override
+  String get homeworkUpcoming => 'In arrivo';
+
+  @override
+  String get homeworkCompleted => 'Completati';
+
+  @override
+  String get homeworkStart => 'Inizia compito';
+
+  @override
+  String get homeworkViewDetails => 'Dettagli';
+
+  @override
+  String get homeworkViewResult => 'Risultato';
+
+  @override
+  String get homeworkLeaderboard => 'Classifica';
+
+  @override
+  String get homeworkRetry => 'Riprova';
+
+  @override
+  String get homeworkTimeRemaining => 'Tempo rimanente';
+
+  @override
+  String get homeworkStartsIn => 'Inizia tra';
+
+  @override
+  String get homeworkSubmitted => 'Inviato';
+
+  @override
+  String get homeworkStatus => 'Stato';
+
+  @override
+  String get homeworkQuestionCount => 'Domande';
+
+  @override
+  String get homeworkTimeLimit => 'Tempo';
+
+  @override
+  String get homeworkStartDate => 'Inizio';
+
+  @override
+  String get homeworkEndDate => 'Fine';
+
+  @override
+  String get homeworkRetryAllowed => 'Riprova consentita';
+
+  @override
+  String get homeworkYes => 'Sì';
+
+  @override
+  String get homeworkNo => 'No';
+
+  @override
+  String get homeworkNoItems => 'Nessun compito disponibile.';
+
+  @override
+  String get homeworkStartLabel => 'Inizia compito';
+
+  @override
+  String get homeworkStartWarningTitle => 'Conferma avvio';
+
+  @override
+  String get homeworkStartWarningMessage =>
+      'Questo compito può essere svolto una sola volta. Sei sicuro di voler iniziare?';
+
+  @override
+  String get homeworkFailedToStart => 'Impossibile avviare il compito';
+
+  @override
+  String get homeworkBackToList => 'Torna ai compiti';
+
+  @override
+  String get homeworkReviewAnswers => 'Rivedi risposte';
+
+  @override
+  String get homeworkRank => 'Posizione';
 }

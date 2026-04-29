@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import '../../services/secure_storage_service.dart';
 import '../../utils/constants.dart';
 import '../../l10n/app_localizations.dart';
 
@@ -24,21 +24,27 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadUserData() async {
-    final prefs = await SharedPreferences.getInstance();
+    final secureStorage = SecureStorageService.instance;
     final session = Supabase.instance.client.auth.currentSession;
-    
+
+    final isGuest =
+        await secureStorage.readBool(AppConstants.keyGuestMode) ?? false;
+    final licenseType =
+        await secureStorage.readString(AppConstants.keyLicenseType);
+    final schoolCode =
+        await secureStorage.readString(AppConstants.keyDrivingSchoolCode);
+
     setState(() {
-      _isGuest = prefs.getBool(AppConstants.keyGuestMode) ?? false;
+      _isGuest = isGuest;
       _userEmail = session?.user.email;
-      _licenseType = prefs.getString(AppConstants.keyLicenseType);
-      _schoolCode = prefs.getString(AppConstants.keyDrivingSchoolCode);
+      _licenseType = licenseType;
+      _schoolCode = schoolCode;
     });
   }
 
   Future<void> _logout() async {
     // Clear guest mode
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(AppConstants.keyGuestMode, false);
+    await SecureStorageService.instance.writeBool(AppConstants.keyGuestMode, false);
     
     // Sign out from Supabase
     await Supabase.instance.client.auth.signOut();

@@ -144,8 +144,10 @@ class _EditTheoryCardScreenState extends State<EditTheoryCardScreen> {
     // Upload new image if selected
     if (_selectedImageFile != null) {
       final bytes = await _selectedImageFile!.readAsBytes();
-      final fileName = 'theory_cards/${DateTime.now().millisecondsSinceEpoch}.jpg';
-      finalImageUrl = await _adminRepo.uploadImage('quiz_images', fileName, bytes);
+      finalImageUrl = await _adminRepo.uploadTheoryCardImage(
+        bytes,
+        originalFileName: _selectedImageFile!.path.split('.').last,
+      );
       
       if (finalImageUrl == null) {
         if (mounted) {
