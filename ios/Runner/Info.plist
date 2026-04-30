@@ -48,8 +48,6 @@
 		<key>NSAllowsArbitraryLoadsInWebContent</key>
 		<true/>
 	</dict>
-	<key>NSCameraUsageDescription</key>
-	<string>This app uses the camera to let you take a profile photo.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>The instructor microphone is used to record voice explanations for quiz questions.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
@@ -80,9 +78,7 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UIBackgroundModes</key>
-	<array>
-		<string>audio</string>
-	</array>
+	<array/>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
