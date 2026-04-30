@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
@@ -7,6 +8,7 @@ import 'package:app_links/app_links.dart';
 import 'l10n/app_localizations.dart';
 import 'utils/theme.dart';
 import 'utils/constants.dart';
+import 'services/secure_storage_service.dart';
 import 'providers/language_provider.dart';
 import 'providers/theme_provider.dart';
 import 'features/auth/screens/splash_screen.dart';
@@ -23,10 +25,32 @@ import 'widgets/connectivity_wrapper.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  try {
+    await dotenv.load(fileName: '.env');
+  } catch (error) {
+    throw StateError(
+      'Failed to load .env. Create it from .env.example and set SUPABASE_URL and SUPABASE_ANON_KEY. Error: $error',
+    );
+  }
+
+  AppConstants.validateSupabaseConfig();
+
+  final secureStorage = SecureStorageService.instance;
+  await secureStorage.migrateSensitivePrefsToSecureStorage();
+  await secureStorage.migrateSupabaseAuthSessionFromSharedPreferences(
+    AppConstants.supabasePersistSessionKey,
+  );
+
   // Initialize Supabase
   await Supabase.initialize(
     url: AppConstants.supabaseUrl,
     anonKey: AppConstants.supabaseAnonKey,
+    authOptions: FlutterAuthClientOptions(
+      localStorage: secureStorage.createSupabaseSessionStorage(
+        persistSessionKey: AppConstants.supabasePersistSessionKey,
+      ),
+      pkceAsyncStorage: secureStorage.createSupabasePkceStorage(),
+    ),
   );
 
   runApp(
@@ -62,7 +86,7 @@ class PatenteQuizApp extends StatefulWidget {
 class _PatenteQuizAppState extends State<PatenteQuizApp> {
   // ── Deep-link / Supabase auth-callback handler ────────────────────────
   // app_links captures the custom URL scheme defined in Info.plist
-  // (io.supabase.gtlzxkfkfzndfsuqiyge://) and forwards incoming URIs to
+  // (io.supabase.<project-ref>://) and forwards incoming URIs to
   // Supabase so magic-link / OAuth callbacks complete correctly on iOS.
   late final AppLinks _appLinks;
 
@@ -103,7 +127,7 @@ class _PatenteQuizAppState extends State<PatenteQuizApp> {
     return Consumer2<LanguageProvider, ThemeProvider>(
       builder: (context, languageProvider, themeProvider, child) {
         return MaterialApp(
-          title: 'Patente B Quiz',
+          title: 'Desh Bangla Patente',
           debugShowCheckedModeBanner: false,
           
           // Localization configuration

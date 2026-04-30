@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
 import '../../l10n/app_localizations.dart';
 import '../../utils/constants.dart';
@@ -17,10 +16,14 @@ import 'video_materials_screen.dart';
 import 'quick_practice_screen.dart';
 import '../../features/profile/profile_screen.dart';
 import '../../services/profile_stats_service.dart';
+import '../../repositories/homework_repository.dart';
 import '../theory/theory_card_list_screen.dart';
 import 'custom_quiz_screen.dart';
 import '../../features/quiz/quiz_screen.dart';
+import '../../features/homework/homework_screen.dart';
+import '../../features/homework/homework_localizations.dart';
 import 'vocabulary_screen.dart';
+import '../../services/secure_storage_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -33,7 +36,9 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
   // Dashboard stats - loaded from Supabase
   DashboardStats _stats = DashboardStats.empty;
   ProfileStatsService? _statsService;
+  final HomeworkRepository _homeworkRepository = HomeworkRepository();
   bool _isLoadingStats = true;
+  bool _hasPendingHomework = false;
   
   // User verification status
   Profile? _userProfile;
@@ -51,6 +56,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     _loadUserProfile();
     _loadUserData();
     _initializeStatsService();
+    _loadHomeworkIndicator();
     
     _animationController = AnimationController(
       vsync: this,
@@ -141,6 +147,42 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
   /// Refresh stats - call this when returning from quiz or theory screens
   Future<void> refreshStats() async {
     await _loadDashboardStats();
+    await _loadHomeworkIndicator();
+  }
+
+  Future<void> _loadHomeworkIndicator() async {
+    try {
+      final homeworks = await _homeworkRepository.getPublishedHomeworkSets();
+      if (homeworks.isEmpty) {
+        if (!mounted) return;
+        setState(() => _hasPendingHomework = false);
+        return;
+      }
+
+      final scoreMap = await _homeworkRepository.getCurrentUserHomeworkScoreMap(
+        homeworkIds: homeworks.map((h) => h.id).toList(),
+      );
+
+      final now = DateTime.now().toUtc();
+      final hasPending = homeworks.any((homework) {
+        if (scoreMap.containsKey(homework.id)) {
+          return false;
+        }
+        final startsAt = homework.startsAt?.toUtc();
+        final endsAt = homework.endsAt?.toUtc();
+        final isActiveNow =
+            (startsAt == null || !now.isBefore(startsAt)) &&
+            (endsAt == null || !now.isAfter(endsAt));
+        return isActiveNow;
+      });
+
+      if (!mounted) return;
+      setState(() => _hasPendingHomework = hasPending);
+    } catch (e) {
+      debugPrint('Error loading homework indicator: $e');
+      if (!mounted) return;
+      setState(() => _hasPendingHomework = false);
+    }
   }
   
   @override
@@ -150,11 +192,13 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
   }
 
   Future<void> _loadUserData() async {
-    final prefs = await SharedPreferences.getInstance();
+    final secureStorage = SecureStorageService.instance;
     final user = Supabase.instance.client.auth.currentUser;
+    final isGuest =
+        await secureStorage.readBool(AppConstants.keyGuestMode) ?? false;
     
     setState(() {
-      _isGuest = prefs.getBool(AppConstants.keyGuestMode) ?? false;
+      _isGuest = isGuest;
       _userName = user?.email?.split('@').first ?? 'Utente';
     });
   }
@@ -162,7 +206,6 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final screenHeight = MediaQuery.of(context).size.height;
     final theme = Theme.of(context);
     
     // Show loading while checking profile
@@ -182,256 +225,117 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     
     return Scaffold(
       backgroundColor: theme.colorScheme.surfaceContainerLowest,
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        backgroundColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: AppTheme.primaryGradient,
+          ),
+        ),
+        titleSpacing: 20,
+        title: Row(
+          children: [
+            GestureDetector(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                );
+              },
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surface,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.person,
+                  color: theme.colorScheme.onSurface,
+                  size: 24,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Flexible(
+              child: Text(
+                '${l10n.dashboardWelcome}, ${_userName ?? l10n.profileTitle}!',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: theme.colorScheme.onPrimary,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          IconButton(
+            icon: Icon(
+              Icons.settings,
+              color: theme.colorScheme.onPrimary,
+              size: 28,
+            ),
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsScreen()),
+              );
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
       body: SafeArea(
+        top: false,
         child: SingleChildScrollView(
           child: Column(
             children: [
               // 1. Gradient Header Section
-              Container(
-                decoration: const BoxDecoration(
-                  gradient: AppTheme.primaryGradient,
-                ),
-                child: Column(
-                  children: [
-                    // a. Welcome Row
-                    Padding(
-                      padding: const EdgeInsets.only(top: 10, left: 20, right: 20, bottom: 10),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              // Profile Icon
-                              GestureDetector(
-                                onTap: () {
-                                  HapticFeedback.lightImpact();
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(builder: (context) => const ProfileScreen()),
-                                  );
-                                },
-                                child: Container(
-                                  width: 40,
-                                  height: 40,
-                                  decoration: BoxDecoration(
-                                    color: Theme.of(context).colorScheme.surface,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(
-                                    Icons.person,
-                                    color: Theme.of(context).colorScheme.onSurface,
-                                    size: 24,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              // Welcome Text
-                              Text(
-                                '${l10n.dashboardWelcome}, ${_userName ?? l10n.profileTitle}!',
-                                style: TextStyle(
-                                  color: Theme.of(context).colorScheme.onPrimary,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                          // Notification Bell
-                          IconButton(
-                            icon: const Icon(
-                              Icons.settings,
-                              color: Colors.white,
-                              size: 28,
-                            ),
-                            onPressed: () {
-                              HapticFeedback.lightImpact();
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (context) => const SettingsScreen()),
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                    
-                    // b. Central Performance Card
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
-                      child: Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.surface,
-                          borderRadius: BorderRadius.circular(30),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 20,
-                              offset: const Offset(0, 10),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            // 1. Left Section - Progress Ring
-                            _buildProgressRing(),
-                            
-                            // Vertical Divider
-                            Container(
-                              width: 1,
-                              height: 80,
-                              color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
-                            ),
-                            
-                            // 2. Middle Section - Streak
-                            _buildStatColumn(
-                              value: _stats.streak.toString(),
-                              label: l10n.dashboardStreak,
-                            ),
-                            
-                            // Vertical Divider
-                            Container(
-                              width: 1,
-                              height: 80,
-                              color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
-                            ),
-                            
-                            // 3. Right Section - Chapters Completed
-                            _buildStatColumn(
-                              value: _stats.completedChapters.toString(),
-                              label: l10n.dashboardChapters,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
               
-              // 2. Main Action Button
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 560),
-                    child: _buildMainActionButton(context, l10n),
-                  ),
-                ),
-              ),
-              
+              const SizedBox(height: 20),
               // 3. Feature Cards Grid
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: _buildFeatureGrid(context, l10n),
               ),
-              
+
               const SizedBox(height: 20),
             ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: BottomAppBar(
+        elevation: 8,
+        color: theme.colorScheme.surface,
+        surfaceTintColor: theme.colorScheme.surface,
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 560),
+                child: _buildMainActionButton(context, l10n),
+              ),
+            ),
           ),
         ),
       ),
     );
   }
 
-  // Progress Ring Widget
-  Widget _buildProgressRing() {
-    final theme = Theme.of(context);
-    return SizedBox(
-      width: 100,
-      height: 100,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // Background Circle
-          SizedBox(
-            width: 100,
-            height: 100,
-            child: CircularProgressIndicator(
-              value: 1.0,
-              strokeWidth: 10,
-              color: theme.colorScheme.surfaceContainerHighest,
-            ),
-          ),
-          // Progress Arc
-          if (_progressAnimation != null)
-            AnimatedBuilder(
-              animation: _progressAnimation!,
-              builder: (context, child) {
-                return SizedBox(
-                  width: 100,
-                  height: 100,
-                  child: CircularProgressIndicator(
-                    value: _progressAnimation!.value,
-                    strokeWidth: 10,
-                    color: theme.colorScheme.primary,
-                  ),
-                );
-              },
-            ),
-          // Center Text
-          if (_progressAnimation != null)
-            AnimatedBuilder(
-              animation: _progressAnimation!,
-              builder: (context, child) {
-                return Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      '${(_progressAnimation!.value * 100).round()}%',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onSurface,
-                      ),
-                    ),
-                    Text(
-                      AppLocalizations.of(context)!.dashboardProgress,
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: theme.colorScheme.onSurface.withOpacity(0.6),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
-        ],
-      ),
-    );
-  }
-  
+
   // Stat Column Widget
-  Widget _buildStatColumn({
-    required String value,
-    required String label,
-  }) {
-    final theme = Theme.of(context);
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.onSurface,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            color: theme.colorScheme.onSurface.withOpacity(0.6),
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ],
-    );
-  }
-  
+
   // Main Action Button
   Widget _buildMainActionButton(BuildContext context, AppLocalizations l10n) {
     return Material(
@@ -547,7 +451,24 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
             ).then((_) => refreshStats());
           },
         ),
-        
+        _buildFeatureCard(
+          context: context,
+          icon: Icons.assignment_outlined,
+          iconColor: Theme.of(context).colorScheme.tertiary,
+          title: l10n.homeworkTitle,
+          subtitle: l10n.homeworkActiveNow,
+          tagText: l10n.homeworkUpcoming,
+          tagColor: Theme.of(context).colorScheme.tertiary,
+          showNotificationDot: _hasPendingHomework,
+          onTap: () {
+            HapticFeedback.mediumImpact();
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const HomeworkScreen()),
+            ).then((_) => refreshStats());
+          },
+        ),
+         
         _buildFeatureCard(
           context: context,
           icon: Icons.book,
@@ -612,6 +533,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     required String subtitle,
     required String? tagText,
     required Color? tagColor,
+    bool showNotificationDot = false,
     required VoidCallback onTap,
   }) {
     final theme = Theme.of(context);
@@ -671,6 +593,19 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                 ],
               ),
             ),
+            if (showNotificationDot)
+              Positioned(
+                top: 10,
+                right: 10,
+                child: Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.error,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
           ],
         ),
       ),

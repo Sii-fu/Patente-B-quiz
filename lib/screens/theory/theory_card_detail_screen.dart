@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:just_audio/just_audio.dart';
 import '../../models/theory_card.dart';
-import '../../services/tts_helper.dart';
 import '../../utils/theme.dart';
 import '../../utils/localization_helper.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -22,11 +21,13 @@ class TheoryCardDetailScreen extends StatefulWidget {
 }
 
 class _TheoryCardDetailScreenState extends State<TheoryCardDetailScreen> {
-  late TtsHelper _ttsHelper;
+  late AudioPlayer _ttsAudioPlayer;
   late AudioPlayer _audioPlayer;
   
-  // TTS state
+  // Localized audio (replaces device TTS) state
   bool _isTtsSpeaking = false;
+  bool _isTtsAudioLoading = false;
+  String? _currentTtsAudioUrl;
   
   // Custom audio state
   bool _isCustomAudioPlaying = false;
@@ -39,10 +40,58 @@ class _TheoryCardDetailScreenState extends State<TheoryCardDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _ttsHelper = TtsHelper();
-    _ttsHelper.init();
+    _ttsAudioPlayer = AudioPlayer();
     _audioPlayer = AudioPlayer();
+    _setupTtsAudioPlayer();
     _setupAudioPlayer();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _preloadSelectedLanguageAudio();
+    });
+  }
+
+  Future<void> _preloadSelectedLanguageAudio({bool showLoading = false}) async {
+    final audioUrl = widget.card.getLocalizedAudioUrl(_selectedLanguage);
+    if (audioUrl == null || audioUrl.isEmpty) return;
+    if (_currentTtsAudioUrl == audioUrl && _ttsAudioPlayer.audioSource != null) return;
+
+    try {
+      if (showLoading && mounted) {
+        setState(() => _isTtsAudioLoading = true);
+      }
+      await _ttsAudioPlayer.setUrl(audioUrl);
+      _currentTtsAudioUrl = audioUrl;
+      if (showLoading && mounted) {
+        setState(() => _isTtsAudioLoading = false);
+      }
+    } catch (e) {
+      if (showLoading && mounted) {
+        setState(() => _isTtsAudioLoading = false);
+      }
+      debugPrint('❌ Audio preload error: $e');
+    }
+  }
+
+  void _setupTtsAudioPlayer() {
+    _ttsAudioPlayer.playerStateStream.listen((state) {
+      if (mounted) {
+        setState(() {
+          _isTtsSpeaking = state.playing;
+          if (state.playing) _isTtsAudioLoading = false;
+        });
+      }
+    });
+
+    _ttsAudioPlayer.processingStateStream.listen((state) {
+      if (mounted) {
+        setState(() {
+          if (state == ProcessingState.ready) {
+            _isTtsAudioLoading = false;
+          } else if (state == ProcessingState.completed) {
+            _isTtsSpeaking = false;
+          }
+        });
+      }
+    });
   }
 
   void _setupAudioPlayer() {
@@ -79,7 +128,7 @@ class _TheoryCardDetailScreenState extends State<TheoryCardDetailScreen> {
 
   @override
   void dispose() {
-    _ttsHelper.stop();
+    _ttsAudioPlayer.dispose();
     _audioPlayer.dispose();
     super.dispose();
   }
@@ -93,38 +142,26 @@ class _TheoryCardDetailScreenState extends State<TheoryCardDetailScreen> {
       setState(() => _isCustomAudioPlaying = false);
     }
 
+    final audioUrl = widget.card.getLocalizedAudioUrl(_selectedLanguage);
+    if (audioUrl == null || audioUrl.isEmpty) return;
+
     if (_isTtsSpeaking) {
-      _ttsHelper.stop();
+      await _ttsAudioPlayer.pause();
       setState(() => _isTtsSpeaking = false);
     } else {
-      final text = widget.card.getLocalizedText(_selectedLanguage);
-      final title = widget.card.getLocalizedTitle(_selectedLanguage);
-
-      if (text.isEmpty) return;
-
-      final fullText = title != null && title.isNotEmpty ? '$title. $text' : text;
-
-      final isAvailable = await _ttsHelper.isLanguageAvailable(_selectedLanguage);
-      if (!isAvailable && _selectedLanguage == 'it') {
-        if (mounted) {
-          _showLanguageNotAvailableDialog(_selectedLanguage);
+      try {
+        if (_currentTtsAudioUrl != audioUrl || _ttsAudioPlayer.audioSource == null) {
+          await _preloadSelectedLanguageAudio(showLoading: true);
         }
-        return;
-      }
-
-      setState(() => _isTtsSpeaking = true);
-      _speakText(fullText, _selectedLanguage);
-    }
-  }
-
-  void _speakText(String text, String languageCode) async {
-    try {
-      await _ttsHelper.speak(text, languageCode, awaitCompletion: true);
-    } catch (e) {
-      debugPrint('❌ TTS error: $e');
-    } finally {
-      if (mounted) {
-        setState(() => _isTtsSpeaking = false);
+        await _ttsAudioPlayer.play();
+      } catch (e) {
+        debugPrint('❌ Localized audio playback error: $e');
+        if (mounted) {
+          setState(() => _isTtsAudioLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error playing audio: $e')),
+          );
+        }
       }
     }
   }
@@ -134,7 +171,7 @@ class _TheoryCardDetailScreenState extends State<TheoryCardDetailScreen> {
 
     // Stop TTS if speaking
     if (_isTtsSpeaking) {
-      _ttsHelper.stop();
+      await _ttsAudioPlayer.pause();
       setState(() => _isTtsSpeaking = false);
     }
 
@@ -167,58 +204,6 @@ class _TheoryCardDetailScreenState extends State<TheoryCardDetailScreen> {
     return "${twoDigits(d.inMinutes)}:${twoDigits(d.inSeconds.remainder(60))}";
   }
 
-  void _showLanguageNotAvailableDialog(String languageCode) {
-    final theme = Theme.of(context);
-    final l10n = context.l10n;
-    final languageName = languageCode == 'it' ? 'Italiano' : 
-                         languageCode == 'en' ? 'English' : 'বাংলা';
-    
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(Icons.volume_up, color: theme.colorScheme.primary),
-            const SizedBox(width: 12),
-            Text(l10n.ttsInstallTitle),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '${l10n.ttsLanguageNotInstalled} $languageName.',
-              style: const TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              l10n.ttsInstallPrompt,
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(l10n.ttsLater),
-          ),
-          FilledButton.icon(
-            onPressed: () async {
-              Navigator.pop(context);
-              await _ttsHelper.launchTtsInstallation();
-            },
-            icon: const Icon(Icons.download),
-            label: Text(l10n.ttsInstall),
-            style: FilledButton.styleFrom(
-              backgroundColor: theme.colorScheme.primary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -236,7 +221,7 @@ class _TheoryCardDetailScreenState extends State<TheoryCardDetailScreen> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
             HapticFeedback.lightImpact();
-            _ttsHelper.stop();
+            _ttsAudioPlayer.stop();
             _audioPlayer.stop();
             Navigator.pop(context);
           },
@@ -326,6 +311,7 @@ class _TheoryCardDetailScreenState extends State<TheoryCardDetailScreen> {
   }
 
   Widget _buildAudioControlsSection(ThemeData theme) {
+    final hasTtsAudio = (widget.card.getLocalizedAudioUrl(_selectedLanguage) ?? '').isNotEmpty;
     final hasCustomAudio = widget.card.audioExplanationUrl != null && 
                            widget.card.audioExplanationUrl!.isNotEmpty;
 
@@ -354,11 +340,14 @@ class _TheoryCardDetailScreenState extends State<TheoryCardDetailScreen> {
               theme: theme,
               icon: _isTtsSpeaking ? Icons.pause : Icons.play_arrow,
               label: 'TTS',
-              sublabel: _isTtsSpeaking ? 'Playing...' : 'Text-to-Speech',
+              sublabel: hasTtsAudio
+                  ? (_isTtsSpeaking ? 'Playing...' : 'Language Audio')
+                  : 'Not Available',
               isActive: _isTtsSpeaking,
-              isLoading: false,
-              onTap: _toggleTTS,
-              color: theme.colorScheme.primary,
+              isLoading: _isTtsAudioLoading,
+              onTap: hasTtsAudio ? _toggleTTS : null,
+              color: hasTtsAudio ? theme.colorScheme.primary : theme.colorScheme.outline,
+              enabled: hasTtsAudio,
             ),
             const SizedBox(width: 12),
             // Custom Audio Button
@@ -481,9 +470,10 @@ class _TheoryCardDetailScreenState extends State<TheoryCardDetailScreen> {
         setState(() => _selectedLanguage = languageCode);
         // Stop TTS when switching languages
         if (_isTtsSpeaking) {
-          _ttsHelper.stop();
+          _ttsAudioPlayer.stop();
           setState(() => _isTtsSpeaking = false);
         }
+        _preloadSelectedLanguageAudio();
       },
       style: OutlinedButton.styleFrom(
         backgroundColor: isActive 

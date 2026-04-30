@@ -3633,6 +3633,174 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'questions found'**
   String get wordQuestionsFound;
+
+  /// No description provided for @homeworkTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Homework'**
+  String get homeworkTitle;
+
+  /// No description provided for @homeworkActiveNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Active Now'**
+  String get homeworkActiveNow;
+
+  /// No description provided for @homeworkUpcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming'**
+  String get homeworkUpcoming;
+
+  /// No description provided for @homeworkCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get homeworkCompleted;
+
+  /// No description provided for @homeworkStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Homework'**
+  String get homeworkStart;
+
+  /// No description provided for @homeworkViewDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get homeworkViewDetails;
+
+  /// No description provided for @homeworkViewResult.
+  ///
+  /// In en, this message translates to:
+  /// **'Result'**
+  String get homeworkViewResult;
+
+  /// No description provided for @homeworkLeaderboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Leaderboard'**
+  String get homeworkLeaderboard;
+
+  /// No description provided for @homeworkRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get homeworkRetry;
+
+  /// No description provided for @homeworkTimeRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'Time remaining'**
+  String get homeworkTimeRemaining;
+
+  /// No description provided for @homeworkStartsIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Starts in'**
+  String get homeworkStartsIn;
+
+  /// No description provided for @homeworkSubmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'Submitted'**
+  String get homeworkSubmitted;
+
+  /// No description provided for @homeworkStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get homeworkStatus;
+
+  /// No description provided for @homeworkQuestionCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Questions'**
+  String get homeworkQuestionCount;
+
+  /// No description provided for @homeworkTimeLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Time limit'**
+  String get homeworkTimeLimit;
+
+  /// No description provided for @homeworkStartDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get homeworkStartDate;
+
+  /// No description provided for @homeworkEndDate.
+  ///
+  /// In en, this message translates to:
+  /// **'End'**
+  String get homeworkEndDate;
+
+  /// No description provided for @homeworkRetryAllowed.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry allowed'**
+  String get homeworkRetryAllowed;
+
+  /// No description provided for @homeworkYes.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes'**
+  String get homeworkYes;
+
+  /// No description provided for @homeworkNo.
+  ///
+  /// In en, this message translates to:
+  /// **'No'**
+  String get homeworkNo;
+
+  /// No description provided for @homeworkNoItems.
+  ///
+  /// In en, this message translates to:
+  /// **'No homework available.'**
+  String get homeworkNoItems;
+
+  /// No description provided for @homeworkStartLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Homework'**
+  String get homeworkStartLabel;
+
+  /// No description provided for @homeworkStartWarningTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Start'**
+  String get homeworkStartWarningTitle;
+
+  /// No description provided for @homeworkStartWarningMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This homework can only be attempted once. Are you sure you want to start?'**
+  String get homeworkStartWarningMessage;
+
+  /// No description provided for @homeworkFailedToStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to start homework'**
+  String get homeworkFailedToStart;
+
+  /// No description provided for @homeworkBackToList.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to Homework'**
+  String get homeworkBackToList;
+
+  /// No description provided for @homeworkReviewAnswers.
+  ///
+  /// In en, this message translates to:
+  /// **'Review Answers'**
+  String get homeworkReviewAnswers;
+
+  /// No description provided for @homeworkRank.
+  ///
+  /// In en, this message translates to:
+  /// **'Rank'**
+  String get homeworkRank;
 }
 
 class _AppLocalizationsDelegate

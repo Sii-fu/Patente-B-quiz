@@ -77,7 +77,7 @@ class VideoCategory {
 /// Represents a single video from the videos table
 class VideoItem {
   final int id;
-  final int categoryId;
+  final int? categoryId;
   final String titleIt;
   final String? titleEn;
   final String? titleBn;
@@ -89,7 +89,7 @@ class VideoItem {
 
   VideoItem({
     required this.id,
-    required this.categoryId,
+    this.categoryId,
     required this.titleIt,
     this.titleEn,
     this.titleBn,
@@ -101,9 +101,10 @@ class VideoItem {
   });
 
   factory VideoItem.fromJson(Map<String, dynamic> json) {
+    final categoryRaw = json['category_id'];
     return VideoItem(
       id: json['id'] as int,
-      categoryId: json['category_id'] as int,
+      categoryId: categoryRaw is int ? categoryRaw : (categoryRaw is num ? categoryRaw.toInt() : null),
       titleIt: json['title_it'] as String,
       titleEn: json['title_en'] as String?,
       titleBn: json['title_bn'] as String?,

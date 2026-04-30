@@ -1,4 +1,5 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/video_models.dart';
 
@@ -27,8 +28,10 @@ class VideoRepository {
   Future<bool> _hasInternetConnection() async {
     try {
       final result = await _connectivity.checkConnectivity();
+      debugPrint('📡 VideoRepository connectivity result: $result');
       return result != ConnectivityResult.none;
     } catch (e) {
+      debugPrint('❌ VideoRepository connectivity check error: $e');
       return false;
     }
   }
@@ -38,12 +41,7 @@ class VideoRepository {
   /// Returns a list of [VideoCategory] objects, each containing their associated videos.
   /// Throws [VideoOfflineException] if no internet connection is available.
   Future<List<VideoCategory>> fetchVideoLibrary() async {
-    // Check connectivity first - videos require internet
-    final hasConnection = await _hasInternetConnection();
-    if (!hasConnection) {
-      throw VideoOfflineException();
-    }
-
+    debugPrint('🎬 fetchVideoLibrary() started');
     try {
       // Fetch categories and videos in parallel for better performance
       final results = await Future.wait([
@@ -53,41 +51,80 @@ class VideoRepository {
 
       final categories = results[0] as List<VideoCategory>;
       final videos = results[1] as List<VideoItem>;
+      debugPrint('✅ fetchVideoLibrary() fetched categories=${categories.length}, videos=${videos.length}');
 
       // Group videos by category
       return _groupVideosByCategory(categories, videos);
     } catch (e) {
+      debugPrint('❌ fetchVideoLibrary() error type=${e.runtimeType} error=$e');
       if (e is VideoOfflineException) rethrow;
       
-      // Handle Supabase errors
       if (e is PostgrestException) {
-        throw VideoOfflineException('Failed to load videos: ${e.message}');
+        debugPrint(
+          '❌ Supabase PostgrestException in fetchVideoLibrary(): code=${e.code}, message=${e.message}, details=${e.details}, hint=${e.hint}',
+        );
+        throw Exception('Failed to load videos: ${e.message}');
       }
-      
-      throw VideoOfflineException('An error occurred while loading videos');
+
+      final hasConnection = await _hasInternetConnection();
+      if (!hasConnection) {
+        debugPrint('❌ fetchVideoLibrary() mapped to VideoOfflineException');
+        throw VideoOfflineException();
+      }
+
+      throw Exception('An error occurred while loading videos');
     }
   }
 
   /// Fetch all video categories ordered by display_order
   Future<List<VideoCategory>> _fetchCategories() async {
+    debugPrint('📂 _fetchCategories() querying video_categories');
     final response = await _supabase
         .from('video_categories')
         .select()
         .order('display_order', ascending: true);
 
     final data = List<Map<String, dynamic>>.from(response);
+    debugPrint('✅ _fetchCategories() rows=${data.length}');
     return data.map((json) => VideoCategory.fromJson(json)).toList();
   }
 
   /// Fetch all videos ordered by display_order
   Future<List<VideoItem>> _fetchVideos() async {
+    debugPrint('🎞️ _fetchVideos() querying videos');
     final response = await _supabase
         .from('videos')
         .select()
         .order('display_order', ascending: true);
 
     final data = List<Map<String, dynamic>>.from(response);
+    debugPrint('✅ _fetchVideos() rows=${data.length}');
     return data.map((json) => VideoItem.fromJson(json)).toList();
+  }
+
+  /// Fetch all videos as a flat list (no category grouping).
+  Future<List<VideoItem>> fetchAllVideos() async {
+    debugPrint('🎬 fetchAllVideos() started');
+    try {
+      final videos = await _fetchVideos();
+      debugPrint('✅ fetchAllVideos() success videos=${videos.length}');
+      return videos;
+    } catch (e) {
+      debugPrint('❌ fetchAllVideos() error type=${e.runtimeType} error=$e');
+      if (e is VideoOfflineException) rethrow;
+      if (e is PostgrestException) {
+        debugPrint(
+          '❌ Supabase PostgrestException in fetchAllVideos(): code=${e.code}, message=${e.message}, details=${e.details}, hint=${e.hint}',
+        );
+        throw Exception('Failed to load videos: ${e.message}');
+      }
+      final hasConnection = await _hasInternetConnection();
+      if (!hasConnection) {
+        debugPrint('❌ fetchAllVideos() mapped to VideoOfflineException');
+        throw VideoOfflineException();
+      }
+      throw Exception('An error occurred while loading videos');
+    }
   }
 
   /// Group videos into their respective categories
@@ -100,8 +137,10 @@ class VideoRepository {
     final videosByCategory = <int, List<VideoItem>>{};
     
     for (final video in videos) {
-      videosByCategory.putIfAbsent(video.categoryId, () => []);
-      videosByCategory[video.categoryId]!.add(video);
+      final categoryId = video.categoryId;
+      if (categoryId == null) continue;
+      videosByCategory.putIfAbsent(categoryId, () => []);
+      videosByCategory[categoryId]!.add(video);
     }
 
     // Assign videos to their categories
@@ -115,11 +154,6 @@ class VideoRepository {
   /// 
   /// Useful for lazy loading or refreshing a single category
   Future<List<VideoItem>> fetchVideosForCategory(int categoryId) async {
-    final hasConnection = await _hasInternetConnection();
-    if (!hasConnection) {
-      throw VideoOfflineException();
-    }
-
     try {
       final response = await _supabase
           .from('videos')
@@ -131,17 +165,19 @@ class VideoRepository {
       return data.map((json) => VideoItem.fromJson(json)).toList();
     } catch (e) {
       if (e is VideoOfflineException) rethrow;
-      throw VideoOfflineException('Failed to load videos for this category');
+      if (e is PostgrestException) {
+        throw Exception('Failed to load videos for this category: ${e.message}');
+      }
+      final hasConnection = await _hasInternetConnection();
+      if (!hasConnection) {
+        throw VideoOfflineException();
+      }
+      throw Exception('Failed to load videos for this category');
     }
   }
 
   /// Fetch a single video by ID
   Future<VideoItem?> fetchVideoById(int videoId) async {
-    final hasConnection = await _hasInternetConnection();
-    if (!hasConnection) {
-      throw VideoOfflineException();
-    }
-
     try {
       final response = await _supabase
           .from('videos')
@@ -153,7 +189,14 @@ class VideoRepository {
       return VideoItem.fromJson(response);
     } catch (e) {
       if (e is VideoOfflineException) rethrow;
-      throw VideoOfflineException('Failed to load video');
+      if (e is PostgrestException) {
+        throw Exception('Failed to load video: ${e.message}');
+      }
+      final hasConnection = await _hasInternetConnection();
+      if (!hasConnection) {
+        throw VideoOfflineException();
+      }
+      throw Exception('Failed to load video');
     }
   }
 }

@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../utils/constants.dart';
 import '../../../services/apple_auth_service.dart';
+import '../../../services/secure_storage_service.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -214,8 +214,10 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Future<void> _continueAsGuest() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(AppConstants.keyGuestMode, true);
+    await SecureStorageService.instance.writeBool(
+      AppConstants.keyGuestMode,
+      true,
+    );
     
     if (mounted) {
       Navigator.pushReplacementNamed(context, AppConstants.routeHome);

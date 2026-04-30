@@ -10,6 +10,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/question.dart';
 import '../../models/quiz_session.dart';
+import '../../models/homework_score.dart';
+import '../../models/homework_set.dart';
+import '../../repositories/homework_repository.dart';
 import '../../services/quiz_repository.dart';
 import '../../services/quiz_service.dart';
 import '../../services/repository_provider.dart';
@@ -17,18 +20,27 @@ import '../../services/tts_helper.dart';
 import '../../services/profile_stats_service.dart';
 import '../../utils/constants.dart';
 import '../../widgets/quiz_image.dart';
+import '../homework/homework_result_screen.dart';
 import 'result_minimalist_screen.dart';
 
 class QuizScreen extends StatefulWidget {
   final bool isExamMode;
   final QuizMode quizMode;
   final int? topicId;
+  final bool isHomeworkMode;
+  final HomeworkSet? homeworkSet;
+  final List<Question>? homeworkQuestions;
+  final int? homeworkTimeLimitMinutes;
 
   const QuizScreen({
     super.key,
     this.isExamMode = true,
     this.quizMode = QuizMode.simulation,
     this.topicId,
+    this.isHomeworkMode = false,
+    this.homeworkSet,
+    this.homeworkQuestions,
+    this.homeworkTimeLimitMinutes,
   });
 
   @override
@@ -42,6 +54,7 @@ class _QuizScreenState extends State<QuizScreen> {
   final AudioPlayer _audioPlayer = AudioPlayer(); // for custom voice
   late QuizRepository _quizRepository;
   final QuizService _quizService = QuizService();
+  final HomeworkRepository _homeworkRepository = HomeworkRepository();
   
   List<Question> _questions = [];
   final Map<int, bool> _userAnswers = {};
@@ -51,6 +64,10 @@ class _QuizScreenState extends State<QuizScreen> {
   // Timer
   late Timer _timer;
   int _secondsRemaining = 20 * 60; // 20 minutes
+  int _quizDurationSeconds = 20 * 60;
+  bool _isSubmitting = false;
+  bool _hasSubmitted = false;
+  bool _inputLocked = false;
   
   // Language state - cycles through Italian → Bangla → English
   String _currentQuestionLanguage = 'it'; // Always start with Italian
@@ -63,14 +80,22 @@ class _QuizScreenState extends State<QuizScreen> {
   // TTS audio player (for pre-recorded audio URLs)
   AudioPlayer? _ttsAudioPlayer;
   bool _isTtsPlaying = false;
+  String? _currentTtsAudioUrl;
 
   @override
   void initState() {
     super.initState();
     _initializeRepository();
+    _initializeQuizDuration();
     _loadQuestions();
     _startTimer();
     _ttsHelper.init(); // Initialize TTS
+  }
+
+  void _initializeQuizDuration() {
+    final minutes = widget.homeworkTimeLimitMinutes ?? 20;
+    _quizDurationSeconds = minutes * 60;
+    _secondsRemaining = _quizDurationSeconds;
   }
 
   void _initializeRepository() {
@@ -90,6 +115,11 @@ class _QuizScreenState extends State<QuizScreen> {
 
   void _startTimer() {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_hasSubmitted) {
+        _timer.cancel();
+        return;
+      }
+
       if (_secondsRemaining > 0) {
         setState(() => _secondsRemaining--);
       } else {
@@ -104,7 +134,16 @@ class _QuizScreenState extends State<QuizScreen> {
       setState(() => _isLoading = true);
 
       List<Question> questions;
-      if (widget.topicId != null) {
+      if (widget.isHomeworkMode) {
+        if (widget.homeworkQuestions != null && widget.homeworkQuestions!.isNotEmpty) {
+          questions = List<Question>.from(widget.homeworkQuestions!);
+        } else if (widget.homeworkSet != null) {
+          questions =
+              await _homeworkRepository.getPreparedHomeworkQuestions(widget.homeworkSet!);
+        } else {
+          throw Exception('Homework configuration is missing.');
+        }
+      } else if (widget.topicId != null) {
         questions = await _quizRepository.getQuestionsForTopic(widget.topicId!);
       } else if (widget.quizMode == QuizMode.simulation) {
         questions = await _quizService.fetchRandomQuestions();
@@ -133,6 +172,7 @@ class _QuizScreenState extends State<QuizScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           _scrollToCurrentQuestion(0);
+          _preloadCurrentQuestionAudio();
         }
       });
     } catch (e) {
@@ -144,6 +184,10 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   void _answerQuestion(int questionIndex, bool selectedTrue) {
+    if (_inputLocked || _isSubmitting || _hasSubmitted) {
+      return;
+    }
+
     HapticFeedback.mediumImpact();
     
     setState(() {
@@ -187,9 +231,11 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   void _autoSubmitQuiz() {
+    if (_isSubmitting || _hasSubmitted) return;
     final l10n = AppLocalizations.of(context)!;
     
     _ttsHelper.stop();
+    setState(() => _inputLocked = true);
     
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -198,12 +244,24 @@ class _QuizScreenState extends State<QuizScreen> {
       ),
     );
 
-    Future.delayed(const Duration(seconds: 1), _submitQuiz);
+    Future.delayed(const Duration(seconds: 1), () {
+      if (mounted) {
+        _submitQuiz();
+      }
+    });
   }
 
   Future<void> _submitQuiz() async {
+    if (_isSubmitting || _hasSubmitted) return;
+    if (_questions.isEmpty) return;
+
+    setState(() {
+      _isSubmitting = true;
+      _inputLocked = true;
+    });
+
     try {
-      final durationSeconds = (20 * 60) - _secondsRemaining;
+      final durationSeconds = _quizDurationSeconds - _secondsRemaining;
 
       // Calculate results
       int errorsCount = 0;
@@ -246,8 +304,34 @@ class _QuizScreenState extends State<QuizScreen> {
         );
       }).toList();
 
-      // Submit using QuizRepository (handles online/offline)
-      final submissionResult = await _quizRepository.submitQuizResult(quizSession, quizAnswers);
+      HomeworkScore? homeworkScore;
+      SubmissionResult? submissionResult;
+      if (widget.isHomeworkMode && widget.homeworkSet != null) {
+        final attemptResult = await _homeworkRepository.submitHomeworkAttempt(
+          homework: widget.homeworkSet!,
+          questions: _questions,
+          userAnswers: _userAnswers,
+          durationSeconds: durationSeconds,
+        );
+        homeworkScore = HomeworkScore(
+          id: '${attemptResult.homeworkId}-${attemptResult.sessionId}',
+          homeworkSetId: attemptResult.homeworkId,
+          userId: quizSession.userId,
+          sessionId: attemptResult.sessionId,
+          correctAnswers: attemptResult.correctCount,
+          wrongAnswers: attemptResult.wrongCount,
+          skippedAnswers: attemptResult.unansweredCount,
+          totalQuestions: attemptResult.totalQuestions,
+          score: attemptResult.score,
+          scorePercentage: attemptResult.score.round(),
+          durationSeconds: attemptResult.durationSeconds,
+          submittedAt: attemptResult.submittedAt,
+        );
+      } else {
+        // Submit using QuizRepository (handles online/offline)
+        submissionResult =
+            await _quizRepository.submitQuizResult(quizSession, quizAnswers);
+      }
 
       // Record stats for dashboard (streak, progress, errors) - sync with Supabase
       try {
@@ -260,9 +344,12 @@ class _QuizScreenState extends State<QuizScreen> {
         debugPrint('Error recording dashboard stats: $e');
       }
 
+      _hasSubmitted = true;
+      _timer.cancel();
+
       // Show appropriate feedback based on submission status
       if (mounted) {
-        if (submissionResult.isOnline) {
+        if (!widget.isHomeworkMode && (submissionResult?.isOnline ?? false)) {
           // Successfully uploaded to cloud
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -285,23 +372,41 @@ class _QuizScreenState extends State<QuizScreen> {
         }
 
         // Navigate to result screen
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ResultMinimalistScreen(
-              questions: _questions,
-              userAnswers: _userAnswers,
-              correctCount: correctCount,
-              errorsCount: errorsCount,
-              isPassed: isPassed,
-              durationSeconds: durationSeconds,
-              quizMode: widget.quizMode,
+        if (widget.isHomeworkMode && widget.homeworkSet != null && homeworkScore != null) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => HomeworkResultScreen(
+                homework: widget.homeworkSet!,
+                score: homeworkScore!,
+                questions: _questions,
+                userAnswers: _userAnswers,
+              ),
             ),
-          ),
-        );
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ResultMinimalistScreen(
+                questions: _questions,
+                userAnswers: _userAnswers,
+                correctCount: correctCount,
+                errorsCount: errorsCount,
+                isPassed: isPassed,
+                durationSeconds: durationSeconds,
+                quizMode: widget.quizMode,
+              ),
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+          _inputLocked = false;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error saving results: $e'),
@@ -313,7 +418,7 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   Future<void> _showSubmitConfirmation() async {
-    final l10n = AppLocalizations.of(context)!;
+    if (_isSubmitting || _hasSubmitted || _inputLocked) return;
     final answeredCount = _userAnswers.length;
     final totalCount = _questions.length;
 
@@ -535,6 +640,7 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   Future<void> _showBackConfirmation() async {
+    if (_isSubmitting || _hasSubmitted || _inputLocked) return;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -661,6 +767,44 @@ class _QuizScreenState extends State<QuizScreen> {
         _currentQuestionLanguage = 'it';
       }
     });
+    _preloadCurrentQuestionAudio();
+  }
+
+  Future<void> _ensureTtsAudioPlayerInitialized() async {
+    if (_ttsAudioPlayer != null) return;
+
+    _ttsAudioPlayer = AudioPlayer();
+
+    _ttsAudioPlayer!.playerStateStream.listen((state) {
+      if (mounted) {
+        setState(() => _isTtsPlaying = state.playing);
+      }
+    });
+
+    _ttsAudioPlayer!.processingStateStream.listen((state) {
+      if (mounted && state == ProcessingState.completed) {
+        setState(() => _isTtsPlaying = false);
+      }
+    });
+  }
+
+  Future<void> _preloadCurrentQuestionAudio({String? languageCode}) async {
+    if (_questions.isEmpty || _currentPage >= _questions.length) return;
+
+    final question = _questions[_currentPage];
+    final lang = languageCode ?? _currentQuestionLanguage;
+    final audioUrl = question.getAudioUrl(lang);
+    if (audioUrl == null || audioUrl.isEmpty) return;
+
+    await _ensureTtsAudioPlayerInitialized();
+    if (_currentTtsAudioUrl == audioUrl && _ttsAudioPlayer!.audioSource != null) return;
+
+    try {
+      await _ttsAudioPlayer!.setUrl(audioUrl);
+      _currentTtsAudioUrl = audioUrl;
+    } catch (e) {
+      debugPrint('⚠️ Quiz audio preload skipped: $e');
+    }
   }
 
   Future<void> _speakQuestion() async {
@@ -715,26 +859,14 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   Future<void> _playTtsFromUrl(String audioUrl) async {
-    // Initialize TTS audio player if needed
-    if (_ttsAudioPlayer == null) {
-      _ttsAudioPlayer = AudioPlayer();
-      
-      _ttsAudioPlayer!.playerStateStream.listen((state) {
-        if (mounted) {
-          setState(() => _isTtsPlaying = state.playing);
-        }
-      });
-      
-      _ttsAudioPlayer!.processingStateStream.listen((state) {
-        if (mounted && state == ProcessingState.completed) {
-          setState(() => _isTtsPlaying = false);
-        }
-      });
-    }
+    await _ensureTtsAudioPlayerInitialized();
     
     try {
       setState(() => _isTtsPlaying = true);
-      await _ttsAudioPlayer!.setUrl(audioUrl);
+      if (_currentTtsAudioUrl != audioUrl || _ttsAudioPlayer!.audioSource == null) {
+        await _ttsAudioPlayer!.setUrl(audioUrl);
+        _currentTtsAudioUrl = audioUrl;
+      }
       await _ttsAudioPlayer!.play();
     } catch (e) {
       debugPrint('❌ TTS audio playback error: $e');
@@ -836,23 +968,29 @@ class _QuizScreenState extends State<QuizScreen> {
   Widget _buildBottomAnswerButton({
     required BuildContext context,
     required String label,
+    required bool isTrueAnswer,
     required bool isSelected,
     required VoidCallback onTap,
 
   }) {
+    final theme = Theme.of(context);
+    final activeColor = isTrueAnswer ? AppTheme.successGreen : AppTheme.errorRed;
+    final disabled = _inputLocked || _isSubmitting || _hasSubmitted;
     return InkWell(
-      onTap: () {
-        HapticFeedback.mediumImpact();
-        onTap();
-      },
+      onTap: disabled
+          ? null
+          : () {
+              HapticFeedback.mediumImpact();
+              onTap();
+            },
       borderRadius: BorderRadius.circular(12),
       child: Container(
         height: 56,
         decoration: BoxDecoration(
-          color: isSelected ? (label=="VERO" ? Colors.green[500] : Colors.red[500]) : Colors.grey[300]  ,
+          color: isSelected ? activeColor : theme.colorScheme.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? (label=="VERO" ? Colors.green[500]! : Colors.red[500]!) : Colors.grey[400]!,
+            color: isSelected ? activeColor : theme.colorScheme.outlineVariant,
             width: 2,
           ),
         ),
@@ -860,7 +998,9 @@ class _QuizScreenState extends State<QuizScreen> {
           child: Text(
             label,
             style: TextStyle(
-              color: isSelected ? Colors.white : Colors.black87,
+              color: isSelected
+                  ? theme.colorScheme.onPrimary
+                  : theme.colorScheme.onSurface,
               fontSize: 18,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
               letterSpacing: 1.2,
@@ -985,7 +1125,7 @@ class _QuizScreenState extends State<QuizScreen> {
                   children: [
                     // Back Button
                     InkWell(
-                      onTap: _showBackConfirmation,
+                      onTap: (_isSubmitting || _hasSubmitted) ? null : _showBackConfirmation,
                       borderRadius: BorderRadius.circular(8),
                       child: Container(
                         padding: const EdgeInsets.all(8),
@@ -1015,7 +1155,7 @@ class _QuizScreenState extends State<QuizScreen> {
                     
                     // Submit Button (FINE)
                     InkWell(
-                      onTap: _showSubmitConfirmation,
+                      onTap: (_isSubmitting || _hasSubmitted) ? null : _showSubmitConfirmation,
                       borderRadius: BorderRadius.circular(16),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
@@ -1029,7 +1169,7 @@ class _QuizScreenState extends State<QuizScreen> {
                         child: Row(
                           children: [
                             Text(
-                              'FINE',
+                              l10n.quizFinish,
                               style: TextStyle(
                                 color: theme.colorScheme.primary,
                                 fontSize: 16,
@@ -1128,6 +1268,7 @@ class _QuizScreenState extends State<QuizScreen> {
                   // Scroll question number to center
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     _scrollToCurrentQuestion(index);
+                    _preloadCurrentQuestionAudio();
                   });
                 },
                 itemCount: _questions.length,
@@ -1193,26 +1334,35 @@ class _QuizScreenState extends State<QuizScreen> {
                         ),
                         child: SafeArea(
                           top: false,
-                          child: Row(
-                            children: [
-                              Expanded(
+                          child: Builder(
+                            builder: (context) {
+                              final trueButton = Expanded(
                                 child: _buildBottomAnswerButton(
                                   context: context,
-                                  label: 'VERO',
+                                  label: l10n.quizAnswerTrue,
+                                  isTrueAnswer: true,
                                   isSelected: isAnswered && selectedAnswer == true,
                                   onTap: () => _answerQuestion(index, true),
                                 ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
+                              );
+                              final falseButton = Expanded(
                                 child: _buildBottomAnswerButton(
                                   context: context,
-                                  label: 'FALSO',
+                                  label: l10n.quizAnswerFalse,
+                                  isTrueAnswer: false,
                                   isSelected: isAnswered && selectedAnswer == false,
                                   onTap: () => _answerQuestion(index, false),
                                 ),
-                              ),
-                            ],
+                              );
+
+                              return Row(
+                                children: [
+                                  trueButton,
+                                  const SizedBox(width: 12),
+                                  falseButton,
+                                ],
+                              );
+                            },
                           ),
                         ),
                       ),
@@ -1398,6 +1548,7 @@ class _QuizScreenState extends State<QuizScreen> {
         setState(() {
           _currentQuestionLanguage = langCode;
         });
+        _preloadCurrentQuestionAudio(languageCode: langCode);
       },
       borderRadius: BorderRadius.circular(20),
       child: Container(

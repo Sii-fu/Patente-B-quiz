@@ -67,6 +67,7 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
   
   // Audio player for question TTS audio (from URL)
   AudioPlayer? _ttsAudioPlayer;
+  String? _currentTtsAudioUrl;
   
   // TTS state
   bool _isTtsSpeaking = false;
@@ -130,6 +131,7 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           _scrollToCurrentQuestion(0);
+          _preloadCurrentQuestionAudio();
         }
       });
     } catch (e) {
@@ -482,34 +484,59 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
       }
     }
   }
+
+  Future<void> _ensureTtsAudioPlayerInitialized() async {
+    if (_ttsAudioPlayer != null) return;
+
+    _ttsAudioPlayer = AudioPlayer();
+
+    _ttsAudioPlayer!.playerStateStream.listen((state) {
+      if (mounted) {
+        setState(() {
+          _isTtsSpeaking = state.playing;
+        });
+      }
+    });
+
+    _ttsAudioPlayer!.processingStateStream.listen((state) {
+      if (mounted && state == ProcessingState.completed) {
+        setState(() {
+          _isTtsSpeaking = false;
+          _playingLanguage = null; // Reset playing language when done
+        });
+      }
+    });
+  }
+
+  Future<void> _preloadCurrentQuestionAudio({String? languageCode}) async {
+    if (_questions.isEmpty || _currentPage >= _questions.length) return;
+
+    final question = _questions[_currentPage];
+    final lang = languageCode ?? _currentQuestionLanguage;
+    final audioUrl = question.getAudioUrl(lang);
+    if (audioUrl == null || audioUrl.isEmpty) return;
+
+    await _ensureTtsAudioPlayerInitialized();
+    if (_currentTtsAudioUrl == audioUrl && _ttsAudioPlayer!.audioSource != null) return;
+
+    try {
+      await _ttsAudioPlayer!.setUrl(audioUrl);
+      _currentTtsAudioUrl = audioUrl;
+    } catch (e) {
+      debugPrint('⚠️ Audio preload skipped: $e');
+    }
+  }
   
   Future<void> _playAudioFromUrl(String audioUrl) async {
-    // Initialize TTS audio player if needed
-    if (_ttsAudioPlayer == null) {
-      _ttsAudioPlayer = AudioPlayer();
-      
-      _ttsAudioPlayer!.playerStateStream.listen((state) {
-        if (mounted) {
-          setState(() {
-            _isTtsSpeaking = state.playing;
-          });
-        }
-      });
-      
-      _ttsAudioPlayer!.processingStateStream.listen((state) {
-        if (mounted && state == ProcessingState.completed) {
-          setState(() {
-            _isTtsSpeaking = false;
-            _playingLanguage = null; // Reset playing language when done
-          });
-        }
-      });
-    }
+    await _ensureTtsAudioPlayerInitialized();
     
     try {
       setState(() => _isTtsSpeaking = true);
-      debugPrint('🎧 Loading audio from URL: $audioUrl');
-      await _ttsAudioPlayer!.setUrl(audioUrl);
+      if (_currentTtsAudioUrl != audioUrl || _ttsAudioPlayer!.audioSource == null) {
+        debugPrint('🎧 Loading audio from URL: $audioUrl');
+        await _ttsAudioPlayer!.setUrl(audioUrl);
+        _currentTtsAudioUrl = audioUrl;
+      }
       debugPrint('▶️ Playing audio from URL');
       await _ttsAudioPlayer!.play();
     } catch (e) {
@@ -632,6 +659,7 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
       await _audioPlayer?.pause();
       setState(() => _isCustomAudioPlaying = false);
     }
+    await _preloadCurrentQuestionAudio(languageCode: languageCode);
     
     // DO NOT change _currentQuestionLanguage - only play audio
     // Track which language is playing for UI feedback
@@ -672,6 +700,7 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
     _ttsAudioPlayer?.stop();
     _isTtsSpeaking = false;
     _playingLanguage = null; // Reset playing language
+    _currentTtsAudioUrl = null;
   }
 
   String _formatTime(int seconds) {
@@ -1112,6 +1141,7 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
                   // Scroll question number to center
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     _scrollToCurrentQuestion(index);
+                    _preloadCurrentQuestionAudio();
                   });
                 },
                 itemCount: _questions.length,

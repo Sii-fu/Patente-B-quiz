@@ -121,6 +121,9 @@ class TheoryService {
           textBn: data['text_bn'] as String?,
           imageUrl: data['image_url'] as String?,
           audioExplanationUrl: data['audio_explanation_url'] as String?,
+          audioItUrl: data['audio_it_url'] as String?,
+          audioEnUrl: data['audio_en_url'] as String?,
+          audioBnUrl: data['audio_bn_url'] as String?,
           displayOrder: data['display_order'] as int,
           createdAt: DateTime.parse(data['created_at'] as String),
         );
@@ -157,6 +160,9 @@ class TheoryService {
           textBn: data['text_bn'] as String?,
           imageUrl: data['image_url'] as String?,
           audioExplanationUrl: data['audio_explanation_url'] as String?,
+          audioItUrl: data['audio_it_url'] as String?,
+          audioEnUrl: data['audio_en_url'] as String?,
+          audioBnUrl: data['audio_bn_url'] as String?,
           displayOrder: data['display_order'] as int,
           createdAt: DateTime.parse(data['created_at'] as String),
         );

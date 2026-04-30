@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../services/secure_storage_service.dart';
 import '../../../utils/constants.dart';
 
 class SetupWizardScreen extends StatefulWidget {
@@ -27,15 +27,18 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
     });
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      
+      final secureStorage = SecureStorageService.instance;
+
       // Save user preferences
-      await prefs.setString(AppConstants.keyLicenseType, _selectedLicenseType);
-      await prefs.setString(
+      await secureStorage.writeString(
+        AppConstants.keyLicenseType,
+        _selectedLicenseType,
+      );
+      await secureStorage.writeString(
         AppConstants.keyDrivingSchoolCode,
         _schoolCodeController.text.trim(),
       );
-      await prefs.setBool(AppConstants.keyCompletedSetup, true);
+      await secureStorage.writeBool(AppConstants.keyCompletedSetup, true);
 
       if (mounted) {
         // Navigate to Auth screen

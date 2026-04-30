@@ -1,5 +1,11 @@
 /// TheoryCard model - Represents a single theory content card (e.g., DOSSO, CUNETTA)
 /// Matches the 'theory_cards' table in Supabase
+int _parseDisplayOrder(dynamic value) {
+  if (value is int) return value;
+  if (value is String) return int.tryParse(value) ?? 0;
+  return 0;
+}
+
 class TheoryCard {
   final int id;
   final int chapterId;
@@ -12,6 +18,9 @@ class TheoryCard {
   final String? textBn;
   final String? imageUrl;
   final String? audioExplanationUrl;
+  final String? audioItUrl;
+  final String? audioEnUrl;
+  final String? audioBnUrl;
   final int displayOrder;
   final DateTime createdAt;
 
@@ -27,6 +36,9 @@ class TheoryCard {
     this.textBn,
     this.imageUrl,
     this.audioExplanationUrl,
+    this.audioItUrl,
+    this.audioEnUrl,
+    this.audioBnUrl,
     required this.displayOrder,
     required this.createdAt,
   });
@@ -55,6 +67,18 @@ class TheoryCard {
     }
   }
 
+  // Get localized audio URL based on language code
+  String? getLocalizedAudioUrl(String languageCode) {
+    switch (languageCode) {
+      case 'en':
+        return audioEnUrl ?? audioItUrl ?? audioBnUrl;
+      case 'bn':
+        return audioBnUrl ?? audioItUrl ?? audioEnUrl;
+      default:
+        return audioItUrl ?? audioEnUrl ?? audioBnUrl;
+    }
+  }
+
   // From JSON (Supabase)
   factory TheoryCard.fromJson(Map<String, dynamic> json) {
     return TheoryCard(
@@ -69,7 +93,10 @@ class TheoryCard {
       textBn: json['text_bn'] as String?,
       imageUrl: json['image_url'] as String?,
       audioExplanationUrl: json['audio_explanation_url'] as String?,
-      displayOrder: json['display_order'] as int,
+      audioItUrl: json['audio_it_url'] as String?,
+      audioEnUrl: json['audio_en_url'] as String?,
+      audioBnUrl: json['audio_bn_url'] as String?,
+      displayOrder: _parseDisplayOrder(json['display_order']),
       createdAt: DateTime.parse(json['created_at'] as String),
     );
   }
@@ -88,6 +115,9 @@ class TheoryCard {
       'text_bn': textBn,
       'image_url': imageUrl,
       'audio_explanation_url': audioExplanationUrl,
+      'audio_it_url': audioItUrl,
+      'audio_en_url': audioEnUrl,
+      'audio_bn_url': audioBnUrl,
       'display_order': displayOrder,
       'created_at': createdAt.toIso8601String(),
     };
@@ -107,7 +137,10 @@ class TheoryCard {
       textBn: map['text_bn'] as String?,
       imageUrl: map['image_url'] as String?,
       audioExplanationUrl: map['audio_explanation_url'] as String?,
-      displayOrder: map['display_order'] as int,
+      audioItUrl: map['audio_it_url'] as String?,
+      audioEnUrl: map['audio_en_url'] as String?,
+      audioBnUrl: map['audio_bn_url'] as String?,
+      displayOrder: _parseDisplayOrder(map['display_order']),
       createdAt: DateTime.parse(map['created_at'] as String),
     );
   }
@@ -126,6 +159,9 @@ class TheoryCard {
       'text_bn': textBn,
       'image_url': imageUrl,
       'audio_explanation_url': audioExplanationUrl,
+      'audio_it_url': audioItUrl,
+      'audio_en_url': audioEnUrl,
+      'audio_bn_url': audioBnUrl,
       'display_order': displayOrder,
       'created_at': createdAt.toIso8601String(),
     };

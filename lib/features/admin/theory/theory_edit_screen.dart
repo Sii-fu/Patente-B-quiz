@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:typed_data';
 import '../../../l10n/app_localizations.dart';
 import '../services/admin_repository.dart';
@@ -118,20 +117,10 @@ class _TheoryEditScreenState extends State<TheoryEditScreen> {
     });
 
     try {
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final fileName = 'theory_${timestamp}_$_selectedImageName';
-      
-      await Supabase.instance.client.storage
-          .from('theory_images')
-          .uploadBinary(
-            fileName,
-            _selectedImageBytes!,
-            fileOptions: const FileOptions(upsert: true),
-          );
-
-      final publicUrl = Supabase.instance.client.storage
-          .from('theory_images')
-          .getPublicUrl(fileName);
+      final publicUrl = await _adminRepository.uploadTheoryCardImage(
+        _selectedImageBytes!,
+        originalFileName: _selectedImageName,
+      );
 
       setState(() {
         _isUploading = false;

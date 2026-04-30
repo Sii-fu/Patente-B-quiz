@@ -19,6 +19,7 @@ class VideoPlayerScreen extends StatefulWidget {
 class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   late YoutubePlayerController _controller;
   bool _isPlayerReady = false;
+  bool _isFullscreen = false;
 
   @override
   void initState() {
@@ -53,8 +54,23 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   }
 
   @override
+  void deactivate() {
+    if (widget.video.videoId != null) {
+      _controller.pause();
+    }
+    super.deactivate();
+  }
+
+  @override
   void dispose() {
-    _controller.dispose();
+    if (widget.video.videoId != null) {
+      _controller.dispose();
+    }
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     super.dispose();
   }
 
@@ -99,14 +115,17 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
     return YoutubePlayerBuilder(
       onEnterFullScreen: () {
+        setState(() => _isFullscreen = true);
         SystemChrome.setPreferredOrientations([
           DeviceOrientation.landscapeLeft,
           DeviceOrientation.landscapeRight,
         ]);
       },
       onExitFullScreen: () {
+        setState(() => _isFullscreen = false);
         SystemChrome.setPreferredOrientations([
           DeviceOrientation.portraitUp,
+          DeviceOrientation.portraitDown,
         ]);
       },
       player: YoutubePlayer(
@@ -133,39 +152,41 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
           ),
         ],
       ),
-      builder: (context, player) {
-        return Scaffold(
-          backgroundColor: theme.colorScheme.surfaceContainerLowest,
-          appBar: AppBar(
-            backgroundColor: theme.colorScheme.surface,
-            elevation: 0,
-            leading: IconButton(
-              icon: Icon(Icons.arrow_back, color: theme.colorScheme.onSurface),
-              onPressed: () {
-                HapticFeedback.lightImpact();
-                Navigator.pop(context);
-              },
-            ),
-            title: Text(
-              l10n.videoPlayerTitle,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                color: theme.colorScheme.onSurface,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            actions: [
-              IconButton(
-                icon: Icon(
-                  Icons.fullscreen,
-                  color: theme.colorScheme.onSurface,
-                ),
-                onPressed: () {
-                  _controller.toggleFullScreenMode();
-                },
-              ),
-            ],
-          ),
-          body: SingleChildScrollView(
+        builder: (context, player) {
+          return Scaffold(
+            backgroundColor: theme.colorScheme.surfaceContainerLowest,
+            appBar: _isFullscreen
+                ? null
+                : AppBar(
+                    backgroundColor: theme.colorScheme.surface,
+                    elevation: 0,
+                    leading: IconButton(
+                      icon: Icon(Icons.arrow_back, color: theme.colorScheme.onSurface),
+                      onPressed: () {
+                        HapticFeedback.lightImpact();
+                        Navigator.pop(context);
+                      },
+                    ),
+                    title: Text(
+                      l10n.videoPlayerTitle,
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        color: theme.colorScheme.onSurface,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    actions: [
+                      IconButton(
+                        icon: Icon(
+                          Icons.fullscreen,
+                          color: theme.colorScheme.onSurface,
+                        ),
+                        onPressed: () {
+                          _controller.toggleFullScreenMode();
+                        },
+                      ),
+                    ],
+                  ),
+            body: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

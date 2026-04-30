@@ -1822,4 +1822,89 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get wordQuestionsFound => 'টি প্রশ্ন পাওয়া গেছে';
+
+  @override
+  String get homeworkTitle => 'হোমওয়ার্ক';
+
+  @override
+  String get homeworkActiveNow => 'এখন সক্রিয়';
+
+  @override
+  String get homeworkUpcoming => 'আসন্ন';
+
+  @override
+  String get homeworkCompleted => 'সম্পন্ন';
+
+  @override
+  String get homeworkStart => 'হোমওয়ার্ক শুরু করুন';
+
+  @override
+  String get homeworkViewDetails => 'বিস্তারিত';
+
+  @override
+  String get homeworkViewResult => 'ফলাফল';
+
+  @override
+  String get homeworkLeaderboard => 'লিডারবোর্ড';
+
+  @override
+  String get homeworkRetry => 'পুনরায় দিন';
+
+  @override
+  String get homeworkTimeRemaining => 'বাকি সময়';
+
+  @override
+  String get homeworkStartsIn => 'শুরু হবে';
+
+  @override
+  String get homeworkSubmitted => 'জমা দেওয়া হয়েছে';
+
+  @override
+  String get homeworkStatus => 'স্ট্যাটাস';
+
+  @override
+  String get homeworkQuestionCount => 'প্রশ্ন';
+
+  @override
+  String get homeworkTimeLimit => 'সময়সীমা';
+
+  @override
+  String get homeworkStartDate => 'শুরুর সময়';
+
+  @override
+  String get homeworkEndDate => 'শেষ সময়';
+
+  @override
+  String get homeworkRetryAllowed => 'পুনরায় দেওয়া যাবে';
+
+  @override
+  String get homeworkYes => 'হ্যাঁ';
+
+  @override
+  String get homeworkNo => 'না';
+
+  @override
+  String get homeworkNoItems => 'কোনো হোমওয়ার্ক পাওয়া যায়নি।';
+
+  @override
+  String get homeworkStartLabel => 'হোমওয়ার্ক শুরু করুন';
+
+  @override
+  String get homeworkStartWarningTitle => 'শুরুর নিশ্চয়তা';
+
+  @override
+  String get homeworkStartWarningMessage =>
+      'এই হোমওয়ার্কটি শুধুমাত্র একবার দেওয়া যাবে। আপনি কি শুরু করতে চান?';
+
+  @override
+  String get homeworkFailedToStart => 'হোমওয়ার্ক শুরু করা যায়নি';
+
+  @override
+  String get homeworkBackToList => 'হোমওয়ার্কে ফিরে যান';
+
+  @override
+  String get homeworkReviewAnswers => 'উত্তর রিভিউ করুন';
+
+  @override
+  String get homeworkRank => 'র‍্যাঙ্ক';
 }

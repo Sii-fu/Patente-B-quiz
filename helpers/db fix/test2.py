@@ -4,6 +4,7 @@ import tkinter as tk
 import tkinter.messagebox as messagebox
 from supabase import create_client, Client
 import re
+import os
 
 #for title
 tscan_x = 5
@@ -17,8 +18,13 @@ scan_y = 220
 scan_w = 500
 scan_h = 800
 
-SUPABASE_URL = "https://gtlzxkfkfzndfsuqiyge.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0bHp4a2ZrZnpuZGZzdXFpeWdlIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MzQ5MDM4NywiZXhwIjoyMDc5MDY2Mzg3fQ.pUZJ1VpO18JjGf0UTir_ViffGKWdmDP41xnbjT0vaq0" 
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+
+if not SUPABASE_URL or not SUPABASE_KEY:
+    raise RuntimeError(
+        "Missing SUPABASE_URL or SUPABASE_KEY environment variable."
+    )
 
 
 
