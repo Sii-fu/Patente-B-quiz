@@ -37,6 +37,12 @@ else
 fi
 
 echo ""
+echo "Checking release signing/build settings..."
+xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -configuration Release -showBuildSettings \
+  | grep -E "CODE_SIGN_STYLE|DEVELOPMENT_TEAM|PRODUCT_BUNDLE_IDENTIFIER|CODE_SIGN_IDENTITY|PROVISIONING_PROFILE_SPECIFIER" \
+  || true
+
+echo ""
 echo "=========================================="
 echo "✓ Pre-build verification passed"
 echo "=========================================="
