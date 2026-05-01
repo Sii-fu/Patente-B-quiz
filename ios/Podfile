@@ -61,6 +61,11 @@ post_install do |installer|
       # ── Suppress "module was not found" warnings for generated umbrella headers
       config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
 
+      # ── Xcode Cloud: prevent CocoaPods script sandbox failures in [CP] phases ─
+      # Needed on newer Xcode versions where pod script phases may fail with
+      # "Command PhaseScriptExecution failed with a nonzero exit code".
+      config.build_settings['ENABLE_USER_SCRIPT_SANDBOXING'] = 'NO'
+
       # ── Fix code signing for simulator builds ────────────────────────────────
       config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO' if target.name.end_with?('Tests')
 

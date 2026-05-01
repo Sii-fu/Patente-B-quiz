@@ -53,6 +53,21 @@ pod repo update || echo "WARNING: pod repo update had issues (continuing)"
 echo "Running: pod install"
 pod install --repo-update || { echo "ERROR: pod install failed"; exit 1; }
 
+echo "Verifying CocoaPods xcfilelists..."
+for f in \
+  "Pods/Target Support Files/Pods-Runner/Pods-Runner-frameworks-Release-input-files.xcfilelist" \
+  "Pods/Target Support Files/Pods-Runner/Pods-Runner-frameworks-Release-output-files.xcfilelist" \
+  "Pods/Target Support Files/Pods-Runner/Pods-Runner-resources-Release-input-files.xcfilelist" \
+  "Pods/Target Support Files/Pods-Runner/Pods-Runner-resources-Release-output-files.xcfilelist"
+do
+  if [ -f "$f" ]; then
+    echo "✓ $f"
+  else
+    echo "ERROR: missing $f"
+    exit 1
+  fi
+done
+
 echo ""
 echo "=========================================="
 echo "✓ Xcode Cloud setup complete"
