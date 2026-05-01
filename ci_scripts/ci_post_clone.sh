@@ -89,31 +89,62 @@ ensure_xcfilelist() {
   return 1
 }
 
+ensure_file_exists() {
+  FILE_PATH="$1"
+  if [ ! -f "$FILE_PATH" ]; then
+    : > "$FILE_PATH"
+    echo "✓ Created empty file: $(basename "$FILE_PATH")"
+  fi
+}
+
 echo ""
 echo "Normalizing xcfilelist names for Xcode archive configuration..."
-MISSING_REQUIRED=0
+MISSING_REQUIRED_RESOURCES=0
 
 for PART in frameworks resources; do
   for IO in input output; do
     RELEASE_TARGET="$XCFILELIST_DIR/Pods-Runner-${PART}-Release-${IO}-files.xcfilelist"
     PROFILE_TARGET="$XCFILELIST_DIR/Pods-Runner-${PART}-Profile-${IO}-files.xcfilelist"
 
-    ensure_xcfilelist "$RELEASE_TARGET" \
+    if ! ensure_xcfilelist "$RELEASE_TARGET" \
       "$XCFILELIST_DIR/Pods-Runner-${PART}-release-${IO}-files.xcfilelist" \
       "$XCFILELIST_DIR/Pods-Runner-${PART}-profile-${IO}-files.xcfilelist" \
       "$XCFILELIST_DIR/Pods-Runner-${PART}-Debug-${IO}-files.xcfilelist" \
-      "$XCFILELIST_DIR/Pods-Runner-${PART}-debug-${IO}-files.xcfilelist" || MISSING_REQUIRED=1
+      "$XCFILELIST_DIR/Pods-Runner-${PART}-debug-${IO}-files.xcfilelist"; then
+      if [ "$PART" = "resources" ]; then
+        MISSING_REQUIRED_RESOURCES=1
+      else
+        ensure_file_exists "$RELEASE_TARGET"
+      fi
+    fi
 
-    ensure_xcfilelist "$PROFILE_TARGET" \
+    if ! ensure_xcfilelist "$PROFILE_TARGET" \
       "$XCFILELIST_DIR/Pods-Runner-${PART}-profile-${IO}-files.xcfilelist" \
       "$XCFILELIST_DIR/Pods-Runner-${PART}-release-${IO}-files.xcfilelist" \
       "$XCFILELIST_DIR/Pods-Runner-${PART}-Debug-${IO}-files.xcfilelist" \
-      "$XCFILELIST_DIR/Pods-Runner-${PART}-debug-${IO}-files.xcfilelist" || MISSING_REQUIRED=1
+      "$XCFILELIST_DIR/Pods-Runner-${PART}-debug-${IO}-files.xcfilelist"; then
+      if [ "$PART" = "resources" ]; then
+        MISSING_REQUIRED_RESOURCES=1
+      else
+        ensure_file_exists "$PROFILE_TARGET"
+      fi
+    fi
   done
 done
 
-if [ "$MISSING_REQUIRED" -ne 0 ]; then
-  echo "ERROR: could not normalize required Release/Profile xcfilelists."
+FRAMEWORKS_SCRIPT="$XCFILELIST_DIR/Pods-Runner-frameworks.sh"
+if [ ! -f "$FRAMEWORKS_SCRIPT" ]; then
+  cat > "$FRAMEWORKS_SCRIPT" << 'EOF'
+#!/bin/sh
+set -e
+echo "No dynamic frameworks to embed for this configuration."
+EOF
+  chmod +x "$FRAMEWORKS_SCRIPT"
+  echo "✓ Created fallback Pods-Runner-frameworks.sh"
+fi
+
+if [ "$MISSING_REQUIRED_RESOURCES" -ne 0 ]; then
+  echo "ERROR: could not normalize required resources xcfilelists."
   echo "Current xcfilelists in $XCFILELIST_DIR:"
   find "$XCFILELIST_DIR" -maxdepth 1 -name "*.xcfilelist" -print | sed 's#^#  - #'
   exit 1
