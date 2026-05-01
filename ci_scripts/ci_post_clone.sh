@@ -142,6 +142,14 @@ EOF
   chmod +x "$FRAMEWORKS_SCRIPT"
   echo "✓ Created fallback Pods-Runner-frameworks.sh"
 fi
+/bin/chmod +x "$FRAMEWORKS_SCRIPT" 2>/dev/null || true
+
+RESOURCES_SCRIPT="$XCFILELIST_DIR/Pods-Runner-resources.sh"
+if [ ! -f "$RESOURCES_SCRIPT" ]; then
+  echo "ERROR: missing required Pods-Runner-resources.sh"
+  ls -la "$XCFILELIST_DIR" || true
+  exit 1
+fi
 
 if [ "$MISSING_REQUIRED_RESOURCES" -ne 0 ]; then
   echo "ERROR: could not normalize required resources xcfilelists."

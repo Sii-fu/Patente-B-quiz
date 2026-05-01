@@ -56,6 +56,18 @@ do
   fi
 done
 
+for s in \
+  "ios/Pods/Target Support Files/Pods-Runner/Pods-Runner-frameworks.sh" \
+  "ios/Pods/Target Support Files/Pods-Runner/Pods-Runner-resources.sh"
+do
+  if [ -f "$s" ]; then
+    echo "✓ $s"
+  else
+    echo "✗ MISSING: $s"
+    exit 1
+  fi
+done
+
 echo ""
 echo "Checking release signing/build settings..."
 xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -configuration Release -showBuildSettings \

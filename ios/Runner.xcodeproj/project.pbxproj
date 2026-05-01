@@ -354,7 +354,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks.sh\"\n";
+			shellScript = "if [ -f \"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks.sh\" ]; then\n  /bin/sh \"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks.sh\"\nelse\n  echo \"No Pods-Runner-frameworks.sh generated; skipping embed frameworks phase.\"\nfi\n";
 			showEnvVarsInLog = 0;
 		};
 		9740EEB61CF901F6004384FC /* Run Script */ = {
@@ -390,7 +390,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources.sh\"\n";
+			shellScript = "if [ ! -f \"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources.sh\" ]; then\n  echo \"error: missing Pods-Runner-resources.sh\" >&2\n  exit 1\nfi\n/bin/sh \"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
