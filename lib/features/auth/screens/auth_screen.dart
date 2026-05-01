@@ -480,7 +480,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 12),
                           child: Text(
-                            'or',
+                            AppLocalizations.of(context)!.authOr,
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: theme.colorScheme.onSurface.withOpacity(0.5),
                             ),

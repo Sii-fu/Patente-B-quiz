@@ -68,8 +68,6 @@
 	<!-- Required so youtube_player_flutter can load iframe embeds over HTTP.   -->
 	<key>NSAppTransportSecurity</key>
 	<dict>
-		<key>NSAllowsArbitraryLoads</key>
-		<true/>
 		<key>NSAllowsArbitraryLoadsInWebContent</key>
 		<true/>
 	</dict>

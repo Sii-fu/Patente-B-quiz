@@ -28,9 +28,9 @@ open ios/Runner.xcworkspace
 | Step | Where in Xcode | Action |
 |---|---|---|
 | ☐ Select Team | Runner → Signing & Capabilities → Team | Pick your Apple Developer account |
-| ☐ Set Bundle ID | Runner → Signing & Capabilities → Bundle Identifier | Change `com.example.flutterApp` → **`com.yourcompany.patentebquiz`** (must match App Store Connect) |
+| ☐ Set Bundle ID | Runner → Signing & Capabilities → Bundle Identifier | Verify `com.deshbangla.patente` (or replace with your own) and ensure it matches App Store Connect exactly |
 | ☐ Auto-manage signing | Runner → Signing & Capabilities | Tick "Automatically manage signing" |
-| ☐ RunnerTests Bundle ID | RunnerTests target → Signing & Capabilities | Append `.tests` e.g. `com.yourcompany.patentebquiz.tests` |
+| ☐ RunnerTests Bundle ID | RunnerTests target → Signing & Capabilities | Keep it aligned (default: `com.deshbangla.patente.RunnerTests`) |
 
 > ⚠️ The Bundle ID you set here must **exactly** match what you register in
 > [App Store Connect → My Apps → New App](https://appstoreconnect.apple.com).
@@ -168,9 +168,8 @@ flutter build ios --release
 Apple now requires a **`PrivacyInfo.xcprivacy`** for any use of required-reason APIs.
 Several Flutter packages (path_provider, shared_preferences) access the file system.
 
-1. In Xcode, right-click **Runner** folder → **New File → Resource → App Privacy**.
-2. Name it `PrivacyInfo.xcprivacy`.
-3. Add required reasons for APIs your app uses. Minimum for this app:
+1. Verify `ios/Runner/PrivacyInfo.xcprivacy` is present in the Runner target resources.
+2. Confirm required reasons for APIs your app uses. Minimum for this app:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
