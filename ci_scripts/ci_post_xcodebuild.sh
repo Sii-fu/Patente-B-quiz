@@ -16,3 +16,6 @@ if [ -n "${RESULT_BUNDLE:-}" ] && [ -d "$RESULT_BUNDLE" ]; then
     echo "------------------------------------------"
   fi
 fi
+
+echo "Searching workspace logs for PhaseScriptExecution..."
+grep -R "PhaseScriptExecution" /Volumes/workspace 2>/dev/null | tail -50 || true
