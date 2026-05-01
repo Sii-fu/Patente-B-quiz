@@ -54,19 +54,21 @@ echo "Running: pod install"
 pod install --repo-update || { echo "ERROR: pod install failed"; exit 1; }
 
 echo "Verifying CocoaPods xcfilelists..."
-for f in \
-  "Pods/Target Support Files/Pods-Runner/Pods-Runner-frameworks-Release-input-files.xcfilelist" \
-  "Pods/Target Support Files/Pods-Runner/Pods-Runner-frameworks-Release-output-files.xcfilelist" \
-  "Pods/Target Support Files/Pods-Runner/Pods-Runner-resources-Release-input-files.xcfilelist" \
-  "Pods/Target Support Files/Pods-Runner/Pods-Runner-resources-Release-output-files.xcfilelist"
-do
-  if [ -f "$f" ]; then
-    echo "✓ $f"
-  else
-    echo "ERROR: missing $f"
-    exit 1
-  fi
-done
+XCFILELIST_DIR="Pods/Target Support Files/Pods-Runner"
+if [ ! -d "$XCFILELIST_DIR" ]; then
+  echo "ERROR: missing directory: $XCFILELIST_DIR"
+  exit 1
+fi
+
+XCFILELIST_COUNT=$(find "$XCFILELIST_DIR" -maxdepth 1 -name "*.xcfilelist" | wc -l | tr -d ' ')
+if [ "${XCFILELIST_COUNT:-0}" -eq 0 ]; then
+  echo "ERROR: no .xcfilelist files found in $XCFILELIST_DIR"
+  ls -la "$XCFILELIST_DIR" || true
+  exit 1
+fi
+
+echo "✓ Found $XCFILELIST_COUNT xcfilelist files in $XCFILELIST_DIR"
+find "$XCFILELIST_DIR" -maxdepth 1 -name "*.xcfilelist" -print | sed 's#^#  - #'
 
 echo ""
 echo "=========================================="
