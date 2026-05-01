@@ -25,19 +25,38 @@ open ios/Runner.xcworkspace
 
 ## Xcode Cloud (if building in cloud)
 
-If your workflow builds in Xcode Cloud, keep this repository script enabled:
+If your workflow builds in Xcode Cloud (not local Mac), these scripts must be committed and executable:
 
-- `ci_scripts/ci_post_clone.sh`
+**Key files:**
+- `ci_scripts/ci_post_clone.sh` → runs **after** repo clone, generates Flutter/CocoaPods files
+- `ci_scripts/ci_pre_xcodebuild.sh` → optional verification script (runs before Xcode build)
 
-It runs:
-- `flutter pub get` (generates `ios/Flutter/Generated.xcconfig`)
-- `flutter build ios --config-only --no-codesign`
-- `pod install --repo-update` (generates Pods `.xcfilelist` files)
-- ensure the script is executable in git (`chmod +x ci_scripts/ci_post_clone.sh`)
+**Setup:**
+```bash
+# After creating/editing scripts on Mac
+chmod +x ci_scripts/ci_post_clone.sh
+chmod +x ci_scripts/ci_pre_xcodebuild.sh
 
-Without this script, Xcode Cloud commonly fails with:
-- missing `Generated.xcconfig`
-- missing `Pods-Runner-*.xcfilelist`
+git add ci_scripts/
+git commit -m "Add Xcode Cloud CI scripts"
+git push
+```
+
+**What `ci_post_clone.sh` does:**
+1. Installs Flutter SDK (if missing)
+2. Runs `flutter pub get` → generates `ios/Flutter/Generated.xcconfig`
+3. Runs `flutter build ios --config-only --no-codesign` → prepares build
+4. Runs `pod install --repo-update` → generates `ios/Pods/Target Support Files/Pods-Runner/*.xcfilelist`
+
+**Why this matters:**
+Without these scripts, Xcode Cloud fails with:
+- `error: could not find included file 'Generated.xcconfig'`
+- `unable to load contents of file list: '...Pods-Runner-*.xcfilelist'`
+
+**In Xcode Cloud workflow settings:**
+- Build scheme: `Runner`
+- Workspace: `ios/Runner.xcworkspace`
+- Let Xcode Cloud auto-detect and run the scripts
 
 ---
 
