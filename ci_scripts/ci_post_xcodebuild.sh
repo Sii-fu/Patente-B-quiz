@@ -18,7 +18,7 @@ if [ -n "${RESULT_BUNDLE:-}" ] && [ -d "$RESULT_BUNDLE" ]; then
   xcrun xcresulttool get --legacy --path "$RESULT_BUNDLE" --format json > /tmp/xcresult.json 2>/dev/null || true
   if [ -f /tmp/xcresult.json ]; then
     echo "---- Errors (tail) ----"
-    grep -E "\"message\"|PhaseScriptExecution|shellScript|\\[CP\\]|Run Script|Thin Binary|flutter_xcode_backend|Flutter Xcode backend action|error:|failed" /tmp/xcresult.json | tail -180 || true
+    grep -E "\"message\"|PhaseScriptExecution|shellScript|\\[CP\\]|\\[CI\\]\\[Runner\\]|Run Script|Thin Binary|flutter_xcode_backend|Flutter Xcode backend action|Using backend script|error:|failed" /tmp/xcresult.json | tail -220 || true
     echo "-----------------------"
   fi
   

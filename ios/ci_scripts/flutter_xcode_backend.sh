@@ -1,5 +1,6 @@
 #!/bin/sh
 set -e
+set -x
 
 ACTION="$1"
 if [ -z "${ACTION:-}" ]; then
@@ -28,5 +29,6 @@ fi
 
 echo "Flutter Xcode backend action: $ACTION"
 echo "Using FLUTTER_ROOT: $FLUTTER_ROOT"
+echo "Using backend script: $BACKEND_SCRIPT"
 
 exec /bin/sh "$BACKEND_SCRIPT" "$ACTION"

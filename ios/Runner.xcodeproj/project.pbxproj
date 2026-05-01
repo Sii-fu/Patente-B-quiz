@@ -312,7 +312,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "/bin/sh \"$SRCROOT/ci_scripts/flutter_xcode_backend.sh\" embed_and_thin";
+			shellScript = "echo \"[CI][Runner][Thin Binary] start (CONFIGURATION=${CONFIGURATION})\"\nif ! /bin/sh \"$SRCROOT/ci_scripts/flutter_xcode_backend.sh\" embed_and_thin; then\n  echo \"error: [CI][Runner][Thin Binary] failed\" >&2\n  exit 1\nfi\necho \"[CI][Runner][Thin Binary] done\"\n";
 		};
 		641521363F9BFF5CF1243446 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -354,7 +354,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "if [ -f \"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks.sh\" ]; then\n  /bin/sh \"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks.sh\"\nelse\n  echo \"No Pods-Runner-frameworks.sh generated; skipping embed frameworks phase.\"\nfi\n";
+			shellScript = "echo \"[CI][Runner][CP Embed Pods Frameworks] start (CONFIGURATION=${CONFIGURATION})\"\nif [ -f \"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks.sh\" ]; then\n  if ! /bin/sh \"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks.sh\"; then\n    echo \"error: [CI][Runner][CP Embed Pods Frameworks] failed\" >&2\n    exit 1\n  fi\nelse\n  echo \"[CI][Runner][CP Embed Pods Frameworks] no frameworks script generated; skipping.\"\nfi\necho \"[CI][Runner][CP Embed Pods Frameworks] done\"\n";
 			showEnvVarsInLog = 0;
 		};
 		9740EEB61CF901F6004384FC /* Run Script */ = {
@@ -370,7 +370,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "/bin/sh \"$SRCROOT/ci_scripts/flutter_xcode_backend.sh\" build";
+			shellScript = "echo \"[CI][Runner][Run Script] start (CONFIGURATION=${CONFIGURATION})\"\nif ! /bin/sh \"$SRCROOT/ci_scripts/flutter_xcode_backend.sh\" build; then\n  echo \"error: [CI][Runner][Run Script] failed\" >&2\n  exit 1\nfi\necho \"[CI][Runner][Run Script] done\"\n";
 		};
 		A6C2ABFD17C6B137CE5DB7EF /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -390,7 +390,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "if [ ! -f \"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources.sh\" ]; then\n  echo \"error: missing Pods-Runner-resources.sh\" >&2\n  exit 1\nfi\n/bin/sh \"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources.sh\"\n";
+			shellScript = "echo \"[CI][Runner][CP Copy Pods Resources] start (CONFIGURATION=${CONFIGURATION})\"\nif [ ! -f \"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources.sh\" ]; then\n  echo \"error: [CI][Runner][CP Copy Pods Resources] missing Pods-Runner-resources.sh\" >&2\n  exit 1\nfi\nif ! /bin/sh \"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources.sh\"; then\n  echo \"error: [CI][Runner][CP Copy Pods Resources] failed\" >&2\n  exit 1\nfi\necho \"[CI][Runner][CP Copy Pods Resources] done\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
