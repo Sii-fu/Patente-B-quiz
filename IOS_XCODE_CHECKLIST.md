@@ -23,6 +23,24 @@ open ios/Runner.xcworkspace
 
 ---
 
+## Xcode Cloud (if building in cloud)
+
+If your workflow builds in Xcode Cloud, keep this repository script enabled:
+
+- `ci_scripts/ci_post_clone.sh`
+
+It runs:
+- `flutter pub get` (generates `ios/Flutter/Generated.xcconfig`)
+- `flutter build ios --config-only --no-codesign`
+- `pod install --repo-update` (generates Pods `.xcfilelist` files)
+- ensure the script is executable in git (`chmod +x ci_scripts/ci_post_clone.sh`)
+
+Without this script, Xcode Cloud commonly fails with:
+- missing `Generated.xcconfig`
+- missing `Pods-Runner-*.xcfilelist`
+
+---
+
 ## 2. Signing & Team
 
 | Step | Where in Xcode | Action |
