@@ -15,9 +15,12 @@ if [ -n "${RESULT_BUNDLE:-}" ] && [ -d "$RESULT_BUNDLE" ]; then
   echo "[1] Found xcresult bundle: $RESULT_BUNDLE"
   echo "Extracting errors..."
   
-  # Try to get all messages
-  xcrun xcresulttool get --legacy --path "$RESULT_BUNDLE" 2>/dev/null | \
-    grep -i "error\|failed\|phaseexecution" | tail -50 || true
+  xcrun xcresulttool get --legacy --path "$RESULT_BUNDLE" --format json > /tmp/xcresult.json 2>/dev/null || true
+  if [ -f /tmp/xcresult.json ]; then
+    echo "---- Errors (tail) ----"
+    grep -E "\"message\"|PhaseScriptExecution|shellScript|\\[CP\\]|Run Script|error:|failed" /tmp/xcresult.json | tail -120 || true
+    echo "-----------------------"
+  fi
   
   echo ""
 fi

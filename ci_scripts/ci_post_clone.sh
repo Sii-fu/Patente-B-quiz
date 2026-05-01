@@ -70,6 +70,57 @@ fi
 echo "✓ Found $XCFILELIST_COUNT xcfilelist files in $XCFILELIST_DIR"
 find "$XCFILELIST_DIR" -maxdepth 1 -name "*.xcfilelist" -print | sed 's#^#  - #'
 
+ensure_xcfilelist() {
+  TARGET_FILE="$1"
+  shift
+
+  if [ -f "$TARGET_FILE" ]; then
+    return 0
+  fi
+
+  for CANDIDATE in "$@"; do
+    if [ -f "$CANDIDATE" ]; then
+      cp "$CANDIDATE" "$TARGET_FILE"
+      echo "✓ Normalized xcfilelist: $(basename "$TARGET_FILE") <- $(basename "$CANDIDATE")"
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+echo ""
+echo "Normalizing xcfilelist names for Xcode archive configuration..."
+MISSING_REQUIRED=0
+
+for PART in frameworks resources; do
+  for IO in input output; do
+    RELEASE_TARGET="$XCFILELIST_DIR/Pods-Runner-${PART}-Release-${IO}-files.xcfilelist"
+    PROFILE_TARGET="$XCFILELIST_DIR/Pods-Runner-${PART}-Profile-${IO}-files.xcfilelist"
+
+    ensure_xcfilelist "$RELEASE_TARGET" \
+      "$XCFILELIST_DIR/Pods-Runner-${PART}-release-${IO}-files.xcfilelist" \
+      "$XCFILELIST_DIR/Pods-Runner-${PART}-profile-${IO}-files.xcfilelist" \
+      "$XCFILELIST_DIR/Pods-Runner-${PART}-Debug-${IO}-files.xcfilelist" \
+      "$XCFILELIST_DIR/Pods-Runner-${PART}-debug-${IO}-files.xcfilelist" || MISSING_REQUIRED=1
+
+    ensure_xcfilelist "$PROFILE_TARGET" \
+      "$XCFILELIST_DIR/Pods-Runner-${PART}-profile-${IO}-files.xcfilelist" \
+      "$XCFILELIST_DIR/Pods-Runner-${PART}-release-${IO}-files.xcfilelist" \
+      "$XCFILELIST_DIR/Pods-Runner-${PART}-Debug-${IO}-files.xcfilelist" \
+      "$XCFILELIST_DIR/Pods-Runner-${PART}-debug-${IO}-files.xcfilelist" || MISSING_REQUIRED=1
+  done
+done
+
+if [ "$MISSING_REQUIRED" -ne 0 ]; then
+  echo "ERROR: could not normalize required Release/Profile xcfilelists."
+  echo "Current xcfilelists in $XCFILELIST_DIR:"
+  find "$XCFILELIST_DIR" -maxdepth 1 -name "*.xcfilelist" -print | sed 's#^#  - #'
+  exit 1
+fi
+
+echo "✓ Release/Profile xcfilelists are ready for archive"
+
 echo ""
 echo "=========================================="
 echo "✓ Xcode Cloud setup complete"
