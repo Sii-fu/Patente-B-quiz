@@ -63,6 +63,25 @@ xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -configuration Relea
   || true
 
 echo ""
+echo "Checking Flutter backend script wiring..."
+if [ -f "ios/ci_scripts/flutter_xcode_backend.sh" ]; then
+  echo "✓ ios/ci_scripts/flutter_xcode_backend.sh exists"
+else
+  echo "✗ MISSING: ios/ci_scripts/flutter_xcode_backend.sh"
+  exit 1
+fi
+
+if [ -f "ios/Flutter/Generated.xcconfig" ]; then
+  FLUTTER_ROOT_VALUE="$(grep '^FLUTTER_ROOT=' ios/Flutter/Generated.xcconfig | head -1 | sed 's/^FLUTTER_ROOT=//')"
+  if [ -n "${FLUTTER_ROOT_VALUE:-}" ]; then
+    echo "✓ FLUTTER_ROOT in Generated.xcconfig: $FLUTTER_ROOT_VALUE"
+  else
+    echo "✗ FLUTTER_ROOT missing in ios/Flutter/Generated.xcconfig"
+    exit 1
+  fi
+fi
+
+echo ""
 echo "=========================================="
 echo "✓ Pre-build verification passed"
 echo "=========================================="
