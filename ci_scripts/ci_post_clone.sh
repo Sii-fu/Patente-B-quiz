@@ -40,8 +40,52 @@ echo "Running: flutter precache --ios"
 flutter precache --ios || { echo "ERROR: flutter precache failed"; exit 1; }
 
 echo ""
+echo "Cleaning stale Flutter iOS config..."
+rm -f ios/Flutter/Generated.xcconfig ios/Flutter/flutter_export_environment.sh
+rm -rf ios/Flutter/ephemeral
+
+echo ""
 echo "Generating Flutter iOS build files (config only)..."
-flutter build ios --config-only 2>&1 || echo "WARNING: flutter build config had non-fatal warnings (continuing)"
+set +e
+flutter build ios --config-only
+BUILD_STATUS=$?
+set -e
+if [ "$BUILD_STATUS" -ne 0 ]; then
+  echo "WARNING: flutter build ios --config-only exited with $BUILD_STATUS"
+fi
+
+if [ ! -f "ios/Flutter/Generated.xcconfig" ]; then
+  echo "ERROR: missing ios/Flutter/Generated.xcconfig after flutter build ios --config-only"
+  exit 1
+fi
+
+FLUTTER_ROOT_VALUE="$(grep '^FLUTTER_ROOT=' ios/Flutter/Generated.xcconfig | tail -1 | sed 's/^FLUTTER_ROOT=//')"
+FLUTTER_APP_VALUE="$(grep '^FLUTTER_APPLICATION_PATH=' ios/Flutter/Generated.xcconfig | tail -1 | sed 's/^FLUTTER_APPLICATION_PATH=//')"
+
+if [ -z "${FLUTTER_ROOT_VALUE:-}" ] || [ -z "${FLUTTER_APP_VALUE:-}" ]; then
+  echo "ERROR: Generated.xcconfig missing FLUTTER_ROOT or FLUTTER_APPLICATION_PATH"
+  exit 1
+fi
+
+if echo "$FLUTTER_ROOT_VALUE" | grep -q '\\'; then
+  echo "ERROR: Generated.xcconfig contains Windows-style FLUTTER_ROOT: $FLUTTER_ROOT_VALUE"
+  exit 1
+fi
+
+if echo "$FLUTTER_APP_VALUE" | grep -q '\\'; then
+  echo "ERROR: Generated.xcconfig contains Windows-style FLUTTER_APPLICATION_PATH: $FLUTTER_APP_VALUE"
+  exit 1
+fi
+
+if [ ! -d "$FLUTTER_ROOT_VALUE" ]; then
+  echo "ERROR: FLUTTER_ROOT path does not exist: $FLUTTER_ROOT_VALUE"
+  exit 1
+fi
+
+if [ ! -f "ios/Flutter/flutter_export_environment.sh" ]; then
+  echo "ERROR: missing ios/Flutter/flutter_export_environment.sh after flutter build ios --config-only"
+  exit 1
+fi
 
 # Install pods
 echo ""

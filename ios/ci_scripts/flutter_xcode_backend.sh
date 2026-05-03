@@ -21,6 +21,18 @@ if [ -z "${FLUTTER_ROOT:-}" ]; then
   exit 1
 fi
 
+if echo "$FLUTTER_ROOT" | grep -q '\\'; then
+  echo "error: FLUTTER_ROOT appears to be a Windows path: $FLUTTER_ROOT" >&2
+  echo "error: Regenerate ios/Flutter/Generated.xcconfig on macOS." >&2
+  exit 1
+fi
+
+if [ -n "${FLUTTER_APPLICATION_PATH:-}" ] && echo "$FLUTTER_APPLICATION_PATH" | grep -q '\\'; then
+  echo "error: FLUTTER_APPLICATION_PATH appears to be a Windows path: $FLUTTER_APPLICATION_PATH" >&2
+  echo "error: Regenerate ios/Flutter/Generated.xcconfig on macOS." >&2
+  exit 1
+fi
+
 BACKEND_SCRIPT="$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh"
 if [ ! -f "$BACKEND_SCRIPT" ]; then
   echo "error: Flutter backend script not found at $BACKEND_SCRIPT" >&2
