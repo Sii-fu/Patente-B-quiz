@@ -10,6 +10,26 @@ REPO_ROOT="${CI_PRIMARY_REPOSITORY_PATH:-.}"
 cd "$REPO_ROOT" || { echo "ERROR: Failed to cd to repo root"; exit 1; }
 echo "Working directory: $PWD"
 
+echo ""
+echo "Ensuring .env exists for Flutter assets..."
+if [ ! -f ".env" ]; then
+  if [ -n "${SUPABASE_URL:-}" ] && [ -n "${SUPABASE_ANON_KEY:-}" ]; then
+    cat > .env << EOF
+SUPABASE_URL=${SUPABASE_URL}
+SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+EOF
+    echo "✓ Created .env from CI environment variables"
+  elif [ -f ".env.example" ]; then
+    cp .env.example .env
+    echo "WARNING: .env was missing; copied .env.example (placeholders)"
+  else
+    echo "ERROR: .env missing and .env.example not found"
+    exit 1
+  fi
+else
+  echo "✓ .env already present"
+fi
+
 # Install Flutter if not present
 FLUTTER_ROOT="${FLUTTER_ROOT:-$HOME/flutter}"
 echo "Flutter root: $FLUTTER_ROOT"
