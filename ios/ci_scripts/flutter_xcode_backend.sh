@@ -42,5 +42,24 @@ fi
 echo "Flutter Xcode backend action: $ACTION"
 echo "Using FLUTTER_ROOT: $FLUTTER_ROOT"
 echo "Using backend script: $BACKEND_SCRIPT"
+LOG_DIR="$IOS_DIR/Flutter"
+LOG_FILE="$LOG_DIR/flutter_backend_${ACTION}.log"
 
-exec /bin/sh "$BACKEND_SCRIPT" "$ACTION"
+echo "Logging Flutter backend output to: $LOG_FILE"
+
+set -o pipefail
+/bin/sh "$BACKEND_SCRIPT" "$ACTION" 2>&1 | tee "$LOG_FILE"
+STATUS=$?
+set +o pipefail
+
+if [ "$STATUS" -ne 0 ]; then
+  echo "error: Flutter Xcode backend failed with status $STATUS" >&2
+  echo "error: Flutter config snapshot:" >&2
+  echo "error:  FLUTTER_ROOT=$FLUTTER_ROOT" >&2
+  echo "error:  FLUTTER_APPLICATION_PATH=${FLUTTER_APPLICATION_PATH:-<unset>}" >&2
+  echo "error:  FLUTTER_BUILD_DIR=${FLUTTER_BUILD_DIR:-<unset>}" >&2
+  ls -la "$LOG_DIR" >&2 || true
+  exit "$STATUS"
+fi
+
+exit 0

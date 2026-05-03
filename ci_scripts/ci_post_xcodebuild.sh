@@ -5,6 +5,8 @@ echo "====== POST-XCODEBUILD DIAGNOSTICS ======"
 echo "Build failed. Attempting to extract error details..."
 echo ""
 
+REPO_ROOT="${CI_PRIMARY_REPOSITORY_PATH:-/Volumes/workspace/repository}"
+
 # 1. Check xcresult bundle
 RESULT_BUNDLE="/Volumes/workspace/resultbundle.xcresult"
 if [ ! -d "$RESULT_BUNDLE" ]; then
@@ -46,12 +48,24 @@ if [ -d "/Volumes/workspace" ]; then
     done
 fi
 
+# 3b. Surface Flutter backend logs if present
+echo ""
+echo "[3b] Flutter backend logs (if any)..."
+if [ -d "$REPO_ROOT/ios/Flutter" ]; then
+  for LOG in "$REPO_ROOT/ios/Flutter"/flutter_backend_*.log; do
+    if [ -f "$LOG" ]; then
+      echo "  -> $LOG"
+      tail -200 "$LOG" || true
+    fi
+  done
+fi
+
 # 4. Check CocoaPods specifically
 echo ""
 echo "[4] CocoaPods diagnostic..."
-if [ -f "/Volumes/workspace/ios/Pods/Manifest.lock" ]; then
+if [ -f "$REPO_ROOT/ios/Pods/Manifest.lock" ]; then
   echo "Pods installed. Pod count:"
-  find /Volumes/workspace/ios/Pods -maxdepth 1 -type d | wc -l
+  find "$REPO_ROOT/ios/Pods" -maxdepth 1 -type d | wc -l
 else
   echo "WARNING: Pods directory not found or Manifest.lock missing!"
 fi
@@ -59,7 +73,7 @@ fi
 # 5. Check Generated.xcconfig
 echo ""
 echo "[5] Flutter Generated.xcconfig check..."
-ls -la /Volumes/workspace/ios/Flutter/ | grep -E "xcconfig|Generated" || \
+ls -la "$REPO_ROOT/ios/Flutter/" | grep -E "xcconfig|Generated" || \
   echo "WARNING: Expected xcconfig files not found!"
 
 echo ""
