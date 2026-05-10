@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:just_audio/just_audio.dart';
@@ -81,6 +82,7 @@ class _QuizScreenState extends State<QuizScreen> {
   AudioPlayer? _ttsAudioPlayer;
   bool _isTtsPlaying = false;
   String? _currentTtsAudioUrl;
+  Completer<void>? _ttsOperationLock;
 
   @override
   void initState() {
@@ -108,8 +110,16 @@ class _QuizScreenState extends State<QuizScreen> {
     _pageController.dispose();
     _questionNumbersScrollController.dispose();
     _ttsHelper.stop();
-    _audioPlayer.dispose();
-    _ttsAudioPlayer?.dispose();
+    if (defaultTargetPlatform == TargetPlatform.windows) {
+      unawaited(_pauseAndRewind(_audioPlayer));
+      unawaited(_pauseAndRewindOptional(_ttsAudioPlayer));
+    } else {
+      unawaited(_audioPlayer.dispose());
+      final ttsAudioPlayer = _ttsAudioPlayer;
+      if (ttsAudioPlayer != null) {
+        unawaited(ttsAudioPlayer.dispose());
+      }
+    }
     super.dispose();
   }
 
@@ -788,6 +798,31 @@ class _QuizScreenState extends State<QuizScreen> {
     });
   }
 
+  Future<void> _runTtsOperation(Future<void> Function() operation) async {
+    while (_ttsOperationLock != null) {
+      await _ttsOperationLock!.future;
+    }
+    final completer = Completer<void>();
+    _ttsOperationLock = completer;
+    try {
+      await operation();
+    } finally {
+      _ttsOperationLock = null;
+      completer.complete();
+    }
+  }
+
+  Future<void> _pauseAndRewind(AudioPlayer player) async {
+    await player.pause();
+    await player.seek(Duration.zero);
+  }
+
+  Future<void> _pauseAndRewindOptional(AudioPlayer? player) async {
+    if (player == null) return;
+    await player.pause();
+    await player.seek(Duration.zero);
+  }
+
   Future<void> _preloadCurrentQuestionAudio({String? languageCode}) async {
     if (_questions.isEmpty || _currentPage >= _questions.length) return;
 
@@ -797,14 +832,15 @@ class _QuizScreenState extends State<QuizScreen> {
     if (audioUrl == null || audioUrl.isEmpty) return;
 
     await _ensureTtsAudioPlayerInitialized();
-    if (_currentTtsAudioUrl == audioUrl && _ttsAudioPlayer!.audioSource != null) return;
-
-    try {
-      await _ttsAudioPlayer!.setUrl(audioUrl);
-      _currentTtsAudioUrl = audioUrl;
-    } catch (e) {
-      debugPrint('⚠️ Quiz audio preload skipped: $e');
-    }
+    await _runTtsOperation(() async {
+      if (_currentTtsAudioUrl == audioUrl && _ttsAudioPlayer!.audioSource != null) return;
+      try {
+        await _ttsAudioPlayer!.setUrl(audioUrl);
+        _currentTtsAudioUrl = audioUrl;
+      } catch (e) {
+        debugPrint('⚠️ Quiz audio preload skipped: $e');
+      }
+    });
   }
 
   Future<void> _speakQuestion() async {
@@ -812,7 +848,7 @@ class _QuizScreenState extends State<QuizScreen> {
     
     // Stop custom audio if playing
     if (_isCustomAudioPlaying) {
-      await _audioPlayer.stop();
+      await _pauseAndRewind(_audioPlayer);
       if (mounted) setState(() { _isCustomAudioPlaying = false; });
     }
     
@@ -820,7 +856,7 @@ class _QuizScreenState extends State<QuizScreen> {
     
     // Toggle off if already playing
     if (_isTtsPlaying) {
-      await _ttsAudioPlayer?.stop();
+      await _pauseAndRewindOptional(_ttsAudioPlayer);
       setState(() => _isTtsPlaying = false);
       return;
     }
@@ -863,11 +899,13 @@ class _QuizScreenState extends State<QuizScreen> {
     
     try {
       setState(() => _isTtsPlaying = true);
-      if (_currentTtsAudioUrl != audioUrl || _ttsAudioPlayer!.audioSource == null) {
-        await _ttsAudioPlayer!.setUrl(audioUrl);
-        _currentTtsAudioUrl = audioUrl;
-      }
-      await _ttsAudioPlayer!.play();
+      await _runTtsOperation(() async {
+        if (_currentTtsAudioUrl != audioUrl || _ttsAudioPlayer!.audioSource == null) {
+          await _ttsAudioPlayer!.setUrl(audioUrl);
+          _currentTtsAudioUrl = audioUrl;
+        }
+        await _ttsAudioPlayer!.play();
+      });
     } catch (e) {
       debugPrint('❌ TTS audio playback error: $e');
       setState(() => _isTtsPlaying = false);
@@ -903,7 +941,7 @@ class _QuizScreenState extends State<QuizScreen> {
     _ttsHelper.stop();
 
     if (_isCustomAudioPlaying) {
-      await _audioPlayer.stop();
+      await _pauseAndRewind(_audioPlayer);
       if (mounted) setState(() { _isCustomAudioPlaying = false; });
       return;
     }
@@ -1264,7 +1302,7 @@ class _QuizScreenState extends State<QuizScreen> {
                     _isCustomAudioBuffering = false;
                   });
                   _ttsHelper.stop();
-                  _audioPlayer.stop();
+                  unawaited(_pauseAndRewind(_audioPlayer));
                   // Scroll question number to center
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     _scrollToCurrentQuestion(index);
