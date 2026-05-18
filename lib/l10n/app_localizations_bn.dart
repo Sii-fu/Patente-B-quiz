@@ -61,9 +61,6 @@ class AppLocalizationsBn extends AppLocalizations {
   String get authSubtitleSignup => 'পড়াশোনা শুরু করতে নিবন্ধন করুন';
 
   @override
-  String get authContinueGoogle => 'Google দিয়ে চালিয়ে যান';
-
-  @override
   String get authContinueFacebook => 'Facebook দিয়ে চালিয়ে যান';
 
   @override
@@ -107,9 +104,6 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get authErrorPasswordShort => 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে';
-
-  @override
-  String get authErrorGoogle => 'Google সাইন-ইন ত্রুটি';
 
   @override
   String get authErrorFacebook => 'Facebook সাইন-ইন ত্রুটি';
@@ -391,6 +385,12 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get dashboardVideoTutorialsDesc => 'গাইডেড পাঠ দেখুন';
+
+  @override
+  String get dashboardLiveClasses => 'লাইভ ক্লাস';
+
+  @override
+  String get dashboardLiveClassesDesc => 'লাইভ ক্লাসের রেকর্ডিং দেখুন';
 
   @override
   String get dashboardVideoCount => 'ভিডিও';
@@ -1097,6 +1097,15 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get videoTipCaptions =>
       'বেশিরভাগ ভিডিওর জন্য ইতালীয় সাবটাইটেল উপলব্ধ';
+
+  @override
+  String get liveClassesTitle => 'লাইভ ক্লাস';
+
+  @override
+  String get liveClassesEmpty => 'এখনও কোন লাইভ ক্লাস উপলব্ধ নেই';
+
+  @override
+  String get liveClassesDateLabel => 'ক্লাসের তারিখ';
 
   @override
   String get profileOfflineMode =>

@@ -84,6 +84,8 @@ class VideoItem {
   final String youtubeUrl;
   final int? durationMinutes;
   final String? thumbnailUrl;
+  final bool isLiveClass;
+  final DateTime? classDate;
   final int displayOrder;
   final DateTime createdAt;
 
@@ -96,12 +98,23 @@ class VideoItem {
     required this.youtubeUrl,
     this.durationMinutes,
     this.thumbnailUrl,
+    this.isLiveClass = false,
+    this.classDate,
     required this.displayOrder,
     required this.createdAt,
   });
 
   factory VideoItem.fromJson(Map<String, dynamic> json) {
     final categoryRaw = json['category_id'];
+    final isLiveClassRaw = json['is_live_class'];
+    final classDateRaw = json['class_date'];
+
+    final parsedClassDate = classDateRaw is String
+        ? DateTime.tryParse(classDateRaw)
+        : classDateRaw is DateTime
+            ? classDateRaw
+            : null;
+
     return VideoItem(
       id: json['id'] as int,
       categoryId: categoryRaw is int ? categoryRaw : (categoryRaw is num ? categoryRaw.toInt() : null),
@@ -111,6 +124,8 @@ class VideoItem {
       youtubeUrl: json['youtube_url'] as String,
       durationMinutes: json['duration_minutes'] as int?,
       thumbnailUrl: json['thumbnail_url'] as String?,
+      isLiveClass: isLiveClassRaw == true || isLiveClassRaw == 1 || isLiveClassRaw == 'true',
+      classDate: parsedClassDate,
       displayOrder: json['display_order'] as int? ?? 0,
       createdAt: DateTime.parse(json['created_at'] as String),
     );
@@ -126,6 +141,8 @@ class VideoItem {
       'youtube_url': youtubeUrl,
       'duration_minutes': durationMinutes,
       'thumbnail_url': thumbnailUrl,
+      'is_live_class': isLiveClass,
+      'class_date': classDate?.toIso8601String(),
       'display_order': displayOrder,
       'created_at': createdAt.toIso8601String(),
     };

@@ -175,8 +175,8 @@ class _SplashScreenState extends State<SplashScreen> {
           child: ClipOval(
             child: Image.asset(
               'assets/icon/app_icon.png',
-              width: 180,
-              height: 180,
+              width: 120,
+              height: 120,
               fit: BoxFit.cover,
             ),
           ),
@@ -209,7 +209,29 @@ class _SplashScreenState extends State<SplashScreen> {
             letterSpacing: 0.5,
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 28),
+        // Person Image
+        Container(
+          width: 220,
+          height: 220,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.18),
+                blurRadius: 22,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: ClipOval(
+            child: Image.asset(
+              'assets/morshed.jpeg',
+              fit: BoxFit.cover,
+            ),
+          ),
+        ),
+        const SizedBox(height: 28),
         // Motto
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),

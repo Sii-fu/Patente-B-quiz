@@ -29,6 +29,11 @@ class _AdminVideoEditScreenState extends State<AdminVideoEditScreen> {
   bool _isSaving = false;
   String? _thumbnailUrl;
   File? _selectedThumbnailFile;
+  List<Map<String, dynamic>> _videoCategories = [];
+  int? _selectedCategoryId;
+  bool _isLoadingCategories = false;
+  bool _isLiveClass = false;
+  DateTime _classDate = DateTime.now();
 
   bool get _isEditing => widget.video != null;
 
@@ -46,6 +51,10 @@ class _AdminVideoEditScreenState extends State<AdminVideoEditScreen> {
       text: (widget.video?['display_order'] ?? 0).toString(),
     );
     _thumbnailUrl = widget.video?['thumbnail_url'] as String?;
+    _selectedCategoryId = _toInt(widget.video?['category_id']);
+    _isLiveClass = widget.video?['is_live_class'] == true;
+    _classDate = _parseClassDate(widget.video?['class_date']) ?? DateTime.now();
+    _loadVideoCategories();
   }
 
   @override
@@ -77,6 +86,56 @@ class _AdminVideoEditScreenState extends State<AdminVideoEditScreen> {
     }
   }
 
+  int? _toInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return null;
+  }
+
+  DateTime? _parseClassDate(dynamic value) {
+    if (value is DateTime) return value;
+    if (value is String) return DateTime.tryParse(value);
+    return null;
+  }
+
+  String _localizedCategoryName(Map<String, dynamic> category, String languageCode) {
+    switch (languageCode) {
+      case 'en':
+        return (category['name_en'] ?? category['name_it'] ?? '').toString();
+      case 'bn':
+        return (category['name_bn'] ?? category['name_it'] ?? '').toString();
+      default:
+        return (category['name_it'] ?? '').toString();
+    }
+  }
+
+  Future<void> _loadVideoCategories() async {
+    setState(() => _isLoadingCategories = true);
+    final categories = await _adminRepository.getVideoCategories();
+    if (!mounted) return;
+    setState(() {
+      _videoCategories = categories;
+      if (_selectedCategoryId == null && categories.isNotEmpty) {
+        _selectedCategoryId = _toInt(categories.first['id']);
+      }
+      _isLoadingCategories = false;
+    });
+  }
+
+  Future<void> _pickClassDate() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _classDate,
+      firstDate: DateTime(now.year - 10),
+      lastDate: DateTime(now.year + 10),
+    );
+    if (picked == null || !mounted) return;
+    setState(() {
+      _classDate = DateTime(picked.year, picked.month, picked.day);
+    });
+  }
+
   String? _extractYouTubeId(String url) {
     final regExp = RegExp(
       r'(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})',
@@ -89,6 +148,13 @@ class _AdminVideoEditScreenState extends State<AdminVideoEditScreen> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    if (!_isLiveClass && _selectedCategoryId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a video category')),
+      );
+      return;
+    }
+
     setState(() => _isSaving = true);
 
     String? finalThumbnailUrl = _thumbnailUrl;
@@ -111,9 +177,14 @@ class _AdminVideoEditScreenState extends State<AdminVideoEditScreen> {
       finalThumbnailUrl = uploaded;
     }
 
+    final categoryIdToSave = _isLiveClass
+        ? (_selectedCategoryId ??
+            (_videoCategories.isNotEmpty ? _toInt(_videoCategories.first['id']) : null))
+        : _selectedCategoryId;
+
     final success = await _adminRepository.upsertVideo(
       id: widget.video?['id'] as int?,
-      categoryId: widget.video?['category_id'] as int?,
+      categoryId: categoryIdToSave,
       titleIt: _titleItController.text.trim(),
       titleEn: _titleEnController.text.trim().isEmpty ? null : _titleEnController.text.trim(),
       titleBn: _titleBnController.text.trim().isEmpty ? null : _titleBnController.text.trim(),
@@ -121,6 +192,8 @@ class _AdminVideoEditScreenState extends State<AdminVideoEditScreen> {
       durationMinutes: int.tryParse(_durationController.text.trim()),
       thumbnailUrl: finalThumbnailUrl,
       displayOrder: int.tryParse(_displayOrderController.text.trim()) ?? 0,
+      isLiveClass: _isLiveClass,
+      classDate: _classDate,
     );
 
     if (!mounted) return;
@@ -141,6 +214,14 @@ class _AdminVideoEditScreenState extends State<AdminVideoEditScreen> {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final previewImagePath = _selectedThumbnailFile?.path;
+    final languageCode = Localizations.localeOf(context).languageCode;
+    final categoryIds = _videoCategories
+        .map((category) => _toInt(category['id']))
+        .whereType<int>()
+        .toSet();
+    final dropdownCategoryValue =
+        categoryIds.contains(_selectedCategoryId) ? _selectedCategoryId : null;
+    final formattedClassDate = MaterialLocalizations.of(context).formatMediumDate(_classDate);
 
     return Scaffold(
       appBar: AppBar(
@@ -194,6 +275,75 @@ class _AdminVideoEditScreenState extends State<AdminVideoEditScreen> {
               },
             ),
             const SizedBox(height: 12),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Is this a Live Class?'),
+              value: _isLiveClass,
+              onChanged: _isSaving
+                  ? null
+                  : (value) {
+                      setState(() {
+                        final wasLiveClass = _isLiveClass;
+                        _isLiveClass = value;
+                        if (!wasLiveClass && value) {
+                          _classDate = DateTime.now();
+                        }
+                        if (_isLiveClass &&
+                            _selectedCategoryId == null &&
+                            _videoCategories.isNotEmpty) {
+                          _selectedCategoryId = _toInt(_videoCategories.first['id']);
+                        }
+                      });
+                    },
+            ),
+            if (_isLiveClass) ...[
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(Icons.calendar_month, color: theme.colorScheme.primary),
+                title: const Text('Class Date'),
+                subtitle: Text(formattedClassDate),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: _pickClassDate,
+              ),
+              const SizedBox(height: 12),
+            ],
+            if (!_isLiveClass) ...[
+              if (_isLoadingCategories)
+                const LinearProgressIndicator()
+              else
+                DropdownButtonFormField<int>(
+                  value: dropdownCategoryValue,
+                  decoration: const InputDecoration(
+                    labelText: 'Video Category *',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: _videoCategories
+                      .map((category) {
+                        final id = _toInt(category['id']);
+                        if (id == null) return null;
+                        return DropdownMenuItem<int>(
+                          value: id,
+                          child: Text(_localizedCategoryName(category, languageCode)),
+                        );
+                      })
+                      .whereType<DropdownMenuItem<int>>()
+                      .toList(),
+                  onChanged: _isSaving
+                      ? null
+                      : (value) {
+                          setState(() {
+                            _selectedCategoryId = value;
+                          });
+                        },
+                  validator: (_) {
+                    if (_selectedCategoryId == null) {
+                      return 'Please select a video category';
+                    }
+                    return null;
+                  },
+                ),
+              const SizedBox(height: 12),
+            ],
             Row(
               children: [
                 Expanded(

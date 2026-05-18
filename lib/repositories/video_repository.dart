@@ -36,43 +36,69 @@ class VideoRepository {
     }
   }
 
-  /// Fetch complete video library with categories and their videos
-  /// 
-  /// Returns a list of [VideoCategory] objects, each containing their associated videos.
-  /// Throws [VideoOfflineException] if no internet connection is available.
-  Future<List<VideoCategory>> fetchVideoLibrary() async {
-    debugPrint('🎬 fetchVideoLibrary() started');
+  /// Fetch normal (non-live) videos grouped by category.
+  /// Returns a list of [VideoCategory] objects with populated videos.
+  Future<List<VideoCategory>> fetchNormalVideos() async {
+    debugPrint('🎬 fetchNormalVideos() started');
     try {
-      // Fetch categories and videos in parallel for better performance
       final results = await Future.wait([
         _fetchCategories(),
-        _fetchVideos(),
+        _fetchNormalVideosData(),
       ]);
 
       final categories = results[0] as List<VideoCategory>;
       final videos = results[1] as List<VideoItem>;
-      debugPrint('✅ fetchVideoLibrary() fetched categories=${categories.length}, videos=${videos.length}');
+      debugPrint('✅ fetchNormalVideos() fetched categories=${categories.length}, videos=${videos.length}');
 
-      // Group videos by category
       return _groupVideosByCategory(categories, videos);
     } catch (e) {
-      debugPrint('❌ fetchVideoLibrary() error type=${e.runtimeType} error=$e');
+      debugPrint('❌ fetchNormalVideos() error type=${e.runtimeType} error=$e');
       if (e is VideoOfflineException) rethrow;
       
       if (e is PostgrestException) {
         debugPrint(
-          '❌ Supabase PostgrestException in fetchVideoLibrary(): code=${e.code}, message=${e.message}, details=${e.details}, hint=${e.hint}',
+          '❌ Supabase PostgrestException in fetchNormalVideos(): code=${e.code}, message=${e.message}, details=${e.details}, hint=${e.hint}',
         );
         throw Exception('Failed to load videos: ${e.message}');
       }
 
       final hasConnection = await _hasInternetConnection();
       if (!hasConnection) {
-        debugPrint('❌ fetchVideoLibrary() mapped to VideoOfflineException');
+        debugPrint('❌ fetchNormalVideos() mapped to VideoOfflineException');
         throw VideoOfflineException();
       }
 
       throw Exception('An error occurred while loading videos');
+    }
+  }
+
+  /// Backward-compatible alias for category-grouped normal videos.
+  Future<List<VideoCategory>> fetchVideoLibrary() => fetchNormalVideos();
+
+  /// Fetch live classes ordered by class_date DESC (newest first).
+  Future<List<VideoItem>> fetchLiveClasses() async {
+    debugPrint('🎬 fetchLiveClasses() started');
+    try {
+      final response = await _supabase
+          .from('videos')
+          .select()
+          .eq('is_live_class', true)
+          .order('class_date', ascending: false);
+
+      final data = List<Map<String, dynamic>>.from(response);
+      debugPrint('✅ fetchLiveClasses() rows=${data.length}');
+      return data.map((json) => VideoItem.fromJson(json)).toList();
+    } catch (e) {
+      debugPrint('❌ fetchLiveClasses() error type=${e.runtimeType} error=$e');
+      if (e is VideoOfflineException) rethrow;
+      if (e is PostgrestException) {
+        throw Exception('Failed to load live classes: ${e.message}');
+      }
+      final hasConnection = await _hasInternetConnection();
+      if (!hasConnection) {
+        throw VideoOfflineException();
+      }
+      throw Exception('An error occurred while loading live classes');
     }
   }
 
@@ -89,16 +115,17 @@ class VideoRepository {
     return data.map((json) => VideoCategory.fromJson(json)).toList();
   }
 
-  /// Fetch all videos ordered by display_order
-  Future<List<VideoItem>> _fetchVideos() async {
-    debugPrint('🎞️ _fetchVideos() querying videos');
+  /// Fetch normal (non-live) videos ordered by display_order
+  Future<List<VideoItem>> _fetchNormalVideosData() async {
+    debugPrint('🎞️ _fetchNormalVideosData() querying videos');
     final response = await _supabase
         .from('videos')
         .select()
+        .eq('is_live_class', false)
         .order('display_order', ascending: true);
 
     final data = List<Map<String, dynamic>>.from(response);
-    debugPrint('✅ _fetchVideos() rows=${data.length}');
+    debugPrint('✅ _fetchNormalVideosData() rows=${data.length}');
     return data.map((json) => VideoItem.fromJson(json)).toList();
   }
 
@@ -106,7 +133,7 @@ class VideoRepository {
   Future<List<VideoItem>> fetchAllVideos() async {
     debugPrint('🎬 fetchAllVideos() started');
     try {
-      final videos = await _fetchVideos();
+      final videos = await _fetchNormalVideosData();
       debugPrint('✅ fetchAllVideos() success videos=${videos.length}');
       return videos;
     } catch (e) {
@@ -159,6 +186,7 @@ class VideoRepository {
           .from('videos')
           .select()
           .eq('category_id', categoryId)
+          .eq('is_live_class', false)
           .order('display_order', ascending: true);
 
       final data = List<Map<String, dynamic>>.from(response);
