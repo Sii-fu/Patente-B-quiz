@@ -13,6 +13,7 @@ import 'theory_chapters_screen.dart';
 import 'all_quizzes_screen.dart';
 import 'settings_screen.dart';
 import 'video_materials_screen.dart';
+import 'live_classes_screen.dart';
 import 'quick_practice_screen.dart';
 import '../../features/profile/profile_screen.dart';
 import '../../services/profile_stats_service.dart';
@@ -517,6 +518,22 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const VideoMaterialsScreen()),
+            );
+          },
+        ),
+        _buildFeatureCard(
+          context: context,
+          icon: Icons.live_tv,
+          iconColor: Theme.of(context).colorScheme.primary,
+          title: l10n.dashboardLiveClasses,
+          subtitle: l10n.dashboardLiveClassesDesc,
+          tagText: l10n.dashboardNew,
+          tagColor: Theme.of(context).colorScheme.primary,
+          onTap: () {
+            HapticFeedback.mediumImpact();
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const LiveClassesScreen()),
             );
           },
         ),

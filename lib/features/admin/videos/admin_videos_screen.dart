@@ -201,6 +201,12 @@ class _AdminVideosScreenState extends State<AdminVideosScreen> {
       final oldThumbnail = (video['thumbnail_url'] ?? '').toString();
       final titleEnValue = video['title_en']?.toString();
       final titleBnValue = video['title_bn']?.toString();
+      final classDateRaw = video['class_date'];
+      final classDate = classDateRaw is String
+          ? (DateTime.tryParse(classDateRaw) ?? DateTime.now())
+          : classDateRaw is DateTime
+              ? classDateRaw
+              : DateTime.now();
       final success = await _adminRepository.upsertVideo(
         id: video['id'] as int,
         categoryId: video['category_id'] as int?,
@@ -211,6 +217,8 @@ class _AdminVideosScreenState extends State<AdminVideosScreen> {
         durationMinutes: video['duration_minutes'] as int?,
         thumbnailUrl: uploadedUrl,
         displayOrder: video['display_order'] as int? ?? 0,
+        isLiveClass: video['is_live_class'] == true,
+        classDate: classDate,
       );
 
       if (!success || !mounted) return;

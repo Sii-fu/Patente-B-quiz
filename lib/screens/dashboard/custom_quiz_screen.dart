@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:photo_view/photo_view.dart';
@@ -64,10 +65,12 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
   AudioPlayer? _audioPlayer;
   bool _isCustomAudioPlaying = false;
   bool _isCustomAudioLoading = false;
+  String? _currentCustomAudioUrl;
   
   // Audio player for question TTS audio (from URL)
   AudioPlayer? _ttsAudioPlayer;
   String? _currentTtsAudioUrl;
+  Completer<void>? _ttsOperationLock;
   
   // TTS state
   bool _isTtsSpeaking = false;
@@ -90,8 +93,19 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
     _pageController.dispose();
     _questionNumbersScrollController.dispose();
     _ttsHelper.stop();
-    _audioPlayer?.dispose();
-    _ttsAudioPlayer?.dispose();
+    if (defaultTargetPlatform == TargetPlatform.windows) {
+      unawaited(_pauseAndRewind(_audioPlayer));
+      unawaited(_pauseAndRewind(_ttsAudioPlayer));
+    } else {
+      final audioPlayer = _audioPlayer;
+      final ttsAudioPlayer = _ttsAudioPlayer;
+      if (audioPlayer != null) {
+        unawaited(audioPlayer.dispose());
+      }
+      if (ttsAudioPlayer != null) {
+        unawaited(ttsAudioPlayer.dispose());
+      }
+    }
     super.dispose();
   }
 
@@ -458,12 +472,13 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
     // Stop custom audio if playing
     if (_isCustomAudioPlaying) {
       await _audioPlayer?.pause();
+      await _audioPlayer?.seek(Duration.zero);
       setState(() => _isCustomAudioPlaying = false);
     }
     
     // Toggle off if already speaking
     if (_isTtsSpeaking) {
-      await _ttsAudioPlayer?.stop();
+      await _pauseAndRewind(_ttsAudioPlayer);
       setState(() => _isTtsSpeaking = false);
       return;
     }
@@ -508,6 +523,26 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
     });
   }
 
+  Future<void> _runTtsOperation(Future<void> Function() operation) async {
+    while (_ttsOperationLock != null) {
+      await _ttsOperationLock!.future;
+    }
+    final completer = Completer<void>();
+    _ttsOperationLock = completer;
+    try {
+      await operation();
+    } finally {
+      _ttsOperationLock = null;
+      completer.complete();
+    }
+  }
+
+  Future<void> _pauseAndRewind(AudioPlayer? player) async {
+    if (player == null) return;
+    await player.pause();
+    await player.seek(Duration.zero);
+  }
+
   Future<void> _preloadCurrentQuestionAudio({String? languageCode}) async {
     if (_questions.isEmpty || _currentPage >= _questions.length) return;
 
@@ -517,14 +552,15 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
     if (audioUrl == null || audioUrl.isEmpty) return;
 
     await _ensureTtsAudioPlayerInitialized();
-    if (_currentTtsAudioUrl == audioUrl && _ttsAudioPlayer!.audioSource != null) return;
-
-    try {
-      await _ttsAudioPlayer!.setUrl(audioUrl);
-      _currentTtsAudioUrl = audioUrl;
-    } catch (e) {
-      debugPrint('⚠️ Audio preload skipped: $e');
-    }
+    await _runTtsOperation(() async {
+      if (_currentTtsAudioUrl == audioUrl && _ttsAudioPlayer!.audioSource != null) return;
+      try {
+        await _ttsAudioPlayer!.setUrl(audioUrl);
+        _currentTtsAudioUrl = audioUrl;
+      } catch (e) {
+        debugPrint('⚠️ Audio preload skipped: $e');
+      }
+    });
   }
   
   Future<void> _playAudioFromUrl(String audioUrl) async {
@@ -532,13 +568,15 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
     
     try {
       setState(() => _isTtsSpeaking = true);
-      if (_currentTtsAudioUrl != audioUrl || _ttsAudioPlayer!.audioSource == null) {
-        debugPrint('🎧 Loading audio from URL: $audioUrl');
-        await _ttsAudioPlayer!.setUrl(audioUrl);
-        _currentTtsAudioUrl = audioUrl;
-      }
-      debugPrint('▶️ Playing audio from URL');
-      await _ttsAudioPlayer!.play();
+      await _runTtsOperation(() async {
+        if (_currentTtsAudioUrl != audioUrl || _ttsAudioPlayer!.audioSource == null) {
+          debugPrint('🎧 Loading audio from URL: $audioUrl');
+          await _ttsAudioPlayer!.setUrl(audioUrl);
+          _currentTtsAudioUrl = audioUrl;
+        }
+        debugPrint('▶️ Playing audio from URL');
+        await _ttsAudioPlayer!.play();
+      });
     } catch (e) {
       debugPrint('❌ TTS audio playback error: $e');
       setState(() {
@@ -619,9 +657,10 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
       } else {
         // Check if we need to load new audio (different question or not loaded)
         final currentSource = _audioPlayer!.audioSource;
-        if (currentSource == null) {
+        if (_currentCustomAudioUrl != audioUrl || currentSource == null) {
           setState(() => _isCustomAudioLoading = true);
           await _audioPlayer!.setUrl(audioUrl);
+          _currentCustomAudioUrl = audioUrl;
         }
         await _audioPlayer!.play();
       }
@@ -643,7 +682,7 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
     
     // If already playing this exact language, stop it
     if (_isTtsSpeaking && _playingLanguage == languageCode) {
-      await _ttsAudioPlayer?.stop();
+      await _pauseAndRewind(_ttsAudioPlayer);
       setState(() {
         _isTtsSpeaking = false;
         _playingLanguage = null;
@@ -653,7 +692,7 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
     
     // Stop any currently playing audio
     if (_isTtsSpeaking) {
-      await _ttsAudioPlayer?.stop();
+      await _pauseAndRewind(_ttsAudioPlayer);
     }
     if (_isCustomAudioPlaying) {
       await _audioPlayer?.pause();
@@ -689,15 +728,14 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
   }
   
   // Reset audio player when changing questions
-  void _resetAudioPlayer() {
-    _audioPlayer?.stop();
-    _audioPlayer?.dispose();
-    _audioPlayer = null;
+  Future<void> _resetAudioPlayer() async {
+    await _pauseAndRewind(_audioPlayer);
     _isCustomAudioPlaying = false;
     _isCustomAudioLoading = false;
+    _currentCustomAudioUrl = null;
     
     // Also reset TTS audio player
-    _ttsAudioPlayer?.stop();
+    await _pauseAndRewind(_ttsAudioPlayer);
     _isTtsSpeaking = false;
     _playingLanguage = null; // Reset playing language
     _currentTtsAudioUrl = null;
@@ -1118,7 +1156,7 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
                 physics: const BouncingScrollPhysics(),
                 onPageChanged: (index) {
                   // Reset audio player when changing questions
-                  _resetAudioPlayer();
+                  unawaited(_resetAudioPlayer());
                   // Stop TTS when changing questions
                   if (_isTtsSpeaking) {
                     _ttsHelper.stop();

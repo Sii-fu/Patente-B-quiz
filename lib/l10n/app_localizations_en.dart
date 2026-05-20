@@ -61,9 +61,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authSubtitleSignup => 'Register to start studying';
 
   @override
-  String get authContinueGoogle => 'Continue with Google';
-
-  @override
   String get authContinueFacebook => 'Continue with Facebook';
 
   @override
@@ -107,9 +104,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authErrorPasswordShort => 'Password must be at least 6 characters';
-
-  @override
-  String get authErrorGoogle => 'Google Sign-In error';
 
   @override
   String get authErrorFacebook => 'Facebook Sign-In error';
@@ -390,6 +384,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dashboardVideoTutorialsDesc => 'Watch guided lessons';
+
+  @override
+  String get dashboardLiveClasses => 'Live Classes';
+
+  @override
+  String get dashboardLiveClassesDesc => 'Watch live class recordings';
 
   @override
   String get dashboardVideoCount => 'videos';
@@ -1092,6 +1092,15 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get videoTipCaptions =>
       'Italian captions are available for most videos';
+
+  @override
+  String get liveClassesTitle => 'Live Classes';
+
+  @override
+  String get liveClassesEmpty => 'No live classes available yet';
+
+  @override
+  String get liveClassesDateLabel => 'Class Date';
 
   @override
   String get profileOfflineMode =>

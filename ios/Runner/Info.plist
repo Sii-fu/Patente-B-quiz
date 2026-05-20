@@ -96,6 +96,38 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
+	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
+
+	<!-- ─── Supabase Auth Deep Linking ─────────────────────────────────────── -->
+	<!-- Scheme format: io.supabase.<project-ref>                              -->
+	<!-- Matches the redirect URL configured in Supabase → Auth → URL Config   -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>supabase-auth</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<!-- Replace with your own Supabase project ref if it changes -->
+				<string>io.supabase.gtlzxkfkfzndfsuqiyge</string>
+			</array>
+		</dict>
+	</array>
+
+	<!-- ─── YouTube / Web-view Network Transport Security ──────────────────── -->
+	<!-- Required so youtube_player_flutter can load iframe embeds over HTTP.   -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoadsInWebContent</key>
+		<true/>
+	</dict>
+
+	<!-- ─── YouTube Embedded-Views Preview (flutter_inappwebview / ytplayer) ─ -->
 	<key>io.flutter.embedded_views_preview</key>
 	<true/>
 </dict>

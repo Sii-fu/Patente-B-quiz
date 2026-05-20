@@ -1,12 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
-import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../utils/constants.dart';
-import '../../../services/apple_auth_service.dart';
 import '../../../services/secure_storage_service.dart';
 
 class AuthScreen extends StatefulWidget {
@@ -77,83 +72,6 @@ class _AuthScreenState extends State<AuthScreen> {
     super.dispose();
   }
 
-  // Future<void> _signInWithGoogle() async {
-  //   setState(() {
-  //     _isLoading = true;
-  //   });
-  //   try {
-  //     // Initialize Google Sign In
-  //     final GoogleSignIn googleSignIn = GoogleSignIn(
-  //       clientId: 'YOUR_GOOGLE_CLIENT_ID', // TODO: Add your Google Client ID
-  //     );
-  //     // Trigger Google Sign In flow
-  //     final googleUser = await googleSignIn.signIn();
-  //     if (googleUser == null) {
-  //       // User cancelled the sign-in
-  //       setState(() {
-  //         _isLoading = false;
-  //       });
-  //       return;
-  //     }
-  //     final googleAuth = await googleUser.authentication;
-  //     final accessToken = googleAuth.accessToken;
-  //     final idToken = googleAuth.idToken;
-  //     if (accessToken == null || idToken == null) {
-  //       throw Exception('Missing Google Auth Token');
-  //     }
-  //     // Sign in to Supabase with Google credentials
-  //     await Supabase.instance.client.auth.signInWithIdToken(
-  //       provider: OAuthProvider.google,
-  //       idToken: idToken,
-  //       accessToken: accessToken,
-  //     );
-  //     // Navigation handled by auth state listener
-  //   } catch (e) {
-  //     if (mounted) {
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         SnackBar(
-  //           content: Text('${AppLocalizations.of(context)!.authErrorGoogle}: $e'),
-  //           backgroundColor: Theme.of(context).colorScheme.error,
-  //         ),
-  //       );
-  //     }
-  //   } finally {
-  //     if (mounted) {
-  //       setState(() {
-  //         _isLoading = false;
-  //       });
-  //     }
-  //   }
-  // }
-  // Future<void> _signInWithFacebook() async {
-  //   setState(() {
-  //     _isLoading = true;
-  //   });
-  //   try {
-  //     // // Note: Facebook login requires additional setup in Supabase dashboard
-  //     // // and the flutter_facebook_auth package
-  //     // await Supabase.instance.client.auth.signInWithOAuth(
-  //     //   OAuthProvider.facebook,
-  //     //   redirectTo: 'YOUR_APP_SCHEME://login-callback', // TODO: Configure
-  //     // );
-        //   } catch (e) {
-  //     if (mounted) {
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         SnackBar(
-  //           content: Text('${AppLocalizations.of(context)!.authErrorFacebook}: $e'),
-  //           backgroundColor: Theme.of(context).colorScheme.error,
-  //         ),
-  //       );
-  //     }
-  //   } finally {
-  //     if (mounted) {
-  //       setState(() {
-  //         _isLoading = false;
-  //       });
-  //     }
-  //   }
-  // }
-
   Future<void> _submitEmailAuth() async {
     if (!_formKey.currentState!.validate()) {
       return;
@@ -221,38 +139,6 @@ class _AuthScreenState extends State<AuthScreen> {
     
     if (mounted) {
       Navigator.pushReplacementNamed(context, AppConstants.routeHome);
-    }
-  }
-
-  // ── Apple Sign-In (iOS App Store requirement) ──────────────────────────────
-  Future<void> _signInWithApple() async {
-    HapticFeedback.mediumImpact();
-    setState(() => _isLoading = true);
-    try {
-      await AppleAuthService.instance.signIn();
-      // Navigation handled by onAuthStateChange listener in initState
-    } on SignInWithAppleAuthorizationException catch (e) {
-      // User cancelled — not an error worth reporting
-      if (e.code == AuthorizationErrorCode.canceled) return;
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Apple Sign-In failed: ${e.message}'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Apple Sign-In error: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -342,44 +228,7 @@ class _AuthScreenState extends State<AuthScreen> {
                 ),
                 const SizedBox(height: 32),
 
-                // // Social Login Buttons
-                // ElevatedButton.icon(
-                //   onPressed: _isLoading ? null : _signInWithGoogle,
-                //   icon: const Icon(Icons.g_mobiledata, size: 28),
-                //   label: Text(AppLocalizations.of(context)!.authContinueGoogle),
-                //   style: ElevatedButton.styleFrom(
-                //     backgroundColor: Theme.of(context).colorScheme.surface,
-                //     foregroundColor: Theme.of(context).colorScheme.onSurface,
-                //     side: BorderSide(color: Theme.of(context).colorScheme.outline),
-                //   ),
-                // ),
-                // const SizedBox(height: 12),
-                // ElevatedButton.icon(
-                //   onPressed: _isLoading ? null : _signInWithFacebook,
-                //   icon: const Icon(Icons.facebook, size: 24),
-                //   label: Text(AppLocalizations.of(context)!.authContinueFacebook),
-                //   style: ElevatedButton.styleFrom(
-                //     backgroundColor: const Color(0xFF1877F2),
-                //     foregroundColor: Colors.white,
-                //   ),
-                // ),
-                // const SizedBox(height: 32),
-
-                // // Divider
-                // Row(
-                //   children: [
-                //     Expanded(child: Divider(color: Theme.of(context).colorScheme.outline)),
-                //     Padding(
-                //       padding: const EdgeInsets.symmetric(horizontal: 16),
-                //       child: Text(
-                //         AppLocalizations.of(context)!.authOr,
-                //         style: Theme.of(context).textTheme.bodyMedium,
-                //       ),
-                //     ),
-                //     Expanded(child: Divider(color: Theme.of(context).colorScheme.outline)),
-                //   ],
-                // ),
-                // const SizedBox(height: 32),
+                const SizedBox(height: 8),
 
                 // Email Field
                 TextFormField(
@@ -464,47 +313,6 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                 ),
 
-                // ── Sign in with Apple (iOS only – App Store requirement) ────
-                // Apple guideline: if you offer any 3rd-party login you MUST
-                // also offer Sign in with Apple on iOS/macOS.
-                if (defaultTargetPlatform == TargetPlatform.iOS ||
-                    defaultTargetPlatform == TargetPlatform.macOS) ...
-                  [
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Divider(
-                              color: theme.colorScheme.outline.withOpacity(0.4)),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          child: Text(
-                            'or',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurface.withOpacity(0.5),
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          child: Divider(
-                              color: theme.colorScheme.outline.withOpacity(0.4)),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    // Official Apple-branded button (style follows Apple HIG)
-                    SignInWithAppleButton(
-                      onPressed: _isLoading ? () {} : _signInWithApple,
-                      style: theme.brightness == Brightness.dark
-                          ? SignInWithAppleButtonStyle.white
-                          : SignInWithAppleButtonStyle.black,
-                      borderRadius:
-                          const BorderRadius.all(Radius.circular(12)),
-                      height: 52,
-                    ),
-                    const SizedBox(height: 8),
-                  ],
                 // const SizedBox(height: 20),
 
                 // // Guest Mode

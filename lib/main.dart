@@ -4,7 +4,6 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
-import 'package:app_links/app_links.dart';
 import 'l10n/app_localizations.dart';
 import 'utils/theme.dart';
 import 'utils/constants.dart';
@@ -84,44 +83,6 @@ class PatenteQuizApp extends StatefulWidget {
 }
 
 class _PatenteQuizAppState extends State<PatenteQuizApp> {
-  // ── Deep-link / Supabase auth-callback handler ────────────────────────
-  // app_links captures the custom URL scheme defined in Info.plist
-  // (io.supabase.<project-ref>://) and forwards incoming URIs to
-  // Supabase so magic-link / OAuth callbacks complete correctly on iOS.
-  late final AppLinks _appLinks;
-
-  @override
-  void initState() {
-    super.initState();
-    _initDeepLinks();
-  }
-
-  Future<void> _initDeepLinks() async {
-    _appLinks = AppLinks();
-
-    // 1. Handle the link that cold-started the app
-    final initialUri = await _appLinks.getInitialLink();
-    if (initialUri != null) {
-      _handleDeepLink(initialUri);
-    }
-
-    // 2. Handle links while the app is already running
-    _appLinks.uriLinkStream.listen(
-      _handleDeepLink,
-      onError: (err) => debugPrint('[DeepLink] stream error: $err'),
-    );
-  }
-
-  void _handleDeepLink(Uri uri) {
-    debugPrint('[DeepLink] received: $uri');
-    // Supabase v2 parses access_token / refresh_token from the fragment
-    // automatically when you call recoverSession or when onAuthStateChange fires.
-    // Passing the raw URI ensures this works for magic links & OAuth callbacks.
-    Supabase.instance.client.auth.getSessionFromUrl(uri).catchError(
-      (e) => debugPrint('[DeepLink] getSessionFromUrl error: $e'),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Consumer2<LanguageProvider, ThemeProvider>(

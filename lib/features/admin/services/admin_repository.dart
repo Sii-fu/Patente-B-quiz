@@ -793,24 +793,26 @@ class AdminRepository {
     int? durationMinutes,
     String? thumbnailUrl,
     int? displayOrder,
+    required bool isLiveClass,
+    required DateTime classDate,
   }) async {
     try {
-      final data = {
-        'category_id': categoryId,
-        'title_it': titleIt,
-        'title_en': titleEn,
-        'title_bn': titleBn,
-        'youtube_url': youtubeUrl,
-        'duration_minutes': durationMinutes,
-        'thumbnail_url': thumbnailUrl,
-        'display_order': displayOrder ?? 0,
-      };
-
-      if (id != null) {
-        await _supabase.from('videos').update(data).eq('id', id);
-      } else {
-        await _supabase.from('videos').insert(data);
-      }
+      await _supabase.rpc(
+        'admin_upsert_video_secure',
+        params: {
+          'p_id': id,
+          'p_category_id': categoryId,
+          'p_title_it': titleIt,
+          'p_title_en': titleEn,
+          'p_title_bn': titleBn,
+          'p_youtube_url': youtubeUrl,
+          'p_duration_minutes': durationMinutes,
+          'p_thumbnail_url': thumbnailUrl,
+          'p_display_order': displayOrder ?? 0,
+          'p_is_live_class': isLiveClass,
+          'p_class_date': classDate.toIso8601String(),
+        },
+      );
       return true;
     } catch (e) {
       debugPrint('Error upserting video: $e');

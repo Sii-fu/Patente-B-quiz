@@ -23,14 +23,51 @@ open ios/Runner.xcworkspace
 
 ---
 
+## Xcode Cloud (if building in cloud)
+
+If your workflow builds in Xcode Cloud (not local Mac), these scripts must be committed and executable:
+
+**Key files:**
+- `ci_scripts/ci_post_clone.sh` → runs **after** repo clone, generates Flutter/CocoaPods files
+- `ci_scripts/ci_pre_xcodebuild.sh` → optional verification script (runs before Xcode build)
+
+**Setup:**
+```bash
+# After creating/editing scripts on Mac
+chmod +x ci_scripts/ci_post_clone.sh
+chmod +x ci_scripts/ci_pre_xcodebuild.sh
+
+git add ci_scripts/
+git commit -m "Add Xcode Cloud CI scripts"
+git push
+```
+
+**What `ci_post_clone.sh` does:**
+1. Installs Flutter SDK (if missing)
+2. Runs `flutter pub get` → generates `ios/Flutter/Generated.xcconfig`
+3. Runs `flutter build ios --config-only --no-codesign` → prepares build
+4. Runs `pod install --repo-update` → generates `ios/Pods/Target Support Files/Pods-Runner/*.xcfilelist`
+
+**Why this matters:**
+Without these scripts, Xcode Cloud fails with:
+- `error: could not find included file 'Generated.xcconfig'`
+- `unable to load contents of file list: '...Pods-Runner-*.xcfilelist'`
+
+**In Xcode Cloud workflow settings:**
+- Build scheme: `Runner`
+- Workspace: `ios/Runner.xcworkspace`
+- Let Xcode Cloud auto-detect and run the scripts
+
+---
+
 ## 2. Signing & Team
 
 | Step | Where in Xcode | Action |
 |---|---|---|
 | ☐ Select Team | Runner → Signing & Capabilities → Team | Pick your Apple Developer account |
-| ☐ Set Bundle ID | Runner → Signing & Capabilities → Bundle Identifier | Change `com.example.flutterApp` → **`com.yourcompany.patentebquiz`** (must match App Store Connect) |
+| ☐ Set Bundle ID | Runner → Signing & Capabilities → Bundle Identifier | Verify `com.deshbangla.patente` (or replace with your own) and ensure it matches App Store Connect exactly |
 | ☐ Auto-manage signing | Runner → Signing & Capabilities | Tick "Automatically manage signing" |
-| ☐ RunnerTests Bundle ID | RunnerTests target → Signing & Capabilities | Append `.tests` e.g. `com.yourcompany.patentebquiz.tests` |
+| ☐ RunnerTests Bundle ID | RunnerTests target → Signing & Capabilities | Keep it aligned (default: `com.deshbangla.patente.RunnerTests`) |
 
 > ⚠️ The Bundle ID you set here must **exactly** match what you register in
 > [App Store Connect → My Apps → New App](https://appstoreconnect.apple.com).
@@ -168,9 +205,8 @@ flutter build ios --release
 Apple now requires a **`PrivacyInfo.xcprivacy`** for any use of required-reason APIs.
 Several Flutter packages (path_provider, shared_preferences) access the file system.
 
-1. In Xcode, right-click **Runner** folder → **New File → Resource → App Privacy**.
-2. Name it `PrivacyInfo.xcprivacy`.
-3. Add required reasons for APIs your app uses. Minimum for this app:
+1. Verify `ios/Runner/PrivacyInfo.xcprivacy` is present in the Runner target resources.
+2. Confirm required reasons for APIs your app uses. Minimum for this app:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>

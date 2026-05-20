@@ -202,12 +202,6 @@ abstract class AppLocalizations {
   /// **'Register to start studying'**
   String get authSubtitleSignup;
 
-  /// No description provided for @authContinueGoogle.
-  ///
-  /// In en, this message translates to:
-  /// **'Continue with Google'**
-  String get authContinueGoogle;
-
   /// No description provided for @authContinueFacebook.
   ///
   /// In en, this message translates to:
@@ -297,12 +291,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Password must be at least 6 characters'**
   String get authErrorPasswordShort;
-
-  /// No description provided for @authErrorGoogle.
-  ///
-  /// In en, this message translates to:
-  /// **'Google Sign-In error'**
-  String get authErrorGoogle;
 
   /// No description provided for @authErrorFacebook.
   ///
@@ -843,6 +831,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Watch guided lessons'**
   String get dashboardVideoTutorialsDesc;
+
+  /// No description provided for @dashboardLiveClasses.
+  ///
+  /// In en, this message translates to:
+  /// **'Live Classes'**
+  String get dashboardLiveClasses;
+
+  /// No description provided for @dashboardLiveClassesDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Watch live class recordings'**
+  String get dashboardLiveClassesDesc;
 
   /// No description provided for @dashboardVideoCount.
   ///
@@ -2217,6 +2217,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Italian captions are available for most videos'**
   String get videoTipCaptions;
+
+  /// No description provided for @liveClassesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Live Classes'**
+  String get liveClassesTitle;
+
+  /// No description provided for @liveClassesEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No live classes available yet'**
+  String get liveClassesEmpty;
+
+  /// No description provided for @liveClassesDateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Class Date'**
+  String get liveClassesDateLabel;
 
   /// No description provided for @profileOfflineMode.
   ///
