@@ -186,7 +186,7 @@ class QuizSession {
 - Cache images with `CachedNetworkImage`
 
 ### Analytics Calculation
-```dart
+```dartwww
 // Exam Readiness Formula (example)
 double calculateReadiness(List<QuizSession> recentSessions) {
   final last10Sessions = recentSessions.take(10);
