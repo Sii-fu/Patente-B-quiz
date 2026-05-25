@@ -633,6 +633,7 @@
   "vocabLoading": "Loading dictionary...",
   "vocabError": "Error loading dictionary",
   "vocabRetry": "Retry",
+  "glossaryViewDictionary": "View in Dictionary",
   "wordQuestionsTitle": "Questions containing",
   "wordQuestionsEmpty": "No exam questions found for this word",
   "wordQuestionsLoading": "Searching questions...",

@@ -1336,14 +1336,23 @@ class _QuizScreenState extends State<QuizScreen> {
                               const SizedBox(height: 24),
 
                               // Question Text
-                              Text(
-                                question.getText(_currentQuestionLanguage),
-                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                  height: 1.5,
-                                  fontWeight: FontWeight.w500,
-                                  color: Theme.of(context).colorScheme.onSurface,
-                                ),
-                                textAlign: TextAlign.center,
+                              Builder(
+                                builder: (context) {
+                                  final questionStyle = Theme.of(context)
+                                      .textTheme
+                                      .bodyLarge
+                                      ?.copyWith(
+                                        height: 1.5,
+                                        fontWeight: FontWeight.w500,
+                                        color: Theme.of(context).colorScheme.onSurface,
+                                      );
+
+                                  return Text(
+                                    question.getText(_currentQuestionLanguage),
+                                    style: questionStyle,
+                                    textAlign: TextAlign.center,
+                                  );
+                                },
                               ),
 
                               const SizedBox(height: 24),

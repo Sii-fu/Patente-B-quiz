@@ -3628,6 +3628,12 @@ abstract class AppLocalizations {
   /// **'Retry'**
   String get vocabRetry;
 
+  /// No description provided for @glossaryViewDictionary.
+  ///
+  /// In en, this message translates to:
+  /// **'View in Dictionary'**
+  String get glossaryViewDictionary;
+
   /// No description provided for @wordQuestionsTitle.
   ///
   /// In en, this message translates to:

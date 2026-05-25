@@ -633,6 +633,7 @@
   "vocabLoading": "অভিধান লোড হচ্ছে...",
   "vocabError": "অভিধান লোড করতে ত্রুটি",
   "vocabRetry": "আবার চেষ্টা করুন",
+  "glossaryViewDictionary": "অভিধানে দেখুন",
   "wordQuestionsTitle": "যে প্রশ্নে আছে",
   "wordQuestionsEmpty": "এই শব্দের জন্য কোনো পরীক্ষার প্রশ্ন পাওয়া যায়নি",
   "wordQuestionsLoading": "প্রশ্ন খোঁজা হচ্ছে...",

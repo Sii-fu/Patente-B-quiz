@@ -4,6 +4,7 @@ import 'package:just_audio/just_audio.dart';
 import '../../models/theory_card.dart';
 import '../../utils/theme.dart';
 import '../../utils/localization_helper.dart';
+import '../../widgets/glossary_text.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'theory_card_quiz_screen.dart';
 
@@ -283,8 +284,8 @@ class _TheoryCardDetailScreenState extends State<TheoryCardDetailScreen> {
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(20.0),
-                      child: Text(
-                        text,
+                      child: GlossaryText(
+                        text: text,
                         style: theme.textTheme.bodyLarge?.copyWith(
                           color: theme.colorScheme.onSurface,
                           height: 1.6,

@@ -1820,6 +1820,9 @@ class AppLocalizationsBn extends AppLocalizations {
   String get vocabRetry => 'আবার চেষ্টা করুন';
 
   @override
+  String get glossaryViewDictionary => 'অভিধানে দেখুন';
+
+  @override
   String get wordQuestionsTitle => 'যে প্রশ্নে আছে';
 
   @override

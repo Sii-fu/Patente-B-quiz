@@ -631,6 +631,7 @@
   "vocabLoading": "Caricamento dizionario...",
   "vocabError": "Errore nel caricamento del dizionario",
   "vocabRetry": "Riprova",
+  "glossaryViewDictionary": "Vedi nel dizionario",
   "wordQuestionsTitle": "Domande contenenti",
   "wordQuestionsEmpty": "Nessuna domanda d'esame trovata per questa parola",
   "wordQuestionsLoading": "Ricerca domande...",

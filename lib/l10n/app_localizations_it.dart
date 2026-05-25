@@ -1833,6 +1833,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get vocabRetry => 'Riprova';
 
   @override
+  String get glossaryViewDictionary => 'Vedi nel dizionario';
+
+  @override
   String get wordQuestionsTitle => 'Domande contenenti';
 
   @override

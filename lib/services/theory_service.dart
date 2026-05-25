@@ -177,6 +177,46 @@ class TheoryService {
     }
   }
 
+  /// Get all theory cards for a specific subtopic directly from Supabase
+  Future<List<TheoryCard>> getCardsForSubtopic(int subtopicId) async {
+    try {
+      print('🃏 Fetching cards for subtopic $subtopicId from Supabase...');
+      final response = await _supabase
+          .from('theory_cards')
+          .select()
+          .eq('subtopic_id', subtopicId)
+          .order('display_order', ascending: true);
+
+      final cards = (response as List).map((data) {
+        return TheoryCard(
+          id: data['id'] as int,
+          chapterId: data['chapter_id'] as int,
+          subtopicId: data['subtopic_id'] as int?,
+          titleIt: data['title_it'] as String?,
+          titleEn: data['title_en'] as String?,
+          titleBn: data['title_bn'] as String?,
+          textIt: data['text_it'] as String,
+          textEn: data['text_en'] as String?,
+          textBn: data['text_bn'] as String?,
+          imageUrl: data['image_url'] as String?,
+          audioExplanationUrl: data['audio_explanation_url'] as String?,
+          audioItUrl: data['audio_it_url'] as String?,
+          audioEnUrl: data['audio_en_url'] as String?,
+          audioBnUrl: data['audio_bn_url'] as String?,
+          displayOrder: data['display_order'] as int? ?? 0,
+          createdAt: DateTime.parse(data['created_at'] as String),
+        );
+      }).toList();
+
+      print('✅ Fetched ${cards.length} cards for subtopic $subtopicId');
+      return cards;
+    } catch (e, stackTrace) {
+      print('❌ Error fetching cards for subtopic: $e');
+      print('Stack trace: $stackTrace');
+      rethrow;
+    }
+  }
+
   /// Get total card count for a chapter directly from Supabase
   Future<int> getCardCountForChapter(int chapterId) async {
     try {

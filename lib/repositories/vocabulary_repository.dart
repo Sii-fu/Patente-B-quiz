@@ -9,6 +9,7 @@ import '../models/question.dart';
 /// - Example questions: Queried via Supabase ILIKE filter on `questions.text_it`.
 class VocabularyRepository {
   static const _starredKey = 'starred_vocabulary_ids';
+  static Map<String, VocabularyWord>? _glossaryCache;
 
   final SupabaseClient _supabase;
 
@@ -27,6 +28,26 @@ class VocabularyRepository {
     return (response as List)
         .map((json) => VocabularyWord.fromJson(json as Map<String, dynamic>))
         .toList();
+  }
+
+  /// Returns a lowercase lookup map keyed by `word_it` for glossary matching.
+  Future<Map<String, VocabularyWord>> getGlossaryMap() async {
+    final cached = _glossaryCache;
+    if (cached != null) {
+      return cached;
+    }
+
+    final words = await getVocabulary();
+    final map = <String, VocabularyWord>{};
+    for (final word in words) {
+      final key = word.wordIt.toLowerCase().trim();
+      if (key.isNotEmpty) {
+        map[key] = word;
+      }
+    }
+
+    _glossaryCache = map;
+    return map;
   }
 
   // ─── Starred / Favorites ─────────────────────────────────────────────────

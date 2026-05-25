@@ -9,6 +9,7 @@ import '../../models/quiz_session.dart';
 import '../../utils/theme.dart';
 import '../../providers/language_provider.dart';
 import '../../services/tts_helper.dart';
+import '../../widgets/glossary_text.dart';
 
 /// Page 4: Quiz Review - Detailed Question Breakdown
 /// Shows each question with correct/incorrect indication
@@ -508,8 +509,8 @@ class _ResultReviewScreenState extends State<ResultReviewScreen> {
           // Question Text
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Text(
-              questionText,
+            child: GlossaryText(
+              text: questionText,
               style: TextStyle(
                 color: AppTheme.lightTheme.colorScheme.onSurface,
                 fontSize: 18,

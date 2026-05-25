@@ -8,11 +8,14 @@ import 'package:just_audio/just_audio.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/question.dart';
 import '../../models/quiz_session.dart';
+import '../../models/theory_card.dart';
 import '../../utils/theme.dart';
 import '../../services/quiz_service.dart';
+import '../../services/theory_service.dart';
 import '../../services/tts_helper.dart';
 import '../../services/profile_stats_service.dart';
 import '../../features/quiz/result_minimalist_screen.dart';
+import '../../widgets/glossary_text.dart';
 
 class CustomQuizScreen extends StatefulWidget {
   final int numberOfQuestions;
@@ -41,6 +44,7 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
   final PageController _pageController = PageController();
   final ScrollController _questionNumbersScrollController = ScrollController();
   final QuizService _quizService = QuizService();
+  final TheoryService _theoryService = TheoryService.online();
   final TtsHelper _ttsHelper = TtsHelper();
   
   List<Question> _questions = [];
@@ -922,6 +926,250 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
     );
   }
 
+  void _showRelatedTheoryCardSheet(Question question) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final subtopicId = question.subtopicId ?? question.subtopic?.id;
+    var sheetLanguage = _currentQuestionLanguage;
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            Widget buildLangChip(String label, String code) {
+              final isSelected = sheetLanguage == code;
+              return InkWell(
+                onTap: () {
+                  setSheetState(() => sheetLanguage = code);
+                },
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? theme.colorScheme.primary
+                        : theme.colorScheme.surfaceContainerLow,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isSelected
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.outlineVariant,
+                    ),
+                  ),
+                  child: Text(
+                    label,
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: isSelected
+                          ? theme.colorScheme.onPrimary
+                          : theme.colorScheme.onSurface,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              );
+            }
+
+            return DraggableScrollableSheet(
+              initialChildSize: 0.55,
+              minChildSize: 0.35,
+              maxChildSize: 0.9,
+              builder: (context, scrollController) {
+                return Container(
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface,
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(24),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 8),
+                      Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.outline.withOpacity(0.4),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                l10n.theoryCardDetailTitle,
+                                style: theme.textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: theme.colorScheme.onSurface,
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.close),
+                              onPressed: () => Navigator.pop(context),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                        child: Row(
+                          children: [
+                            buildLangChip('IT', 'it'),
+                            const SizedBox(width: 8),
+                            buildLangChip('EN', 'en'),
+                            const SizedBox(width: 8),
+                            buildLangChip('বাংলা', 'bn'),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: subtopicId == null
+                            ? _buildTheorySheetEmpty(l10n, theme, scrollController)
+                            : FutureBuilder<List<TheoryCard>>(
+                                future:
+                                    _theoryService.getCardsForSubtopic(subtopicId),
+                                builder: (context, snapshot) {
+                                  if (snapshot.connectionState ==
+                                      ConnectionState.waiting) {
+                                    return _buildTheorySheetLoading(
+                                      theme,
+                                      scrollController,
+                                    );
+                                  }
+
+                                  if (snapshot.hasError) {
+                                    return _buildTheorySheetEmpty(
+                                      l10n,
+                                      theme,
+                                      scrollController,
+                                    );
+                                  }
+
+                                  final cards = snapshot.data ?? [];
+                                  if (cards.isEmpty) {
+                                    return _buildTheorySheetEmpty(
+                                      l10n,
+                                      theme,
+                                      scrollController,
+                                    );
+                                  }
+
+                                  return ListView.separated(
+                                    controller: scrollController,
+                                    padding:
+                                        const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                                    itemCount: cards.length,
+                                    separatorBuilder: (_, __) =>
+                                        const SizedBox(height: 16),
+                                    itemBuilder: (context, index) {
+                                      final card = cards[index];
+                                      final title =
+                                          card.getLocalizedTitle(sheetLanguage);
+                                      final text =
+                                          card.getLocalizedText(sheetLanguage);
+
+                                      return Container(
+                                        padding: const EdgeInsets.all(16),
+                                        decoration: BoxDecoration(
+                                          color: theme
+                                              .colorScheme.surfaceContainerLow,
+                                          borderRadius: BorderRadius.circular(16),
+                                          border: Border.all(
+                                            color:
+                                                theme.colorScheme.outlineVariant,
+                                          ),
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            if (title != null &&
+                                                title.trim().isNotEmpty)
+                                              Text(
+                                                title,
+                                                style: theme
+                                                    .textTheme.titleMedium
+                                                    ?.copyWith(
+                                                  fontWeight: FontWeight.bold,
+                                                  color: theme
+                                                      .colorScheme.onSurface,
+                                                ),
+                                              ),
+                                            if (title != null &&
+                                                title.trim().isNotEmpty)
+                                              const SizedBox(height: 8),
+                                            GlossaryText(
+                                              text: text,
+                                              style: theme.textTheme.bodyLarge
+                                                  ?.copyWith(
+                                                color:
+                                                    theme.colorScheme.onSurface,
+                                                height: 1.5,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  );
+                                },
+                              ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildTheorySheetLoading(
+    ThemeData theme,
+    ScrollController scrollController,
+  ) {
+    return ListView(
+      controller: scrollController,
+      children: [
+        const SizedBox(height: 24),
+        Center(
+          child: CircularProgressIndicator(color: theme.colorScheme.primary),
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  Widget _buildTheorySheetEmpty(
+    AppLocalizations l10n,
+    ThemeData theme,
+    ScrollController scrollController,
+  ) {
+    return ListView(
+      controller: scrollController,
+      children: [
+        const SizedBox(height: 12),
+        Icon(Icons.menu_book_outlined,
+            size: 48, color: theme.colorScheme.outline),
+        const SizedBox(height: 12),
+        Text(
+          l10n.theoryCardListEmpty,
+          textAlign: TextAlign.center,
+          style: theme.textTheme.bodyLarge?.copyWith(
+            color: theme.colorScheme.onSurface.withOpacity(0.6),
+          ),
+        ),
+        const SizedBox(height: 12),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -1206,8 +1454,7 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
                               const SizedBox(height: 24),
 
                               // Question Text
-                              Text(
-                                question.getText(_currentQuestionLanguage),
+                              DefaultTextStyle(
                                 style: const TextStyle(
                                   fontSize: 18,
                                   height: 1.5,
@@ -1215,6 +1462,9 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
                                   color: Colors.black87,
                                 ),
                                 textAlign: TextAlign.center,
+                                child: GlossaryText(
+                                  text: question.getText(_currentQuestionLanguage),
+                                ),
                               ),
 
                               const SizedBox(height: 24),
@@ -1371,10 +1621,17 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
                                     // Theory icon (placeholder)
-                                    Icon(
-                                      Icons.menu_book_outlined,
-                                      color: Colors.grey[600],
-                                      size: 28,
+                                    InkWell(
+                                      onTap: () => _showRelatedTheoryCardSheet(question),
+                                      borderRadius: BorderRadius.circular(20),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(4),
+                                        child: Icon(
+                                          Icons.menu_book_outlined,
+                                          color: Colors.grey[600],
+                                          size: 28,
+                                        ),
+                                      ),
                                     ),
                                     
                                     // Question counter
