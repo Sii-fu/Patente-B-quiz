@@ -172,7 +172,7 @@ class _ResultReviewScreenState extends State<ResultReviewScreen> {
     final filteredQuestions = _getFilteredQuestions();
 
     return Scaffold(
-      backgroundColor: AppTheme.lightGrey,
+      backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
         backgroundColor: AppTheme.primaryBrandBlue,
         elevation: 0,
@@ -443,6 +443,7 @@ class _ResultReviewScreenState extends State<ResultReviewScreen> {
     bool isCorrect,
     String defaultLanguage,
   ) {
+    final theme = Theme.of(context);
     final questionLanguage = _getQuestionLanguage(questionIndex, defaultLanguage);
     final questionText = question.getText(questionLanguage);
     final audioUrl = question.getAudioUrl(questionLanguage);
@@ -460,7 +461,7 @@ class _ResultReviewScreenState extends State<ResultReviewScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: AppTheme.lightGrey,
+        color: theme.colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(20),
         border: availableLanguages.length > 1
             ? Border.all(
@@ -489,7 +490,7 @@ class _ResultReviewScreenState extends State<ResultReviewScreen> {
                   child: Text(
                     '${AppLocalizations.of(context)!.quizQuestion} ${questionIndex + 1}/${widget.questions.length}',
                     style: TextStyle(
-                      color: AppTheme.lightTheme.colorScheme.onSurface,
+                      color: theme.colorScheme.onSurface,
                       fontSize: 14,
                       fontWeight: FontWeight.w400, 
                       letterSpacing: 0.5,
@@ -512,7 +513,7 @@ class _ResultReviewScreenState extends State<ResultReviewScreen> {
             child: GlossaryText(
               text: questionText,
               style: TextStyle(
-                color: AppTheme.lightTheme.colorScheme.onSurface,
+                color: theme.colorScheme.onSurface,
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
                 height: 1.4,
@@ -536,7 +537,7 @@ class _ResultReviewScreenState extends State<ResultReviewScreen> {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: AppTheme.lightTheme.colorScheme.surface.withOpacity(0.5),
+              color: theme.colorScheme.surfaceContainerLow,
               borderRadius: const BorderRadius.only(
                 bottomLeft: Radius.circular(20),
                 bottomRight: Radius.circular(20),
@@ -608,7 +609,7 @@ class _ResultReviewScreenState extends State<ResultReviewScreen> {
                       Text(
                         '${AppLocalizations.of(context)!.quizCorrectAnswer}: ',
                         style: TextStyle(
-                          color: AppTheme.lightTheme.colorScheme.onPrimary,
+                          color: theme.colorScheme.onPrimary,
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
@@ -616,7 +617,7 @@ class _ResultReviewScreenState extends State<ResultReviewScreen> {
                       Text(
                         question.isTrue ? 'VERO' : 'FALSO',
                         style: TextStyle(
-                          color: AppTheme.lightTheme.colorScheme.onPrimary,
+                          color: theme.colorScheme.onPrimary,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 1.2,
@@ -625,7 +626,7 @@ class _ResultReviewScreenState extends State<ResultReviewScreen> {
                       const SizedBox(width: 8),
                       Icon(
                         question.isTrue ? Icons.check_circle : Icons.cancel,
-                        color: AppTheme.lightTheme.colorScheme.onPrimary,
+                        color: theme.colorScheme.onPrimary,
                         size: 24,
                       ),
                     ],

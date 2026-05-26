@@ -93,10 +93,16 @@ class _GlossaryTextState extends State<GlossaryText> {
           ..onTap = () => _showGlossaryPopup(context, glossaryWord);
         _recognizers.add(recognizer);
 
+        var highlightColor = Theme.of(context).colorScheme.primary;
+        if (Theme.of(context).brightness == Brightness.dark &&
+            highlightColor.computeLuminance() < 0.4) {
+          highlightColor = Theme.of(context).colorScheme.primaryContainer;
+        }
+
         spans.add(TextSpan(
           text: word,
           style: baseStyle.copyWith(
-            color: Theme.of(context).primaryColor,
+            color: highlightColor,
             decoration: TextDecoration.underline,
           ),
           recognizer: recognizer,
@@ -210,8 +216,17 @@ class _GlossaryTextState extends State<GlossaryText> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final defaultStyle = DefaultTextStyle.of(context);
-    final baseStyle = defaultStyle.style.merge(widget.style);
+    var baseStyle = defaultStyle.style.merge(widget.style);
+    if (baseStyle.color == null) {
+      baseStyle = baseStyle.copyWith(color: theme.colorScheme.onSurface);
+    } else if (theme.brightness == Brightness.dark) {
+      final luminance = baseStyle.color!.computeLuminance();
+      if (luminance < 0.35) {
+        baseStyle = baseStyle.copyWith(color: theme.colorScheme.onSurface);
+      }
+    }
     final textAlign = defaultStyle.textAlign ?? TextAlign.start;
 
     if (widget.text.isEmpty) {

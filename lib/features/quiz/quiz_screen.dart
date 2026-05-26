@@ -1233,7 +1233,7 @@ class _QuizScreenState extends State<QuizScreen> {
           // ============= QUESTION NUMBERS ROW =============
           Container(
             height: 50,
-            color: Colors.white,
+            color: theme.colorScheme.surface,
             child: ListView.builder(
               controller: _questionNumbersScrollController,
               scrollDirection: Axis.horizontal,
@@ -1243,7 +1243,7 @@ class _QuizScreenState extends State<QuizScreen> {
                 final isAnswered = _userAnswers.containsKey(index);
                 final isCurrent = index == _currentPage;
                 
-                Color backgroundColor = Colors.white;
+                Color backgroundColor = theme.colorScheme.surface;
                 Color borderColor = theme.colorScheme.primary;
                 Color textColor = theme.colorScheme.primary;
                 
@@ -1291,7 +1291,7 @@ class _QuizScreenState extends State<QuizScreen> {
           // ============= MAIN CONTENT AREA =============
           Expanded(
             child: Container(
-              color: Colors.white,
+              color: theme.colorScheme.surface,
               child: PageView.builder(
                 controller: _pageController,
                 physics: const BouncingScrollPhysics(),
@@ -1370,7 +1370,7 @@ class _QuizScreenState extends State<QuizScreen> {
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: theme.colorScheme.surface,
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withValues(alpha: 0.05),
@@ -1441,9 +1441,16 @@ class _QuizScreenState extends State<QuizScreen> {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.black26, width: 2),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.outlineVariant,
+                  width: 2,
+                ),
               ),
-              child: const Icon(Icons.volume_up, size: 28, color: Colors.black54),
+              child: Icon(
+                Icons.volume_up,
+                size: 28,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
             ),
           ),
         ),
@@ -1460,11 +1467,17 @@ class _QuizScreenState extends State<QuizScreen> {
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.deepPurple.withValues(alpha: 0.1),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .secondary
+                      .withValues(alpha: 0.12),
                   border: Border.all(
                     color: _isCustomAudioPlaying
-                        ? Colors.deepPurple
-                        : Colors.deepPurple.withValues(alpha: 0.4),
+                        ? Theme.of(context).colorScheme.secondary
+                        : Theme.of(context)
+                            .colorScheme
+                            .secondary
+                            .withValues(alpha: 0.4),
                     width: 2,
                   ),
                 ),
@@ -1474,7 +1487,7 @@ class _QuizScreenState extends State<QuizScreen> {
                         height: 28,
                         child: CircularProgressIndicator(
                           strokeWidth: 2.5,
-                          color: Colors.deepPurple,
+                          color: AppTheme.successGreen,
                         ),
                       )
                     : Icon(
@@ -1482,7 +1495,7 @@ class _QuizScreenState extends State<QuizScreen> {
                             ? Icons.pause_circle_filled
                             : Icons.record_voice_over,
                         size: 28,
-                        color: Colors.deepPurple,
+                        color: Theme.of(context).colorScheme.secondary,
                       ),
               ),
             ),

@@ -779,9 +779,9 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -817,9 +817,9 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.grey[100],
+                        color: theme.colorScheme.surfaceContainerLow,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey[300]!),
+                        border: Border.all(color: theme.colorScheme.outlineVariant),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -869,9 +869,9 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.grey[100],
+                        color: theme.colorScheme.surfaceContainerLow,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey[300]!),
+                        border: Border.all(color: theme.colorScheme.outlineVariant),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1303,7 +1303,7 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
                           vertical: 8,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: theme.colorScheme.surface,
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Row(
@@ -1335,7 +1335,7 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
           // ============= QUESTION NUMBERS ROW =============
           Container(
             height: 50,
-            color: Colors.white,
+            color: theme.colorScheme.surface,
             child: ListView.builder(
               controller: _questionNumbersScrollController,
               scrollDirection: Axis.horizontal,
@@ -1345,7 +1345,7 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
                 final isAnswered = _userAnswers.containsKey(index);
                 final isCurrent = index == _currentPage;
                 
-                Color backgroundColor = Colors.white;
+                Color backgroundColor = theme.colorScheme.surface;
                 Color borderColor = theme.colorScheme.primary;
                 Color textColor = theme.colorScheme.primary;
                 
@@ -1398,7 +1398,7 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
           // ============= MAIN CONTENT AREA =============
           Expanded(
             child: Container(
-              color: Colors.white,
+              color: theme.colorScheme.surface,
               child: PageView.builder(
                 controller: _pageController,
                 physics: const BouncingScrollPhysics(),
@@ -1455,12 +1455,18 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
 
                               // Question Text
                               DefaultTextStyle(
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  height: 1.5,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.black87,
-                                ),
+                                style: theme.textTheme.bodyLarge?.copyWith(
+                                      fontSize: 18,
+                                      height: 1.5,
+                                      fontWeight: FontWeight.w500,
+                                      color: theme.colorScheme.onSurface,
+                                    ) ??
+                                    TextStyle(
+                                      fontSize: 18,
+                                      height: 1.5,
+                                      fontWeight: FontWeight.w500,
+                                      color: theme.colorScheme.onSurface,
+                                    ),
                                 textAlign: TextAlign.center,
                                 child: GlossaryText(
                                   text: question.getText(_currentQuestionLanguage),
@@ -1604,7 +1610,11 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
                                                   Expanded(
                                                     child: Text(
                                                       _questions[_currentPage].getExplanation(_currentQuestionLanguage) ?? '',
-                                                      style: const TextStyle(fontSize: 15, height: 1.4, color: Colors.black87),
+                                                      style: TextStyle(
+                                                        fontSize: 15,
+                                                        height: 1.4,
+                                                        color: theme.colorScheme.onSurface,
+                                                      ),
                                                     ),
                                                   ),
                                               ],
@@ -1628,7 +1638,7 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
                                         padding: const EdgeInsets.all(4),
                                         child: Icon(
                                           Icons.menu_book_outlined,
-                                          color: Colors.grey[600],
+                                          color: theme.colorScheme.onSurfaceVariant,
                                           size: 28,
                                         ),
                                       ),
@@ -1639,7 +1649,7 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
                                       '${_currentPage + 1} ${l10n.quizSubmitOutOf} ${_questions.length}',
                                       style: TextStyle(
                                         fontSize: 16,
-                                        color: Colors.grey[700],
+                                        color: theme.colorScheme.onSurfaceVariant,
                                         fontWeight: FontWeight.w500,
                                       ),
                                     ),
@@ -1652,7 +1662,7 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
                                           borderRadius: BorderRadius.circular(8),
                                           child: Icon(
                                             Icons.expand_more,
-                                            color: Colors.grey[600],
+                                            color: theme.colorScheme.onSurfaceVariant,
                                             size: 28,
                                           ),
                                         ),
@@ -1681,7 +1691,7 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: theme.colorScheme.surface,
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withValues(alpha: 0.05),
@@ -1762,7 +1772,7 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: theme.colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: theme.colorScheme.primary.withOpacity(0.2),
@@ -1832,10 +1842,14 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
         child: Container(
           height: 56,
           decoration: BoxDecoration(
-            color: isSelected ? (label=="VERO" ? Colors.green[500] : Colors.red[500]) : Colors.grey[200],
+            color: isSelected
+                ? (label == 'VERO' ? AppTheme.successGreen : AppTheme.errorRed)
+                : Theme.of(context).colorScheme.surfaceContainerHigh,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isSelected ? (label=="VERO" ? Colors.green[500]! : Colors.red[500]!) : Colors.grey[300]!,
+              color: isSelected
+                  ? (label == 'VERO' ? AppTheme.successGreen : AppTheme.errorRed)
+                  : Theme.of(context).colorScheme.outlineVariant,
               width: 2,
             ),
           ),
@@ -1843,7 +1857,9 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
             child: Text(
               label,
               style: TextStyle(
-                color: isSelected ? Colors.white : Colors.black87,
+                color: isSelected
+                    ? Theme.of(context).colorScheme.onPrimary
+                    : Theme.of(context).colorScheme.onSurface,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 0.5,
