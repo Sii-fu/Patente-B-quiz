@@ -8,7 +8,7 @@ import '../services/admin_repository.dart';
 import '../users/user_management_screen.dart';
 import '../quizzes/admin_categories_screen.dart';
 import '../theory/admin_theory_chapters_screen.dart';
-import '../videos/admin_videos_screen.dart';
+import '../videos/admin_video_management_screen.dart';
 import '../homework/admin_homework_management_screen.dart';
 import '../../../screens/dashboard/settings_screen.dart';
 
@@ -44,7 +44,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   Future<void> _logout() async {
     final l10n = AppLocalizations.of(context)!;
-    
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -75,10 +75,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   void _navigateTo(Widget screen) {
     HapticFeedback.mediumImpact();
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => screen),
-    );
+    Navigator.push(context, MaterialPageRoute(builder: (context) => screen));
   }
 
   @override
@@ -93,54 +90,57 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             : CustomScrollView(
                 slivers: [
                   // Header
-                  SliverToBoxAdapter(
-                    child: _buildHeader(theme, l10n),
-                  ),
-                  
+                  SliverToBoxAdapter(child: _buildHeader(theme, l10n)),
+
                   // Dashboard Cards
                   SliverPadding(
                     padding: const EdgeInsets.all(16),
                     sliver: SliverGrid(
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        mainAxisSpacing: 16,
-                        crossAxisSpacing: 16,
-                        childAspectRatio: 1.0,
-                      ),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            mainAxisSpacing: 16,
+                            crossAxisSpacing: 16,
+                            childAspectRatio: 1.0,
+                          ),
                       delegate: SliverChildListDelegate([
                         _buildDashboardCard(
                           icon: Icons.group,
                           title: l10n.adminUsers,
                           subtitle: l10n.adminUserManagementDesc,
                           color: Colors.blue,
-                          onTap: () => _navigateTo(const UserManagementScreen()),
+                          onTap: () =>
+                              _navigateTo(const UserManagementScreen()),
                         ),
                         _buildDashboardCard(
                           icon: Icons.quiz,
                           title: l10n.adminQuizzes,
                           subtitle: l10n.adminQuizManagementDesc,
                           color: Colors.green,
-                          onTap: () => _navigateTo(const AdminCategoriesScreen()),
+                          onTap: () =>
+                              _navigateTo(const AdminCategoriesScreen()),
                         ),
                         _buildDashboardCard(
                           icon: Icons.video_library,
                           title: l10n.adminVideos,
                           subtitle: l10n.adminVideoManagementDesc,
                           color: Colors.purple,
-                          onTap: () => _navigateTo(const AdminVideosScreen()),
+                          onTap: () =>
+                              _navigateTo(const AdminVideoManagementScreen()),
                         ),
                         _buildDashboardCard(
                           icon: Icons.assignment,
                           title: 'Homework',
                           subtitle: 'Manage homework sets',
                           color: theme.colorScheme.primary,
-                          onTap: () =>
-                              _navigateTo(const AdminHomeworkManagementScreen()),
+                          onTap: () => _navigateTo(
+                            const AdminHomeworkManagementScreen(),
+                          ),
                         ),
                       ]),
                     ),
                   ),
-                  
+
                   // Logout Button
                   SliverToBoxAdapter(
                     child: Padding(
@@ -159,11 +159,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       ),
                     ),
                   ),
-                  
+
                   // Bottom Spacing
-                  const SliverToBoxAdapter(
-                    child: SizedBox(height: 32),
-                  ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 32)),
                 ],
               ),
       ),
@@ -175,10 +173,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            theme.colorScheme.primary,
-            theme.colorScheme.secondary,
-          ],
+          colors: [theme.colorScheme.primary, theme.colorScheme.secondary],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -252,7 +247,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   HapticFeedback.lightImpact();
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                    MaterialPageRoute(
+                      builder: (context) => const SettingsScreen(),
+                    ),
                   );
                 },
               ),
@@ -288,7 +285,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     required VoidCallback onTap,
   }) {
     final theme = Theme.of(context);
-    
+
     return Material(
       color: theme.colorScheme.surface,
       borderRadius: BorderRadius.circular(16),
@@ -301,10 +298,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: color.withOpacity(0.2),
-              width: 1,
-            ),
+            border: Border.all(color: color.withOpacity(0.2), width: 1),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -315,11 +309,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   color: color.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
-                  icon,
-                  size: 32,
-                  color: color,
-                ),
+                child: Icon(icon, size: 32, color: color),
               ),
               const SizedBox(height: 12),
               Text(

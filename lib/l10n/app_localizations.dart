@@ -2476,6 +2476,18 @@ abstract class AppLocalizations {
   /// **'Version'**
   String get settingsVersion;
 
+  /// No description provided for @settingsDisclaimerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Disclaimer'**
+  String get settingsDisclaimerTitle;
+
+  /// No description provided for @settingsDisclaimerContent.
+  ///
+  /// In en, this message translates to:
+  /// **'This app is not a government entity. Quizzes are based on public information from mit.gov.it.'**
+  String get settingsDisclaimerContent;
+
   /// No description provided for @settingsClose.
   ///
   /// In en, this message translates to:
@@ -3411,6 +3423,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Video deleted successfully'**
   String get adminVideoDeleted;
+
+  /// No description provided for @adminVideoManagement.
+  ///
+  /// In en, this message translates to:
+  /// **'Video Management'**
+  String get adminVideoManagement;
+
+  /// No description provided for @adminFilterLiveOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Live Classes Only'**
+  String get adminFilterLiveOnly;
+
+  /// No description provided for @adminFilterChapterOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Chapter Classes Only'**
+  String get adminFilterChapterOnly;
+
+  /// No description provided for @adminSortByDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Latest'**
+  String get adminSortByDate;
+
+  /// No description provided for @adminSortByChapter.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort by Chapter'**
+  String get adminSortByChapter;
+
+  /// No description provided for @adminTagLive.
+  ///
+  /// In en, this message translates to:
+  /// **'LIVE'**
+  String get adminTagLive;
+
+  /// No description provided for @adminTagChapter.
+  ///
+  /// In en, this message translates to:
+  /// **'CHAPTER {number}'**
+  String adminTagChapter(int number);
+
+  /// No description provided for @adminLiveClass.
+  ///
+  /// In en, this message translates to:
+  /// **'Live Class'**
+  String get adminLiveClass;
+
+  /// No description provided for @adminChapterClass.
+  ///
+  /// In en, this message translates to:
+  /// **'Chapter Class'**
+  String get adminChapterClass;
+
+  /// No description provided for @adminUploadTypeQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'What type of video would you like to upload?'**
+  String get adminUploadTypeQuestion;
+
+  /// No description provided for @adminUploadRegular.
+  ///
+  /// In en, this message translates to:
+  /// **'Regular Class Video'**
+  String get adminUploadRegular;
+
+  /// No description provided for @adminUploadLive.
+  ///
+  /// In en, this message translates to:
+  /// **'Live Class Recording'**
+  String get adminUploadLive;
+
+  /// No description provided for @adminClassType.
+  ///
+  /// In en, this message translates to:
+  /// **'Class Type'**
+  String get adminClassType;
+
+  /// No description provided for @adminNormalClass.
+  ///
+  /// In en, this message translates to:
+  /// **'Normal Class'**
+  String get adminNormalClass;
+
+  /// No description provided for @adminClassDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Class Date'**
+  String get adminClassDate;
+
+  /// No description provided for @adminTheoryChapter.
+  ///
+  /// In en, this message translates to:
+  /// **'Theory Chapter'**
+  String get adminTheoryChapter;
+
+  /// No description provided for @adminSelectChapterRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select a theory chapter'**
+  String get adminSelectChapterRequired;
 
   /// No description provided for @adminDeleteCategoryWarning.
   ///

@@ -1243,6 +1243,13 @@ class AppLocalizationsIt extends AppLocalizations {
   String get settingsVersion => 'Versione';
 
   @override
+  String get settingsDisclaimerTitle => 'Disclaimer';
+
+  @override
+  String get settingsDisclaimerContent =>
+      'This app is not a government entity. Quizzes are based on public information from mit.gov.it.';
+
+  @override
   String get settingsClose => 'Chiudi';
 
   @override
@@ -1717,6 +1724,59 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get adminVideoDeleted => 'Video eliminato con successo';
+
+  @override
+  String get adminVideoManagement => 'Gestione Video';
+
+  @override
+  String get adminFilterLiveOnly => 'Solo Lezioni Live';
+
+  @override
+  String get adminFilterChapterOnly => 'Solo Lezioni per Capitolo';
+
+  @override
+  String get adminSortByDate => 'Più recenti';
+
+  @override
+  String get adminSortByChapter => 'Ordina per Capitolo';
+
+  @override
+  String get adminTagLive => 'LIVE';
+
+  @override
+  String adminTagChapter(int number) {
+    return 'CAPITOLO $number';
+  }
+
+  @override
+  String get adminLiveClass => 'Lezione Live';
+
+  @override
+  String get adminChapterClass => 'Lezione per Capitolo';
+
+  @override
+  String get adminUploadTypeQuestion => 'Che tipo di video vuoi caricare?';
+
+  @override
+  String get adminUploadRegular => 'Video Lezione Regolare';
+
+  @override
+  String get adminUploadLive => 'Registrazione Lezione Live';
+
+  @override
+  String get adminClassType => 'Tipo di Lezione';
+
+  @override
+  String get adminNormalClass => 'Lezione Normale';
+
+  @override
+  String get adminClassDate => 'Data della Lezione';
+
+  @override
+  String get adminTheoryChapter => 'Capitolo di Teoria';
+
+  @override
+  String get adminSelectChapterRequired => 'Seleziona un capitolo di teoria';
 
   @override
   String adminDeleteCategoryWarning(int count) {

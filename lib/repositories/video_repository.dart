@@ -2,6 +2,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/video_models.dart';
+import '../models/theory_chapter.dart';
 
 /// Exception thrown when video content cannot be loaded due to network issues
 class VideoOfflineException implements Exception {
@@ -99,6 +100,65 @@ class VideoRepository {
         throw VideoOfflineException();
       }
       throw Exception('An error occurred while loading live classes');
+    }
+  }
+
+  /// Fetch normal (non-live) videos for a specific theory chapter.
+  ///
+  /// Returns videos where `is_live_class = false` AND `chapter_id = chapterId`,
+  /// ordered by display_order (ascending).
+  Future<List<VideoItem>> fetchVideosByChapter(int chapterId) async {
+    debugPrint('🎬 fetchVideosByChapter($chapterId) started');
+    try {
+      final response = await _supabase
+          .from('videos')
+          .select()
+          .eq('is_live_class', false)
+          .eq('chapter_id', chapterId)
+          .order('display_order', ascending: true);
+
+      final data = List<Map<String, dynamic>>.from(response);
+      debugPrint('✅ fetchVideosByChapter($chapterId) rows=${data.length}');
+      return data.map((json) => VideoItem.fromJson(json)).toList();
+    } catch (e) {
+      debugPrint('❌ fetchVideosByChapter($chapterId) error type=${e.runtimeType} error=$e');
+      if (e is VideoOfflineException) rethrow;
+      if (e is PostgrestException) {
+        throw Exception('Failed to load videos for this chapter: ${e.message}');
+      }
+      final hasConnection = await _hasInternetConnection();
+      if (!hasConnection) {
+        throw VideoOfflineException();
+      }
+      throw Exception('An error occurred while loading chapter videos');
+    }
+  }
+
+  /// Fetch the list of theory chapters (used to display the chapter list in the UI).
+  ///
+  /// Returns all chapters from the `theory_chapters` table ordered by display_order.
+  Future<List<TheoryChapter>> fetchTheoryChapters() async {
+    debugPrint('📚 fetchTheoryChapters() started');
+    try {
+      final response = await _supabase
+          .from('theory_chapters')
+          .select()
+          .order('id', ascending: true);
+
+      final data = List<Map<String, dynamic>>.from(response);
+      debugPrint('✅ fetchTheoryChapters() rows=${data.length}');
+      return data.map((json) => TheoryChapter.fromJson(json)).toList();
+    } catch (e) {
+      debugPrint('❌ fetchTheoryChapters() error type=${e.runtimeType} error=$e');
+      if (e is VideoOfflineException) rethrow;
+      if (e is PostgrestException) {
+        throw Exception('Failed to load theory chapters: ${e.message}');
+      }
+      final hasConnection = await _hasInternetConnection();
+      if (!hasConnection) {
+        throw VideoOfflineException();
+      }
+      throw Exception('An error occurred while loading theory chapters');
     }
   }
 

@@ -751,6 +751,79 @@ class AdminRepository {
     }
   }
 
+  /// Get all videos joined with their theory chapter (for the unified admin
+  /// management screen). Fetches both the [videos] and [theory_chapters] tables
+  /// and stitches them together client-side, attaching the matching chapter map
+  /// under each video's `chapter` key (or `null` for live classes / unmatched).
+  ///
+  /// A client-side join is used instead of a PostgREST embed so this does not
+  /// depend on a declared foreign-key relationship between the two tables, and
+  /// so a missing chapter never drops the video from the result set.
+  ///
+  /// Sorted newest-first by `class_date` (falling back to `created_at`), which
+  /// is the default order the management screen presents before any local
+  /// re-sorting is applied.
+  ///
+  /// Each video is also tagged with a 1-based `chapter_number` derived from the
+  /// chapter's rank in the `id`-ordered chapter list (chapter 1 → 25). This is
+  /// used instead of `display_order`, which is nullable/unset in the data and
+  /// would otherwise render every tag as "CHAPTER 0".
+  Future<List<Map<String, dynamic>>> getVideosWithChapters() async {
+    try {
+      final videosResponse = await _supabase
+          .from('videos')
+          .select()
+          .timeout(const Duration(seconds: 10));
+      final chaptersResponse = await _supabase
+          .from('theory_chapters')
+          .select('id, name_it, name_en, name_bn, display_order')
+          .timeout(const Duration(seconds: 10));
+
+      final videos = List<Map<String, dynamic>>.from(videosResponse as List);
+      final chapters = List<Map<String, dynamic>>.from(chaptersResponse as List);
+
+      int chapterIdOf(Map<String, dynamic> chapter) {
+        final id = chapter['id'];
+        if (id is int) return id;
+        if (id is num) return id.toInt();
+        return int.tryParse('${id ?? ''}') ?? 0;
+      }
+
+      // Rank chapters by id (ascending) → 1-based chapter number.
+      chapters.sort((a, b) => chapterIdOf(a).compareTo(chapterIdOf(b)));
+      final chapterNumberById = <dynamic, int>{};
+      for (var i = 0; i < chapters.length; i++) {
+        chapterNumberById[chapters[i]['id']] = i + 1;
+      }
+
+      final chapterById = <dynamic, Map<String, dynamic>>{
+        for (final chapter in chapters) chapter['id']: chapter,
+      };
+
+      for (final video in videos) {
+        final chapterId = video['chapter_id'];
+        video['chapter'] = chapterId != null ? chapterById[chapterId] : null;
+        video['chapter_number'] =
+            chapterId != null ? chapterNumberById[chapterId] : null;
+      }
+
+      int dateMillis(Map<String, dynamic> video) {
+        final raw = video['class_date'] ?? video['created_at'];
+        if (raw is String) {
+          return DateTime.tryParse(raw)?.millisecondsSinceEpoch ?? 0;
+        }
+        if (raw is DateTime) return raw.millisecondsSinceEpoch;
+        return 0;
+      }
+
+      videos.sort((a, b) => dateMillis(b).compareTo(dateMillis(a)));
+      return videos;
+    } catch (e) {
+      debugPrint('Error fetching videos with chapters: $e');
+      return [];
+    }
+  }
+
   /// Get videos by category ID
   Future<List<Map<String, dynamic>>> getVideosByCategory(int categoryId) async {
     try {
@@ -786,6 +859,7 @@ class AdminRepository {
   Future<bool> upsertVideo({
     int? id,
     int? categoryId,
+    int? chapterId,
     required String titleIt,
     String? titleEn,
     String? titleBn,
@@ -802,6 +876,7 @@ class AdminRepository {
         params: {
           'p_id': id,
           'p_category_id': categoryId,
+          'p_chapter_id': chapterId,
           'p_title_it': titleIt,
           'p_title_en': titleEn,
           'p_title_bn': titleBn,

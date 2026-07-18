@@ -1235,6 +1235,13 @@ class AppLocalizationsBn extends AppLocalizations {
   String get settingsVersion => 'সংস্করণ';
 
   @override
+  String get settingsDisclaimerTitle => 'Disclaimer';
+
+  @override
+  String get settingsDisclaimerContent =>
+      'This app is not a government entity. Quizzes are based on public information from mit.gov.it.';
+
+  @override
   String get settingsClose => 'বন্ধ করুন';
 
   @override
@@ -1706,6 +1713,59 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get adminVideoDeleted => 'ভিডিও সফলভাবে মুছে ফেলা হয়েছে';
+
+  @override
+  String get adminVideoManagement => 'ভিডিও ব্যবস্থাপনা';
+
+  @override
+  String get adminFilterLiveOnly => 'শুধু লাইভ ক্লাস';
+
+  @override
+  String get adminFilterChapterOnly => 'শুধু অধ্যায়ের ক্লাস';
+
+  @override
+  String get adminSortByDate => 'সর্বশেষ';
+
+  @override
+  String get adminSortByChapter => 'অধ্যায় অনুসারে সাজান';
+
+  @override
+  String get adminTagLive => 'লাইভ';
+
+  @override
+  String adminTagChapter(int number) {
+    return 'অধ্যায় $number';
+  }
+
+  @override
+  String get adminLiveClass => 'লাইভ ক্লাস';
+
+  @override
+  String get adminChapterClass => 'অধ্যায়ের ক্লাস';
+
+  @override
+  String get adminUploadTypeQuestion => 'আপনি কোন ধরনের ভিডিও আপলোড করতে চান?';
+
+  @override
+  String get adminUploadRegular => 'নিয়মিত ক্লাস ভিডিও';
+
+  @override
+  String get adminUploadLive => 'লাইভ ক্লাস রেকর্ডিং';
+
+  @override
+  String get adminClassType => 'ক্লাসের ধরন';
+
+  @override
+  String get adminNormalClass => 'সাধারণ ক্লাস';
+
+  @override
+  String get adminClassDate => 'ক্লাসের তারিখ';
+
+  @override
+  String get adminTheoryChapter => 'তত্ত্ব অধ্যায়';
+
+  @override
+  String get adminSelectChapterRequired => 'একটি তত্ত্ব অধ্যায় নির্বাচন করুন';
 
   @override
   String adminDeleteCategoryWarning(int count) {

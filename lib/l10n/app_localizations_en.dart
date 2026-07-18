@@ -1231,6 +1231,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsVersion => 'Version';
 
   @override
+  String get settingsDisclaimerTitle => 'Disclaimer';
+
+  @override
+  String get settingsDisclaimerContent =>
+      'This app is not a government entity. Quizzes are based on public information from mit.gov.it.';
+
+  @override
   String get settingsClose => 'Close';
 
   @override
@@ -1702,6 +1709,60 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adminVideoDeleted => 'Video deleted successfully';
+
+  @override
+  String get adminVideoManagement => 'Video Management';
+
+  @override
+  String get adminFilterLiveOnly => 'Live Classes Only';
+
+  @override
+  String get adminFilterChapterOnly => 'Chapter Classes Only';
+
+  @override
+  String get adminSortByDate => 'Latest';
+
+  @override
+  String get adminSortByChapter => 'Sort by Chapter';
+
+  @override
+  String get adminTagLive => 'LIVE';
+
+  @override
+  String adminTagChapter(int number) {
+    return 'CHAPTER $number';
+  }
+
+  @override
+  String get adminLiveClass => 'Live Class';
+
+  @override
+  String get adminChapterClass => 'Chapter Class';
+
+  @override
+  String get adminUploadTypeQuestion =>
+      'What type of video would you like to upload?';
+
+  @override
+  String get adminUploadRegular => 'Regular Class Video';
+
+  @override
+  String get adminUploadLive => 'Live Class Recording';
+
+  @override
+  String get adminClassType => 'Class Type';
+
+  @override
+  String get adminNormalClass => 'Normal Class';
+
+  @override
+  String get adminClassDate => 'Class Date';
+
+  @override
+  String get adminTheoryChapter => 'Theory Chapter';
+
+  @override
+  String get adminSelectChapterRequired => 'Please select a theory chapter';
 
   @override
   String adminDeleteCategoryWarning(int count) {

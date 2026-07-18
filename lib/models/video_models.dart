@@ -78,6 +78,7 @@ class VideoCategory {
 class VideoItem {
   final int id;
   final int? categoryId;
+  final int? chapterId;
   final String titleIt;
   final String? titleEn;
   final String? titleBn;
@@ -92,6 +93,7 @@ class VideoItem {
   VideoItem({
     required this.id,
     this.categoryId,
+    this.chapterId,
     required this.titleIt,
     this.titleEn,
     this.titleBn,
@@ -106,6 +108,7 @@ class VideoItem {
 
   factory VideoItem.fromJson(Map<String, dynamic> json) {
     final categoryRaw = json['category_id'];
+    final chapterRaw = json['chapter_id'];
     final isLiveClassRaw = json['is_live_class'];
     final classDateRaw = json['class_date'];
 
@@ -118,6 +121,7 @@ class VideoItem {
     return VideoItem(
       id: json['id'] as int,
       categoryId: categoryRaw is int ? categoryRaw : (categoryRaw is num ? categoryRaw.toInt() : null),
+      chapterId: chapterRaw is int ? chapterRaw : (chapterRaw is num ? chapterRaw.toInt() : null),
       titleIt: json['title_it'] as String,
       titleEn: json['title_en'] as String?,
       titleBn: json['title_bn'] as String?,
@@ -135,6 +139,7 @@ class VideoItem {
     return {
       'id': id,
       'category_id': categoryId,
+      'chapter_id': chapterId,
       'title_it': titleIt,
       'title_en': titleEn,
       'title_bn': titleBn,

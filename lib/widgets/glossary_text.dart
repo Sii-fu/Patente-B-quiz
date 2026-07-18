@@ -13,6 +13,7 @@ class GlossaryText extends StatefulWidget {
   const GlossaryText({
     super.key,
     required this.text,
+    
     this.style,
   });
 

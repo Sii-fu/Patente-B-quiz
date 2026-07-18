@@ -423,6 +423,8 @@
   "settingsAbout": "About",
   "settingsAboutContent": "Desh Bangla Patente helps you prepare for the Italian driving license exam (Patente B) with practice quizzes, video tutorials, and progress tracking.\n\nDeveloped with ❤️ for the Bangladeshi community in Italy.",
   "settingsVersion": "Version",
+  "settingsDisclaimerTitle": "Disclaimer",
+  "settingsDisclaimerContent": "This app is not a government entity. Quizzes are based on public information from mit.gov.it.",
   "settingsClose": "Close",
   "settingsCancel": "Cancel",
   "settingsConfirm": "Confirm",
@@ -583,6 +585,29 @@
   "adminThumbnailUrl": "Thumbnail URL",
   "adminThumbnailHelper": "Leave empty to use YouTube thumbnail",
   "adminVideoDeleted": "Video deleted successfully",
+  "adminVideoManagement": "Video Management",
+  "adminFilterAll": "All",
+  "adminFilterLiveOnly": "Live Classes Only",
+  "adminFilterChapterOnly": "Chapter Classes Only",
+  "adminSortByDate": "Latest",
+  "adminSortByChapter": "Sort by Chapter",
+  "adminTagLive": "LIVE",
+  "adminTagChapter": "CHAPTER {number}",
+  "@adminTagChapter": {
+    "placeholders": {
+      "number": { "type": "int" }
+    }
+  },
+  "adminLiveClass": "Live Class",
+  "adminChapterClass": "Chapter Class",
+  "adminUploadTypeQuestion": "What type of video would you like to upload?",
+  "adminUploadRegular": "Regular Class Video",
+  "adminUploadLive": "Live Class Recording",
+  "adminClassType": "Class Type",
+  "adminNormalClass": "Normal Class",
+  "adminClassDate": "Class Date",
+  "adminTheoryChapter": "Theory Chapter",
+  "adminSelectChapterRequired": "Please select a theory chapter",
   "adminDeleteCategoryWarning": "This category has {count} items. Deleting it will also delete all items. Continue?",
   "@adminDeleteCategoryWarning": {
     "placeholders": {

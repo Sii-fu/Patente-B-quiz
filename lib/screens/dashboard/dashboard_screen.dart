@@ -25,6 +25,7 @@ import '../../features/homework/homework_screen.dart';
 import '../../features/homework/homework_localizations.dart';
 import 'vocabulary_screen.dart';
 import '../../services/secure_storage_service.dart';
+import 'video_chapters_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -517,7 +518,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
             HapticFeedback.mediumImpact();
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const VideoMaterialsScreen()),
+              MaterialPageRoute(builder: (context) => const VideoChaptersScreen()),
             );
           },
         ),

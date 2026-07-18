@@ -8,7 +8,16 @@ import '../services/admin_repository.dart';
 class AdminVideoEditScreen extends StatefulWidget {
   final Map<String, dynamic>? video;
 
-  const AdminVideoEditScreen({super.key, this.video});
+  /// Pre-selects the "Live Class" toggle when creating a **new** video, driven
+  /// by the choice dialog on the management screen. Ignored when [video] is
+  /// provided — an existing record's own `is_live_class` value wins.
+  final bool? initialIsLiveClass;
+
+  const AdminVideoEditScreen({
+    super.key,
+    this.video,
+    this.initialIsLiveClass,
+  });
 
   @override
   State<AdminVideoEditScreen> createState() => _AdminVideoEditScreenState();
@@ -31,7 +40,9 @@ class _AdminVideoEditScreenState extends State<AdminVideoEditScreen> {
   File? _selectedThumbnailFile;
   List<Map<String, dynamic>> _videoCategories = [];
   int? _selectedCategoryId;
-  bool _isLoadingCategories = false;
+  List<Map<String, dynamic>> _theoryChapters = [];
+  int? _selectedChapterId;
+  bool _isLoadingChapters = false;
   bool _isLiveClass = false;
   DateTime _classDate = DateTime.now();
 
@@ -51,10 +62,21 @@ class _AdminVideoEditScreenState extends State<AdminVideoEditScreen> {
       text: (widget.video?['display_order'] ?? 0).toString(),
     );
     _thumbnailUrl = widget.video?['thumbnail_url'] as String?;
-    _selectedCategoryId = _toInt(widget.video?['category_id']);
-    _isLiveClass = widget.video?['is_live_class'] == true;
+    final existing = widget.video;
+    _selectedCategoryId = _toInt(existing?['category_id']);
+    // Prefer the flat `chapter_id`; fall back to the joined `chapter` map the
+    // management screen attaches so an edit opened from that list keeps its
+    // selected chapter even if `chapter_id` wasn't projected onto the row.
+    _selectedChapterId = _toInt(existing?['chapter_id']) ??
+        _toInt((existing?['chapter'] as Map?)?['id']);
+    // New videos honour the choice-dialog flag; existing records keep their own
+    // stored value. (A local avoids the `?[` / ternary parser ambiguity.)
+    _isLiveClass = existing != null
+        ? existing['is_live_class'] == true
+        : (widget.initialIsLiveClass ?? false);
     _classDate = _parseClassDate(widget.video?['class_date']) ?? DateTime.now();
     _loadVideoCategories();
+    _loadTheoryChapters();
   }
 
   @override
@@ -98,19 +120,7 @@ class _AdminVideoEditScreenState extends State<AdminVideoEditScreen> {
     return null;
   }
 
-  String _localizedCategoryName(Map<String, dynamic> category, String languageCode) {
-    switch (languageCode) {
-      case 'en':
-        return (category['name_en'] ?? category['name_it'] ?? '').toString();
-      case 'bn':
-        return (category['name_bn'] ?? category['name_it'] ?? '').toString();
-      default:
-        return (category['name_it'] ?? '').toString();
-    }
-  }
-
   Future<void> _loadVideoCategories() async {
-    setState(() => _isLoadingCategories = true);
     final categories = await _adminRepository.getVideoCategories();
     if (!mounted) return;
     setState(() {
@@ -118,8 +128,32 @@ class _AdminVideoEditScreenState extends State<AdminVideoEditScreen> {
       if (_selectedCategoryId == null && categories.isNotEmpty) {
         _selectedCategoryId = _toInt(categories.first['id']);
       }
-      _isLoadingCategories = false;
     });
+  }
+
+  Future<void> _loadTheoryChapters() async {
+    setState(() => _isLoadingChapters = true);
+    final chapters = await _adminRepository.getTheoryChapters();
+    // Present chapters in chapter order (first → last). Sorting by `id` locally
+    // — rather than changing the shared repository query — keeps every other
+    // admin screen that calls getTheoryChapters() untouched.
+    chapters.sort((a, b) => (_toInt(a['id']) ?? 0).compareTo(_toInt(b['id']) ?? 0));
+    if (!mounted) return;
+    setState(() {
+      _theoryChapters = chapters;
+      _isLoadingChapters = false;
+    });
+  }
+
+  String _localizedChapterName(Map<String, dynamic> chapter, String languageCode) {
+    switch (languageCode) {
+      case 'en':
+        return (chapter['name_en'] ?? chapter['name_it'] ?? '').toString();
+      case 'bn':
+        return (chapter['name_bn'] ?? chapter['name_it'] ?? '').toString();
+      default:
+        return (chapter['name_it'] ?? '').toString();
+    }
   }
 
   Future<void> _pickClassDate() async {
@@ -148,9 +182,11 @@ class _AdminVideoEditScreenState extends State<AdminVideoEditScreen> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
-    if (!_isLiveClass && _selectedCategoryId == null) {
+    if (!_isLiveClass && _selectedChapterId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a video category')),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.adminSelectChapterRequired),
+        ),
       );
       return;
     }
@@ -185,6 +221,7 @@ class _AdminVideoEditScreenState extends State<AdminVideoEditScreen> {
     final success = await _adminRepository.upsertVideo(
       id: widget.video?['id'] as int?,
       categoryId: categoryIdToSave,
+      chapterId: _isLiveClass ? null : _selectedChapterId,
       titleIt: _titleItController.text.trim(),
       titleEn: _titleEnController.text.trim().isEmpty ? null : _titleEnController.text.trim(),
       titleBn: _titleBnController.text.trim().isEmpty ? null : _titleBnController.text.trim(),
@@ -215,12 +252,12 @@ class _AdminVideoEditScreenState extends State<AdminVideoEditScreen> {
     final theme = Theme.of(context);
     final previewImagePath = _selectedThumbnailFile?.path;
     final languageCode = Localizations.localeOf(context).languageCode;
-    final categoryIds = _videoCategories
-        .map((category) => _toInt(category['id']))
+    final chapterIds = _theoryChapters
+        .map((chapter) => _toInt(chapter['id']))
         .whereType<int>()
         .toSet();
-    final dropdownCategoryValue =
-        categoryIds.contains(_selectedCategoryId) ? _selectedCategoryId : null;
+    final dropdownChapterValue =
+        chapterIds.contains(_selectedChapterId) ? _selectedChapterId : null;
     final formattedClassDate = MaterialLocalizations.of(context).formatMediumDate(_classDate);
 
     return Scaffold(
@@ -275,13 +312,20 @@ class _AdminVideoEditScreenState extends State<AdminVideoEditScreen> {
               },
             ),
             const SizedBox(height: 12),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Is this a Live Class?'),
+            DropdownButtonFormField<bool>(
               value: _isLiveClass,
+              decoration: InputDecoration(
+                labelText: '${l10n.adminClassType} *',
+                border: const OutlineInputBorder(),
+              ),
+              items: [
+                DropdownMenuItem(value: false, child: Text(l10n.adminNormalClass)),
+                DropdownMenuItem(value: true, child: Text(l10n.adminLiveClass)),
+              ],
               onChanged: _isSaving
                   ? null
                   : (value) {
+                      if (value == null) return;
                       setState(() {
                         final wasLiveClass = _isLiveClass;
                         _isLiveClass = value;
@@ -296,11 +340,12 @@ class _AdminVideoEditScreenState extends State<AdminVideoEditScreen> {
                       });
                     },
             ),
+            const SizedBox(height: 12),
             if (_isLiveClass) ...[
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: Icon(Icons.calendar_month, color: theme.colorScheme.primary),
-                title: const Text('Class Date'),
+                title: Text(l10n.adminClassDate),
                 subtitle: Text(formattedClassDate),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: _pickClassDate,
@@ -308,22 +353,26 @@ class _AdminVideoEditScreenState extends State<AdminVideoEditScreen> {
               const SizedBox(height: 12),
             ],
             if (!_isLiveClass) ...[
-              if (_isLoadingCategories)
+              if (_isLoadingChapters)
                 const LinearProgressIndicator()
               else
                 DropdownButtonFormField<int>(
-                  value: dropdownCategoryValue,
-                  decoration: const InputDecoration(
-                    labelText: 'Video Category *',
-                    border: OutlineInputBorder(),
+                  value: dropdownChapterValue,
+                  isExpanded: true,
+                  decoration: InputDecoration(
+                    labelText: '${l10n.adminTheoryChapter} *',
+                    border: const OutlineInputBorder(),
                   ),
-                  items: _videoCategories
-                      .map((category) {
-                        final id = _toInt(category['id']);
+                  items: _theoryChapters
+                      .map((chapter) {
+                        final id = _toInt(chapter['id']);
                         if (id == null) return null;
                         return DropdownMenuItem<int>(
                           value: id,
-                          child: Text(_localizedCategoryName(category, languageCode)),
+                          child: Text(
+                            _localizedChapterName(chapter, languageCode),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         );
                       })
                       .whereType<DropdownMenuItem<int>>()
@@ -332,12 +381,12 @@ class _AdminVideoEditScreenState extends State<AdminVideoEditScreen> {
                       ? null
                       : (value) {
                           setState(() {
-                            _selectedCategoryId = value;
+                            _selectedChapterId = value;
                           });
                         },
                   validator: (_) {
-                    if (_selectedCategoryId == null) {
-                      return 'Please select a video category';
+                    if (_selectedChapterId == null) {
+                      return l10n.adminSelectChapterRequired;
                     }
                     return null;
                   },
