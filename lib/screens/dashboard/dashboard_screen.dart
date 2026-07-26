@@ -26,6 +26,7 @@ import '../../features/homework/homework_localizations.dart';
 import 'vocabulary_screen.dart';
 import '../../services/secure_storage_service.dart';
 import 'video_chapters_screen.dart';
+import 'categories_list_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -34,21 +35,22 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProviderStateMixin {
+class _DashboardScreenState extends State<DashboardScreen>
+    with SingleTickerProviderStateMixin {
   // Dashboard stats - loaded from Supabase
   DashboardStats _stats = DashboardStats.empty;
   ProfileStatsService? _statsService;
   final HomeworkRepository _homeworkRepository = HomeworkRepository();
   bool _isLoadingStats = true;
   bool _hasPendingHomework = false;
-  
+
   // User verification status
   Profile? _userProfile;
   bool _isLoadingProfile = true;
-  
+
   String? _userName;
   bool _isGuest = false;
-  
+
   AnimationController? _animationController;
   Animation<double>? _progressAnimation;
 
@@ -59,22 +61,18 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     _loadUserData();
     _initializeStatsService();
     _loadHomeworkIndicator();
-    
+
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     );
-    
+
     // Initialize with 0, will animate to real value after stats load
-    _progressAnimation = Tween<double>(
-      begin: 0.0,
-      end: 0.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController!,
-      curve: Curves.easeOut,
-    ));
+    _progressAnimation = Tween<double>(begin: 0.0, end: 0.0).animate(
+      CurvedAnimation(parent: _animationController!, curve: Curves.easeOut),
+    );
   }
-  
+
   Future<void> _loadUserProfile() async {
     try {
       final userId = Supabase.instance.client.auth.currentUser?.id;
@@ -106,33 +104,33 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       }
     }
   }
-  
+
   Future<void> _initializeStatsService() async {
     _statsService = ProfileStatsService();
     await _loadDashboardStats();
   }
-  
+
   Future<void> _loadDashboardStats() async {
     if (_statsService == null) return;
-    
+
     try {
       final stats = await _statsService!.getDashboardStats();
-      
+
       if (mounted) {
         setState(() {
           _stats = stats;
           _isLoadingStats = false;
-          
+
           // Update animation with real progress value
-          _progressAnimation = Tween<double>(
-            begin: 0.0,
-            end: stats.progressPercentage,
-          ).animate(CurvedAnimation(
-            parent: _animationController!,
-            curve: Curves.easeOut,
-          ));
+          _progressAnimation =
+              Tween<double>(begin: 0.0, end: stats.progressPercentage).animate(
+                CurvedAnimation(
+                  parent: _animationController!,
+                  curve: Curves.easeOut,
+                ),
+              );
         });
-        
+
         // Start the animation
         _animationController!.forward();
       }
@@ -145,7 +143,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       }
     }
   }
-  
+
   /// Refresh stats - call this when returning from quiz or theory screens
   Future<void> refreshStats() async {
     await _loadDashboardStats();
@@ -186,7 +184,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       setState(() => _hasPendingHomework = false);
     }
   }
-  
+
   @override
   void dispose() {
     _animationController?.dispose();
@@ -198,7 +196,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     final user = Supabase.instance.client.auth.currentUser;
     final isGuest =
         await secureStorage.readBool(AppConstants.keyGuestMode) ?? false;
-    
+
     setState(() {
       _isGuest = isGuest;
       _userName = user?.email?.split('@').first ?? 'Utente';
@@ -209,22 +207,20 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
-    
+
     // Show loading while checking profile
     if (_isLoadingProfile) {
       return Scaffold(
         backgroundColor: theme.colorScheme.surfaceContainerLowest,
-        body: const Center(
-          child: CircularProgressIndicator(),
-        ),
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
-    
+
     // Show pending verification if user is not verified
     if (_userProfile != null && !_userProfile!.isVerified && !_isGuest) {
       return _buildPendingVerificationScreen(context, l10n, theme);
     }
-    
+
     return Scaffold(
       backgroundColor: theme.colorScheme.surfaceContainerLowest,
       appBar: AppBar(
@@ -234,9 +230,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         backgroundColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
         flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: AppTheme.primaryGradient,
-          ),
+          decoration: const BoxDecoration(gradient: AppTheme.primaryGradient),
         ),
         titleSpacing: 20,
         title: Row(
@@ -246,7 +240,9 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                 HapticFeedback.lightImpact();
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const ProfileScreen(),
+                  ),
                 );
               },
               child: Container(
@@ -302,7 +298,6 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
           child: Column(
             children: [
               // 1. Gradient Header Section
-              
               const SizedBox(height: 20),
               // 3. Feature Cards Grid
               Padding(
@@ -335,7 +330,6 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     );
   }
 
-
   // Stat Column Widget
 
   // Main Action Button
@@ -358,7 +352,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
               ),
             ),
           );
-        }, 
+        },
         borderRadius: BorderRadius.circular(16),
         child: Ink(
           decoration: BoxDecoration(
@@ -381,11 +375,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                   ),
                 ),
                 const SizedBox(width: 12),
-                const Icon(
-                  Icons.arrow_forward,
-                  color: Colors.white,
-                  size: 24,
-                ),
+                const Icon(Icons.arrow_forward, color: Colors.white, size: 24),
               ],
             ),
           ),
@@ -393,7 +383,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       ),
     );
   }
-  
+
   // Feature Cards Grid
   Widget _buildFeatureGrid(BuildContext context, AppLocalizations l10n) {
     final isTablet = MediaQuery.of(context).size.width >= 600;
@@ -433,7 +423,9 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
             HapticFeedback.mediumImpact();
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const ReviewErrorsScreen()),
+              MaterialPageRoute(
+                builder: (context) => const ReviewErrorsScreen(),
+              ),
             ).then((_) => refreshStats());
           },
         ),
@@ -470,7 +462,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
             ).then((_) => refreshStats());
           },
         ),
-         
+
         _buildFeatureCard(
           context: context,
           icon: Icons.book,
@@ -518,7 +510,9 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
             HapticFeedback.mediumImpact();
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const VideoChaptersScreen()),
+              MaterialPageRoute(
+                builder: (context) => const VideoChaptersScreen(),
+              ),
             );
           },
         ),
@@ -534,14 +528,34 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
             HapticFeedback.mediumImpact();
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const LiveClassesScreen()),
+              MaterialPageRoute(
+                builder: (context) => const LiveClassesScreen(),
+              ),
             );
           },
         ),
+        // _buildFeatureCard(
+        //   context: context,
+        //   icon: Icons.live_tv,
+        //   iconColor: Theme.of(context).colorScheme.primary,
+        //   title: l10n.dashboardLiveClasses,
+        //   subtitle: l10n.dashboardLiveClassesDesc,
+        //   tagText: l10n.dashboardNew,
+        //   tagColor: Theme.of(context).colorScheme.primary,
+        //   onTap: () {
+        //     HapticFeedback.mediumImpact();
+        //     Navigator.push(
+        //       context,
+        //       MaterialPageRoute(
+        //         builder: (context) => const CategoriesListScreen(),
+        //       ),
+        //     );
+        //   },
+        // ),
       ],
     );
   }
-  
+
   // Feature Card Widget
   Widget _buildFeatureCard({
     required BuildContext context,
@@ -577,11 +591,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                       color: iconColor.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(
-                      icon,
-                      color: iconColor,
-                      size: 28,
-                    ),
+                    child: Icon(icon, color: iconColor, size: 28),
                   ),
 
                   const SizedBox(width: 12),
@@ -629,14 +639,16 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       ),
     );
   }
-  
+
   // Pending Verification Screen
-  Widget _buildPendingVerificationScreen(BuildContext context, AppLocalizations l10n, ThemeData theme) {
+  Widget _buildPendingVerificationScreen(
+    BuildContext context,
+    AppLocalizations l10n,
+    ThemeData theme,
+  ) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: AppTheme.primaryGradient,
-        ),
+        decoration: const BoxDecoration(gradient: AppTheme.primaryGradient),
         child: SafeArea(
           child: Center(
             child: Padding(
@@ -657,9 +669,9 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                       color: theme.colorScheme.onPrimary,
                     ),
                   ),
-                  
+
                   const SizedBox(height: 40),
-                  
+
                   // Title
                   Text(
                     l10n.pendingVerificationTitle,
@@ -669,9 +681,9 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   // Message
                   Text(
                     l10n.pendingVerificationMessage,
@@ -680,9 +692,9 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  
+
                   const SizedBox(height: 12),
-                  
+
                   // Sub-message
                   Container(
                     padding: const EdgeInsets.all(16),
@@ -698,9 +710,9 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                       textAlign: TextAlign.center,
                     ),
                   ),
-                  
+
                   const SizedBox(height: 48),
-                  
+
                   // Refresh Button
                   SizedBox(
                     width: double.infinity,
@@ -721,16 +733,19 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   // Logout Button
                   TextButton.icon(
                     onPressed: () async {
                       HapticFeedback.mediumImpact();
                       await Supabase.instance.client.auth.signOut();
                       if (mounted) {
-                        Navigator.pushReplacementNamed(context, AppConstants.routeAuth);
+                        Navigator.pushReplacementNamed(
+                          context,
+                          AppConstants.routeAuth,
+                        );
                       }
                     },
                     icon: Icon(

@@ -631,6 +631,38 @@ class AdminRepository {
     }
   }
 
+  /// Get question/quiz count by chapter/category
+  Future<int> getQuestionCountByChapter(int chapterId) async {
+    try {
+      // 1. Get unique subtopic IDs for this chapter from theory_cards
+      final theoryCardsResponse = await _supabase
+          .from('theory_cards')
+          .select('subtopic_id')
+          .eq('chapter_id', chapterId)
+          .not('subtopic_id', 'is', null);
+
+      final Set<int> subtopicIds = {};
+      for (var card in theoryCardsResponse as List) {
+        if (card['subtopic_id'] != null) {
+          subtopicIds.add(card['subtopic_id'] as int);
+        }
+      }
+
+      if (subtopicIds.isEmpty) return 0;
+
+      // 2. Count questions in these subtopics
+      final response = await _supabase
+          .from('questions')
+          .select('id')
+          .inFilter('subtopic_id', subtopicIds.toList())
+          .count(CountOption.exact);
+      return response.count;
+    } catch (e) {
+      debugPrint('Error getting question count by chapter: $e');
+      return 0;
+    }
+  }
+
   /// Upsert a theory card (admin only)
   Future<bool> upsertTheoryCard({
     int? id,

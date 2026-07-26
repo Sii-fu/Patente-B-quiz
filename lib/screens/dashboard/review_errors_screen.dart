@@ -42,12 +42,12 @@ class _ReviewErrorsScreenState extends State<ReviewErrorsScreen> {
       // Calculate totals
       int totalCorrect = 0;
       int totalErrors = 0;
-      
+
       for (var session in sessions) {
         final errorsCount = session['errors_count'] ?? 0;
         final totalQuestions = session['total_questions'] ?? 30;
         final correctCount = totalQuestions - errorsCount;
-        
+
         totalCorrect += correctCount as int;
         totalErrors += errorsCount as int;
       }
@@ -67,7 +67,7 @@ class _ReviewErrorsScreenState extends State<ReviewErrorsScreen> {
   Future<void> _openSessionReview(Map<String, dynamic> session) async {
     try {
       final sessionId = session['id'];
-      
+
       // Fetch answers for this session
       final answers = await _supabase
           .from('quiz_answers')
@@ -84,11 +84,13 @@ class _ReviewErrorsScreenState extends State<ReviewErrorsScreen> {
       // Build Question objects and userAnswers map
       List<Question> questions = [];
       Map<int, bool> userAnswers = {};
-      
+
       for (int i = 0; i < questionsData.length; i++) {
         final qData = questionsData[i];
-        final answer = answers.firstWhere((a) => a['question_id'] == qData['id']);
-        
+        final answer = answers.firstWhere(
+          (a) => a['question_id'] == qData['id'],
+        );
+
         questions.add(Question.fromJson(qData));
         userAnswers[i] = answer['selected_true'];
       }
@@ -120,9 +122,9 @@ class _ReviewErrorsScreenState extends State<ReviewErrorsScreen> {
     } catch (e) {
       print('Error opening session review: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading session: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error loading session: $e')));
       }
     }
   }
@@ -131,27 +133,29 @@ class _ReviewErrorsScreenState extends State<ReviewErrorsScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Container(
-        decoration: BoxDecoration(
-          gradient: AppTheme.primaryGradient,
-        ),
+        decoration: BoxDecoration(gradient: AppTheme.primaryGradient),
         child: SafeArea(
           child: Column(
             children: [
               // AppBar Section with gradient background
               Container(
-                decoration: BoxDecoration(
-                  color: Colors.transparent,
-                ),
+                decoration: BoxDecoration(color: Colors.transparent),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 0,
+                  ),
                   child: Row(
                     children: [
                       IconButton(
-                        icon: Icon(Icons.arrow_back, color: theme.colorScheme.onPrimary),
+                        icon: Icon(
+                          Icons.arrow_back,
+                          color: theme.colorScheme.onPrimary,
+                        ),
                         onPressed: () {
                           HapticFeedback.lightImpact();
                           Navigator.pop(context);
@@ -170,38 +174,48 @@ class _ReviewErrorsScreenState extends State<ReviewErrorsScreen> {
                   ),
                 ),
               ),
-              
+
               // Main Content
               Expanded(
                 child: Container(
-                  decoration: const BoxDecoration(
-                    color: Colors.transparent,
-                  ),
+                  decoration: const BoxDecoration(color: Colors.transparent),
                   child: _isLoading
-                      ? Center(child: CircularProgressIndicator(color: theme.colorScheme.onPrimary))
+                      ? Center(
+                          child: CircularProgressIndicator(
+                            color: theme.colorScheme.onPrimary,
+                          ),
+                        )
                       : _sessions.isEmpty
-                          ? _buildEmptyState(l10n)
-                          : Container(
-                              margin: const EdgeInsets.only(top: 0, left: 16, right: 16, bottom: 0),
-                              child: Column(
-                                children: [
-                                  // Summary Card
-                                  _buildSummaryCard(),
-                                  
-                                  const SizedBox(height: 16),
-                                  
-                                  // Sessions List
-                                  Expanded(
-                                    child: ListView.builder(
-                                      itemCount: _sessions.length,
-                                      itemBuilder: (context, index) {
-                                        return _buildSessionCard(_sessions[index], index);
-                                      },
-                                    ),
-                                  ),
-                                ],
+                      ? _buildEmptyState(l10n)
+                      : Container(
+                          margin: const EdgeInsets.only(
+                            top: 0,
+                            left: 16,
+                            right: 16,
+                            bottom: 0,
+                          ),
+                          child: Column(
+                            children: [
+                              // Summary Card
+                              _buildSummaryCard(),
+
+                              const SizedBox(height: 16),
+
+                              // Sessions List
+                              Expanded(
+                                child: ListView.builder(
+                                  itemCount: _sessions.length,
+                                  itemBuilder: (context, index) {
+                                    return _buildSessionCard(
+                                      _sessions[index],
+                                      index,
+                                    );
+                                  },
+                                ),
                               ),
-                            ),
+                            ],
+                          ),
+                        ),
                 ),
               ),
             ],
@@ -380,7 +394,7 @@ class _ReviewErrorsScreenState extends State<ReviewErrorsScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      '${l10n.reviewErrorsSession} #${index + 1}',
+                      '${l10n.reviewErrorsSession} #${_sessions.length - index}',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -388,7 +402,10 @@ class _ReviewErrorsScreenState extends State<ReviewErrorsScreen> {
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: theme.colorScheme.error,
                         borderRadius: BorderRadius.circular(12),
@@ -415,7 +432,9 @@ class _ReviewErrorsScreenState extends State<ReviewErrorsScreen> {
                             'Data: ${createdAt.day}/${createdAt.month}/${createdAt.year}',
                             style: TextStyle(
                               fontSize: 13,
-                              color: theme.colorScheme.onSurface.withOpacity(0.6),
+                              color: theme.colorScheme.onSurface.withOpacity(
+                                0.6,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -423,7 +442,9 @@ class _ReviewErrorsScreenState extends State<ReviewErrorsScreen> {
                             'Tempo: ${durationMinutes}:${(durationSeconds % 60).toString().padLeft(2, '0')} min',
                             style: TextStyle(
                               fontSize: 13,
-                              color: theme.colorScheme.onSurface.withOpacity(0.6),
+                              color: theme.colorScheme.onSurface.withOpacity(
+                                0.6,
+                              ),
                             ),
                           ),
                         ],

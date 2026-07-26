@@ -64,12 +64,14 @@ class _TheoryReadingScreenState extends State<TheoryReadingScreen> {
     setState(() => _isLoading = true);
 
     try {
-      print('📖 Loading chapter data directly from Supabase for chapter ${widget.chapterId}...');
-      
+      print(
+        '📖 Loading chapter data directly from Supabase for chapter ${widget.chapterId}...',
+      );
+
       // Load chapter info directly from Supabase
       final chapter = await _theoryService.getChapterById(widget.chapterId);
       print('📖 Chapter loaded: ${chapter?.nameIt ?? "NULL"}');
-      
+
       final languageCode = Localizations.localeOf(context).languageCode;
 
       // Load cards directly from Supabase
@@ -87,7 +89,6 @@ class _TheoryReadingScreenState extends State<TheoryReadingScreen> {
         _isLoading = false;
       });
 
-      
       print('✅ Chapter data loaded successfully');
     } catch (e, stackTrace) {
       print('❌ Error loading chapter data: $e');
@@ -165,8 +166,8 @@ class _TheoryReadingScreenState extends State<TheoryReadingScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _cards.isEmpty
-              ? _buildEmptyState()
-              : _buildCardsFeed(),
+          ? _buildEmptyState()
+          : _buildCardsFeed(),
     );
   }
 
@@ -176,11 +177,17 @@ class _TheoryReadingScreenState extends State<TheoryReadingScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.book_outlined, size: 64, color: theme.colorScheme.onSurface.withOpacity(0.3)),
+          Icon(
+            Icons.book_outlined,
+            size: 64,
+            color: theme.colorScheme.onSurface.withOpacity(0.3),
+          ),
           const SizedBox(height: 16),
           Text(
             'No theory cards available',
-            style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6)),
+            style: TextStyle(
+              color: theme.colorScheme.onSurface.withOpacity(0.6),
+            ),
           ),
         ],
       ),
@@ -189,7 +196,7 @@ class _TheoryReadingScreenState extends State<TheoryReadingScreen> {
 
   Widget _buildCardsFeed() {
     final languageCode = Localizations.localeOf(context).languageCode;
-    
+
     return ListView.builder(
       controller: _scrollController,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -203,15 +210,14 @@ class _TheoryReadingScreenState extends State<TheoryReadingScreen> {
 
   Widget _buildTheoryCardListItem(TheoryCard card, String languageCode) {
     final theme = Theme.of(context);
-    final title = card.getLocalizedTitle(languageCode) ?? 
-                  card.getLocalizedText(languageCode).substring(0, 50) + '...';
+    final title =
+        card.getLocalizedTitle(languageCode) ??
+        card.getLocalizedText(languageCode).substring(0, 50) + '...';
 
     return Card(
       elevation: 2,
       margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: () {
           HapticFeedback.lightImpact();
@@ -235,10 +241,16 @@ class _TheoryReadingScreenState extends State<TheoryReadingScreen> {
                   color: theme.colorScheme.primary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(
-                  Icons.menu_book,
-                  color: theme.colorScheme.primary,
-                  size: 24,
+                child: Center(
+                  child: Text(
+                    '${card.id % 100}',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 26,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: 16),

@@ -57,7 +57,9 @@ class _QuizCardsScreenState extends State<QuizCardsScreen> {
 
       final response = await _supabase
           .from('theory_cards')
-          .select('id, title_it, title_en, title_bn, text_it, text_en, text_bn, image_url, subtopic_id, display_order')
+          .select(
+            'id, title_it, title_en, title_bn, text_it, text_en, text_bn, image_url, subtopic_id, display_order',
+          )
           .eq('chapter_id', widget.chapterId)
           .order('id', ascending: true);
 
@@ -134,12 +136,14 @@ class _QuizCardsScreenState extends State<QuizCardsScreen> {
     );
   }
 
-  Widget _buildBody(ThemeData theme, AppLocalizations l10n, String currentLanguage) {
+  Widget _buildBody(
+    ThemeData theme,
+    AppLocalizations l10n,
+    String currentLanguage,
+  ) {
     if (_isLoading) {
       return Center(
-        child: CircularProgressIndicator(
-          color: theme.colorScheme.primary,
-        ),
+        child: CircularProgressIndicator(color: theme.colorScheme.primary),
       );
     }
 
@@ -148,11 +152,7 @@ class _QuizCardsScreenState extends State<QuizCardsScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 64,
-              color: theme.colorScheme.error,
-            ),
+            Icon(Icons.error_outline, size: 64, color: theme.colorScheme.error),
             const SizedBox(height: 16),
             Text(
               l10n.theoryCardQuizErrorLoading,
@@ -214,32 +214,35 @@ class _QuizCardsScreenState extends State<QuizCardsScreen> {
     );
   }
 
-  Widget _buildCardItem(Map<String, dynamic> card, ThemeData theme, String currentLanguage) {
+  Widget _buildCardItem(
+    Map<String, dynamic> card,
+    ThemeData theme,
+    String currentLanguage,
+  ) {
     final l10n = AppLocalizations.of(context)!;
-    final cardTitle = _getLocalizedTitle(card, currentLanguage);
+    final cardTitle =
+        '${card['id'] % 100}. ${_getLocalizedTitle(card, currentLanguage)}';
     final cardText = _getLocalizedText(card, currentLanguage);
     final subtopicId = card['subtopic_id'] as int?;
     final imageUrl = card['image_url'] as String?;
 
     // Show preview of text (first 100 characters)
-    final previewText = cardText.length > 100 
-        ? '${cardText.substring(0, 100)}...' 
-        : cardText;
+    // final previewText = cardText.length > 100
+    //     ? '${cardText.substring(0, 100)}...'
+    //     : cardText;
+
+    final previewText = cardText;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         onTap: () {
           if (subtopicId == null) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(
-                  l10n.theoryCardQuizEmpty,
-                ),
+                content: Text(l10n.theoryCardQuizEmpty),
                 backgroundColor: theme.colorScheme.error,
               ),
             );
@@ -305,7 +308,7 @@ class _QuizCardsScreenState extends State<QuizCardsScreen> {
                     child: Text(
                       cardTitle,
                       style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700,
                         color: theme.colorScheme.onSurface,
                       ),
                     ),
@@ -321,7 +324,10 @@ class _QuizCardsScreenState extends State<QuizCardsScreen> {
                   if (_isAdmin) const SizedBox(width: 8),
                   if (subtopicId != null)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: theme.colorScheme.primaryContainer,
                         borderRadius: BorderRadius.circular(8),
@@ -354,7 +360,7 @@ class _QuizCardsScreenState extends State<QuizCardsScreen> {
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
-                  maxLines: 2,
+                  maxLines: 4,
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
@@ -369,10 +375,8 @@ class _QuizCardsScreenState extends State<QuizCardsScreen> {
     final result = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
-        builder: (context) => EditTheoryCardScreen(
-          card: card,
-          chapterId: widget.chapterId,
-        ),
+        builder: (context) =>
+            EditTheoryCardScreen(card: card, chapterId: widget.chapterId),
       ),
     );
 

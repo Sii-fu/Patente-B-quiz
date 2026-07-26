@@ -16,17 +16,18 @@ class TopicModeScreen extends StatefulWidget {
 
 class _TopicModeScreenState extends State<TopicModeScreen> {
   late QuizRepository _repository;
-  
+
   // Quiz Configuration
   int _numberOfQuestions = 30;
   bool _hasTimeLimit = false;
   int _timeLimit = 20; // minutes
   Set<int> _selectedTopicIds = {}; // Empty means all topics
   bool _immediateAnswerFeedback = true;
-  
+
   List<Map<String, dynamic>> _topics = [];
   bool _isLoadingTopics = true;
-  final TextEditingController _customQuestionController = TextEditingController();
+  final TextEditingController _customQuestionController =
+      TextEditingController();
 
   @override
   void initState() {
@@ -50,8 +51,15 @@ class _TopicModeScreenState extends State<TopicModeScreen> {
     try {
       final topics = await _repository.getAllTopics();
 
+      final sortedTopics = List<Map<String, dynamic>>.from(topics)
+        ..sort((a, b) {
+          final aId = a['id'] as int? ?? 0;
+          final bId = b['id'] as int? ?? 0;
+          return aId.compareTo(bId);
+        });
+
       setState(() {
-        _topics = topics;
+        _topics = sortedTopics;
         _isLoadingTopics = false;
       });
     } catch (e) {
@@ -64,7 +72,7 @@ class _TopicModeScreenState extends State<TopicModeScreen> {
     // Formula: 30 questions = 20 minutes, proportional
     setState(() {
       _timeLimit = ((_numberOfQuestions / 30) * 20).round();
-    }); 
+    });
   }
 
   void _showTopicSelector() {
@@ -81,7 +89,9 @@ class _TopicModeScreenState extends State<TopicModeScreen> {
             height: MediaQuery.of(context).size.height * 0.8,
             decoration: BoxDecoration(
               color: sheetTheme.colorScheme.surface,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(24),
+              ),
             ),
             child: Column(
               children: [
@@ -118,12 +128,15 @@ class _TopicModeScreenState extends State<TopicModeScreen> {
                       ? const Center(child: CircularProgressIndicator())
                       : ListView.builder(
                           padding: const EdgeInsets.all(16),
+
                           itemCount: _topics.length,
                           itemBuilder: (context, index) {
                             final topic = _topics[index];
                             final topicId = topic['id'] as int;
-                            final isSelected = _selectedTopicIds.contains(topicId);
-                            
+                            final isSelected = _selectedTopicIds.contains(
+                              topicId,
+                            );
+
                             return CheckboxListTile(
                               value: isSelected,
                               onChanged: (value) {
@@ -136,11 +149,24 @@ class _TopicModeScreenState extends State<TopicModeScreen> {
                                 });
                                 setState(() {});
                               },
-                              title: Text(
-                                topic['name_it'] ?? '',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  color: sheetTheme.colorScheme.onSurface,
+                              title: Text.rich(
+                                TextSpan(
+                                  children: [
+                                    TextSpan(
+                                      text: '${index + 1}. ',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: sheetTheme.colorScheme.onSurface,
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: topic['name_it'] ?? '',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.normal,
+                                        color: sheetTheme.colorScheme.onSurface,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                               activeColor: sheetTheme.colorScheme.primary,
@@ -210,46 +236,49 @@ class _TopicModeScreenState extends State<TopicModeScreen> {
               const Divider(height: 1),
               Expanded(
                 child: ListView(
-                  children: [10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((count) {
-                    return ListTile(
-                      title: Text(
-                        '$count ${l10n.topicModeQuestions}',
-                        style: const TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                      trailing: _numberOfQuestions == count
-                          ? Icon(Icons.check, color: sheetTheme.colorScheme.primary)
-                          : null,
-                      onTap: () {
-                        setState(() {
-                          _numberOfQuestions = count;
-                          _updateTimeLimit();
-                        });
-                        Navigator.pop(context);
-                      },
-                    );
-                  }).toList()
-                    ..add(
-                      ListTile(
-                        title: TextField(
-                          controller: _customQuestionController,
-                          keyboardType: TextInputType.number,
-                          decoration: InputDecoration(
-                            labelText: l10n.topicModeCustomNumber,
-                            border: const OutlineInputBorder(),
+                  children:
+                      [10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((count) {
+                        return ListTile(
+                          title: Text(
+                            '$count ${l10n.topicModeQuestions}',
+                            style: const TextStyle(fontWeight: FontWeight.w600),
                           ),
-                          onSubmitted: (value) {
-                            final customCount = int.tryParse(value);
-                            if (customCount != null && customCount > 0) {
-                              setState(() {
-                                _numberOfQuestions = customCount;
-                                _updateTimeLimit();
-                              });
-                              Navigator.pop(context);
-                            }
+                          trailing: _numberOfQuestions == count
+                              ? Icon(
+                                  Icons.check,
+                                  color: sheetTheme.colorScheme.primary,
+                                )
+                              : null,
+                          onTap: () {
+                            setState(() {
+                              _numberOfQuestions = count;
+                              _updateTimeLimit();
+                            });
+                            Navigator.pop(context);
                           },
+                        );
+                      }).toList()..add(
+                        ListTile(
+                          title: TextField(
+                            controller: _customQuestionController,
+                            keyboardType: TextInputType.number,
+                            decoration: InputDecoration(
+                              labelText: l10n.topicModeCustomNumber,
+                              border: const OutlineInputBorder(),
+                            ),
+                            onSubmitted: (value) {
+                              final customCount = int.tryParse(value);
+                              if (customCount != null && customCount > 0) {
+                                setState(() {
+                                  _numberOfQuestions = customCount;
+                                  _updateTimeLimit();
+                                });
+                                Navigator.pop(context);
+                              }
+                            },
+                          ),
                         ),
                       ),
-                    ),
                 ),
               ),
             ],
@@ -263,26 +292,28 @@ class _TopicModeScreenState extends State<TopicModeScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
-          gradient: AppTheme.primaryGradient,
-        ),
+        decoration: BoxDecoration(gradient: AppTheme.primaryGradient),
         child: SafeArea(
           child: Column(
             children: [
               // AppBar Section
               Container(
-                decoration: const BoxDecoration(
-                  color: Colors.transparent,
-                ),
+                decoration: const BoxDecoration(color: Colors.transparent),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 0,
+                  ),
                   child: Row(
                     children: [
                       IconButton(
-                        icon: Icon(Icons.arrow_back, color: theme.colorScheme.onPrimary),
+                        icon: Icon(
+                          Icons.arrow_back,
+                          color: theme.colorScheme.onPrimary,
+                        ),
                         onPressed: () {
                           HapticFeedback.lightImpact();
                           Navigator.pop(context);
@@ -301,11 +332,16 @@ class _TopicModeScreenState extends State<TopicModeScreen> {
                   ),
                 ),
               ),
-              
+
               // Main Content Card
               Expanded(
                 child: Container(
-                  margin: const EdgeInsets.only(top: 20, left: 16, right: 16, bottom: 0),
+                  margin: const EdgeInsets.only(
+                    top: 20,
+                    left: 16,
+                    right: 16,
+                    bottom: 0,
+                  ),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.surface,
                     borderRadius: BorderRadius.circular(35),
@@ -339,13 +375,15 @@ class _TopicModeScreenState extends State<TopicModeScreen> {
                               l10n.topicModeConfigureQuiz,
                               style: TextStyle(
                                 fontSize: 16,
-                                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                                color: theme.colorScheme.onSurface.withValues(
+                                  alpha: 0.6,
+                                ),
                               ),
                             ),
                           ],
                         ),
                       ),
-                      
+
                       // Configuration Items
                       Expanded(
                         child: SingleChildScrollView(
@@ -356,7 +394,8 @@ class _TopicModeScreenState extends State<TopicModeScreen> {
                                 context: context,
                                 icon: Icons.quiz,
                                 title: l10n.topicModeNumberOfQuestions,
-                                value: '$_numberOfQuestions ${l10n.topicModeQuestions}',
+                                value:
+                                    '$_numberOfQuestions ${l10n.topicModeQuestions}',
                                 onTap: _showQuestionCountPicker,
                               ),
                               const SizedBox(height: 16),
@@ -364,7 +403,9 @@ class _TopicModeScreenState extends State<TopicModeScreen> {
                                 context: context,
                                 icon: Icons.access_time,
                                 title: l10n.topicModeTimeLimit,
-                                value: _hasTimeLimit ? '$_timeLimit ${l10n.topicModeMinutes}' : l10n.noTimeLimit,
+                                value: _hasTimeLimit
+                                    ? '$_timeLimit ${l10n.topicModeMinutes}'
+                                    : l10n.noTimeLimit,
                                 onTap: () {
                                   setState(() {
                                     _hasTimeLimit = !_hasTimeLimit;
@@ -376,8 +417,8 @@ class _TopicModeScreenState extends State<TopicModeScreen> {
                                 context: context,
                                 icon: Icons.topic,
                                 title: l10n.topicModeTopics,
-                                value: _selectedTopicIds.isEmpty 
-                                    ? l10n.topicModeAllTopics 
+                                value: _selectedTopicIds.isEmpty
+                                    ? l10n.topicModeAllTopics
                                     : '${_selectedTopicIds.length} ${l10n.topicModeSelectedTopics}',
                                 onTap: _showTopicSelector,
                               ),
@@ -386,12 +427,13 @@ class _TopicModeScreenState extends State<TopicModeScreen> {
                                 context: context,
                                 icon: Icons.feedback,
                                 title: l10n.feedbackType,
-                                value: _immediateAnswerFeedback 
-                                    ? l10n.topicModeImmediateFeedback 
+                                value: _immediateAnswerFeedback
+                                    ? l10n.topicModeImmediateFeedback
                                     : l10n.feedbackAtEnd,
                                 onTap: () {
                                   setState(() {
-                                    _immediateAnswerFeedback = !_immediateAnswerFeedback;
+                                    _immediateAnswerFeedback =
+                                        !_immediateAnswerFeedback;
                                   });
                                 },
                               ),
@@ -400,7 +442,7 @@ class _TopicModeScreenState extends State<TopicModeScreen> {
                           ),
                         ),
                       ),
-                      
+
                       // Start Button
                       Padding(
                         padding: const EdgeInsets.all(10),
@@ -417,8 +459,10 @@ class _TopicModeScreenState extends State<TopicModeScreen> {
                                     numberOfQuestions: _numberOfQuestions,
                                     hasTimeLimit: _hasTimeLimit,
                                     timeLimit: _timeLimit,
-                                    selectedTopicIds: _selectedTopicIds.toList(),
-                                    immediateAnswerFeedback: _immediateAnswerFeedback,
+                                    selectedTopicIds: _selectedTopicIds
+                                        .toList(),
+                                    immediateAnswerFeedback:
+                                        _immediateAnswerFeedback,
                                   ),
                                 ),
                               );
@@ -496,11 +540,7 @@ class _TopicModeScreenState extends State<TopicModeScreen> {
                 color: theme.colorScheme.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(
-                icon,
-                size: 24,
-                color: theme.colorScheme.primary,
-              ),
+              child: Icon(icon, size: 24, color: theme.colorScheme.primary),
             ),
             const SizedBox(width: 16),
             Expanded(

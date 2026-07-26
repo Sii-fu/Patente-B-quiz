@@ -21,6 +21,8 @@ class _AdminCategoriesScreenState extends State<AdminCategoriesScreen> {
   List<Map<String, dynamic>> _categories = [];
   bool _isLoading = true;
   String? _error;
+  final Map<int, int> _theoryCardCounts = {};
+  final Map<int, int> _quizCounts = {};
 
   @override
   void initState() {
@@ -36,9 +38,34 @@ class _AdminCategoriesScreenState extends State<AdminCategoriesScreen> {
 
     try {
       final categories = await _adminRepository.getTheoryChapters();
+      final sortedCategories = List<Map<String, dynamic>>.from(categories)
+        ..sort((a, b) {
+          final aId = a['id'] as int? ?? 0;
+          final bId = b['id'] as int? ?? 0;
+          return aId.compareTo(bId);
+        });
+
+      _theoryCardCounts.clear();
+      _quizCounts.clear();
+
+      // Load counts in parallel
+      await Future.wait(
+        sortedCategories.map((category) async {
+          final id = category['id'] as int;
+          final cardCount = await _adminRepository.getTheoryCardCountByChapter(
+            id,
+          );
+          final quizCount = await _adminRepository.getQuestionCountByChapter(
+            id,
+          );
+          _theoryCardCounts[id] = cardCount;
+          _quizCounts[id] = quizCount;
+        }),
+      );
+
       if (mounted) {
         setState(() {
-          _categories = categories;
+          _categories = sortedCategories;
           _isLoading = false;
         });
       }
@@ -80,7 +107,7 @@ class _AdminCategoriesScreenState extends State<AdminCategoriesScreen> {
     HapticFeedback.mediumImpact();
     final chapterId = category['id'] as int;
     final langCode = Localizations.localeOf(context).languageCode;
-    
+
     // Navigate to theory cards screen for this chapter
     Navigator.push(
       context,
@@ -112,16 +139,24 @@ class _AdminCategoriesScreenState extends State<AdminCategoriesScreen> {
     HapticFeedback.mediumImpact();
     final l10n = AppLocalizations.of(context)!;
     final isEditing = category != null;
-    
-    final nameItController = TextEditingController(text: category?['name_it'] ?? '');
-    final nameEnController = TextEditingController(text: category?['name_en'] ?? '');
-    final nameBnController = TextEditingController(text: category?['name_bn'] ?? '');
-    final colorController = TextEditingController(text: category?['color_hex'] ?? '');
+
+    final nameItController = TextEditingController(
+      text: category?['name_it'] ?? '',
+    );
+    final nameEnController = TextEditingController(
+      text: category?['name_en'] ?? '',
+    );
+    final nameBnController = TextEditingController(
+      text: category?['name_bn'] ?? '',
+    );
+    final colorController = TextEditingController(
+      text: category?['color_hex'] ?? '',
+    );
     final orderController = TextEditingController(
       text: (category?['display_order'] ?? 0).toString(),
     );
 
-    final result = await showDialog<bool>(
+    final result = await showDialog<dynamic>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(isEditing ? l10n.adminEditCategory : l10n.adminAddCategory),
@@ -174,39 +209,66 @@ class _AdminCategoriesScreenState extends State<AdminCategoriesScreen> {
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(l10n.settingsCancel),
-          ),
-          FilledButton(
-            onPressed: () async {
-              if (nameItController.text.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(l10n.adminFieldRequired)),
-                );
-                return;
-              }
-              
-              final success = await _adminRepository.upsertCategory(
-                id: category?['id'] as int?,
-                nameIt: nameItController.text,
-                nameEn: nameEnController.text.isEmpty ? null : nameEnController.text,
-                nameBn: nameBnController.text.isEmpty ? null : nameBnController.text,
-                colorHex: colorController.text.isEmpty ? null : colorController.text,
-                displayOrder: int.tryParse(orderController.text) ?? 0,
-              );
-              
-              if (context.mounted) {
-                Navigator.pop(context, success);
-              }
-            },
-            child: Text(l10n.settingsConfirm),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              if (isEditing)
+                TextButton(
+                  onPressed: () => Navigator.pop(context, 'delete'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    backgroundColor: Colors.redAccent,
+                  ),
+                  child: Text(l10n.adminDelete),
+                )
+              else
+                const SizedBox.shrink(),
+              Row(
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: Text(l10n.settingsCancel),
+                  ),
+                  const SizedBox(width: 8),
+                  FilledButton(
+                    onPressed: () async {
+                      if (nameItController.text.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(l10n.adminFieldRequired)),
+                        );
+                        return;
+                      }
+
+                      final success = await _adminRepository.upsertCategory(
+                        id: category?['id'] as int?,
+                        nameIt: nameItController.text,
+                        nameEn: nameEnController.text.isEmpty
+                            ? null
+                            : nameEnController.text,
+                        nameBn: nameBnController.text.isEmpty
+                            ? null
+                            : nameBnController.text,
+                        colorHex: colorController.text.isEmpty
+                            ? null
+                            : colorController.text,
+                        displayOrder: int.tryParse(orderController.text) ?? 0,
+                      );
+
+                      if (context.mounted) {
+                        Navigator.pop(context, success ? 'save' : false);
+                      }
+                    },
+                    child: Text(l10n.settingsConfirm),
+                  ),
+                ],
+              ),
+            ],
           ),
         ],
       ),
     );
 
-    if (result == true) {
+    if (result == 'save') {
       _loadCategories();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -216,12 +278,14 @@ class _AdminCategoriesScreenState extends State<AdminCategoriesScreen> {
           ),
         );
       }
+    } else if (result == 'delete') {
+      _deleteCategory(category!);
     }
   }
 
   Future<void> _deleteCategory(Map<String, dynamic> category) async {
     final l10n = AppLocalizations.of(context)!;
-    
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -242,7 +306,9 @@ class _AdminCategoriesScreenState extends State<AdminCategoriesScreen> {
     );
 
     if (confirmed == true) {
-      final success = await _adminRepository.deleteCategory(category['id'] as int);
+      final success = await _adminRepository.deleteCategory(
+        category['id'] as int,
+      );
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -280,107 +346,131 @@ class _AdminCategoriesScreenState extends State<AdminCategoriesScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
-                      const SizedBox(height: 16),
-                      Text(_error!),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: _loadCategories,
-                        child: Text(l10n.retry),
-                      ),
-                    ],
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.error_outline,
+                    size: 48,
+                    color: theme.colorScheme.error,
                   ),
-                )
-              : _categories.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.category_outlined, size: 64, color: Colors.grey),
-                          const SizedBox(height: 16),
-                          Text(
-                            l10n.adminNoCategories,
-                            style: const TextStyle(color: Colors.grey, fontSize: 16),
+                  const SizedBox(height: 16),
+                  Text(_error!),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: _loadCategories,
+                    child: Text(l10n.retry),
+                  ),
+                ],
+              ),
+            )
+          : _categories.isEmpty
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.category_outlined,
+                    size: 64,
+                    color: Colors.grey,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    l10n.adminNoCategories,
+                    style: const TextStyle(color: Colors.grey, fontSize: 16),
+                  ),
+                ],
+              ),
+            )
+          : RefreshIndicator(
+              onRefresh: _loadCategories,
+              child: ListView.builder(
+                padding: const EdgeInsets.only(
+                  left: 16,
+                  right: 16,
+                  top: 16,
+                  bottom: 100,
+                ),
+                itemCount: _categories.length,
+                itemBuilder: (context, index) {
+                  final category = _categories[index];
+                  final color = _parseColor(category['color_hex'] as String?);
+
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    child: ListTile(
+                      leading: Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: color.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Center(
+                          child: Text(
+                            category['id'].toString(),
+                            style: TextStyle(
+                              color: color,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 26,
+                            ),
                           ),
+                        ),
+                      ),
+                      title: Text(
+                        _getLocalizedName(category, langCode),
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      subtitle: Text(
+                        'Theory Cards: ${_theoryCardCounts[category['id']] ?? 0} • Quizzes: ${_quizCounts[category['id']] ?? 0}',
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurface.withOpacity(0.6),
+                          fontSize: 12,
+                        ),
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.edit, size: 20),
+                            onPressed: () {
+                              debugPrint(
+                                'Clicked: Edit category ${category['id']} - ${_getLocalizedName(category, langCode)}',
+                              );
+                              _showEditDialog(category);
+                            },
+                            tooltip: l10n.adminEdit,
+                          ),
+                          // IconButton(
+                          //   icon: const Icon(
+                          //     Icons.delete,
+                          //     size: 20,
+                          //     color: Colors.red,
+                          //   ),
+                          //   onPressed: () {
+                          //     debugPrint(
+                          //       'Clicked: Delete category ${category['id']} - ${_getLocalizedName(category, langCode)}',
+                          //     );
+                          //     _deleteCategory(category);
+                          //   },
+                          //   tooltip: l10n.adminDelete,
+                          // ),
                         ],
                       ),
-                    )
-                  : RefreshIndicator(
-                      onRefresh: _loadCategories,
-                      child: ListView.builder(
-                        padding: const EdgeInsets.only(
-                          left: 16,
-                          right: 16,
-                          top: 16,
-                          bottom: 100,
-                        ),
-                        itemCount: _categories.length,
-                        itemBuilder: (context, index) {
-                          final category = _categories[index];
-                          final color = _parseColor(category['color_hex'] as String?);
-                          
-                          return Card(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            child: ListTile(
-                              leading: Container(
-                              width: 48,
-                              height: 48,
-                              decoration: BoxDecoration(
-                                color: color.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Icon(
-                                Icons.category,
-                                color: color,
-                              ),
-                              ),
-                              title: Text(
-                              _getLocalizedName(category, langCode),
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              ),
-                              subtitle: Text(
-                              'ID: ${category['id']} • ${l10n.adminDisplayOrder}: ${category['display_order'] ?? 0}',
-                              style: TextStyle(
-                                color: theme.colorScheme.onSurface.withOpacity(0.6),
-                                fontSize: 12,
-                              ),
-                              ),
-                              trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                icon: const Icon(Icons.edit, size: 20),
-                                onPressed: () {
-                                  debugPrint('Clicked: Edit category ${category['id']} - ${_getLocalizedName(category, langCode)}');
-                                  _showEditDialog(category);
-                                },
-                                tooltip: l10n.adminEdit,
-                                ),
-                                IconButton(
-                                icon: const Icon(Icons.delete, size: 20, color: Colors.red),
-                                onPressed: () {
-                                  debugPrint('Clicked: Delete category ${category['id']} - ${_getLocalizedName(category, langCode)}');
-                                  _deleteCategory(category);
-                                },
-                                tooltip: l10n.adminDelete,
-                                ),
-                              ],
-                              ),
-                              onTap: () {
-                              debugPrint('Clicked: Category item ${category['id']} - ${_getLocalizedName(category, langCode)}');
-                              _navigateToquizzes(category);
-                              },
-                            ),
-                          );
-                        },
-                      ),
+                      onTap: () {
+                        debugPrint(
+                          'Clicked: Category item ${category['id']} - ${_getLocalizedName(category, langCode)}',
+                        );
+                        _navigateToquizzes(category);
+                      },
                     ),
+                  );
+                },
+              ),
+            ),
     );
   }
 }

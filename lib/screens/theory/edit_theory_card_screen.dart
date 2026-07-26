@@ -38,11 +38,11 @@ class _EditTheoryCardScreenState extends State<EditTheoryCardScreen> {
   late TextEditingController _textEnController;
   late TextEditingController _textBnController;
   late TextEditingController _displayOrderController;
-  
+
   bool _isSaving = false;
   String? _imageUrl;
   File? _selectedImageFile;
-  
+
   // Store fresh card data from DB
   Map<String, dynamic> _freshCard = {};
   bool _isLoadingFreshData = true;
@@ -63,7 +63,7 @@ class _EditTheoryCardScreenState extends State<EditTheoryCardScreen> {
           .select()
           .eq('id', widget.card['id'])
           .single();
-      
+
       if (mounted) {
         setState(() {
           _freshCard = response;
@@ -120,16 +120,16 @@ class _EditTheoryCardScreenState extends State<EditTheoryCardScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error picking image: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error picking image: $e')));
       }
     }
   }
 
   Future<void> _saveCard() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     if (_textItController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Italian content is required')),
@@ -148,7 +148,7 @@ class _EditTheoryCardScreenState extends State<EditTheoryCardScreen> {
         bytes,
         originalFileName: _selectedImageFile!.path.split('.').last,
       );
-      
+
       if (finalImageUrl == null) {
         if (mounted) {
           setState(() => _isSaving = false);
@@ -163,19 +163,29 @@ class _EditTheoryCardScreenState extends State<EditTheoryCardScreen> {
     final success = await _adminRepo.upsertTheoryCard(
       id: widget.card['id'] as int,
       chapterId: widget.chapterId,
-      titleIt: _titleItController.text.trim().isEmpty ? null : _titleItController.text.trim(),
-      titleEn: _titleEnController.text.trim().isEmpty ? null : _titleEnController.text.trim(),
-      titleBn: _titleBnController.text.trim().isEmpty ? null : _titleBnController.text.trim(),
+      titleIt: _titleItController.text.trim().isEmpty
+          ? null
+          : _titleItController.text.trim(),
+      titleEn: _titleEnController.text.trim().isEmpty
+          ? null
+          : _titleEnController.text.trim(),
+      titleBn: _titleBnController.text.trim().isEmpty
+          ? null
+          : _titleBnController.text.trim(),
       textIt: _textItController.text.trim(),
-      textEn: _textEnController.text.trim().isEmpty ? null : _textEnController.text.trim(),
-      textBn: _textBnController.text.trim().isEmpty ? null : _textBnController.text.trim(),
+      textEn: _textEnController.text.trim().isEmpty
+          ? null
+          : _textEnController.text.trim(),
+      textBn: _textBnController.text.trim().isEmpty
+          ? null
+          : _textBnController.text.trim(),
       imageUrl: finalImageUrl,
       displayOrder: int.tryParse(_displayOrderController.text) ?? 1,
     );
 
     if (mounted) {
       setState(() => _isSaving = false);
-      
+
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('✓ Theory card updated successfully')),
@@ -198,7 +208,7 @@ class _EditTheoryCardScreenState extends State<EditTheoryCardScreen> {
       backgroundColor: theme.colorScheme.surfaceContainerLowest,
       appBar: AppBar(
         title: const Text('Edit Theory Card'),
-        backgroundColor: theme.colorScheme.surface,
+        backgroundColor: theme.colorScheme.primary,
         elevation: 0,
         actions: [
           if (_isSaving)
@@ -215,6 +225,7 @@ class _EditTheoryCardScreenState extends State<EditTheoryCardScreen> {
               onPressed: _saveCard,
               icon: const Icon(Icons.save),
               label: const Text('Save'),
+              style: TextButton.styleFrom(foregroundColor: Colors.white),
             ),
         ],
       ),
@@ -228,19 +239,19 @@ class _EditTheoryCardScreenState extends State<EditTheoryCardScreen> {
               // Image Section
               _buildImageSection(theme),
               const SizedBox(height: 16),
-              
+
               // Audio Section
               _buildAudioSection(theme),
               const SizedBox(height: 16),
-              
+
               // Title Section
               _buildTitleSection(theme),
               const SizedBox(height: 16),
-              
+
               // Content Section
               _buildContentSection(theme),
               const SizedBox(height: 16),
-              
+
               // Display Order
               _buildDisplayOrderSection(theme),
               const SizedBox(height: 32),
@@ -292,18 +303,18 @@ class _EditTheoryCardScreenState extends State<EditTheoryCardScreen> {
                         ),
                       )
                     : _imageUrl != null && _imageUrl!.isNotEmpty
-                        ? ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.network(
-                              _imageUrl!,
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                              errorBuilder: (context, error, stack) {
-                                return _buildImagePlaceholder(theme);
-                              },
-                            ),
-                          )
-                        : _buildImagePlaceholder(theme),
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.network(
+                          _imageUrl!,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          errorBuilder: (context, error, stack) {
+                            return _buildImagePlaceholder(theme);
+                          },
+                        ),
+                      )
+                    : _buildImagePlaceholder(theme),
               ),
             ),
           ],
@@ -337,7 +348,7 @@ class _EditTheoryCardScreenState extends State<EditTheoryCardScreen> {
   Widget _buildAudioSection(ThemeData theme) {
     final audioUrl = _freshCard['audio_explanation_url'];
     final hasAudio = audioUrl != null && audioUrl.toString().trim().isNotEmpty;
-    
+
     debugPrint('🎙️ Theory Card Audio Debug:');
     debugPrint('  - Audio URL: $audioUrl');
     debugPrint('  - Has Audio: $hasAudio');
@@ -374,10 +385,7 @@ class _EditTheoryCardScreenState extends State<EditTheoryCardScreen> {
                     ),
                     child: Row(
                       children: [
-                        Icon(
-                          Icons.check_circle,
-                          color: AppTheme.successGreen,
-                        ),
+                        Icon(Icons.check_circle, color: AppTheme.successGreen),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
@@ -403,7 +411,10 @@ class _EditTheoryCardScreenState extends State<EditTheoryCardScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  _TheoryCardAudioPlayerWidget(audioUrl: audioUrl, theme: theme),
+                  _TheoryCardAudioPlayerWidget(
+                    audioUrl: audioUrl,
+                    theme: theme,
+                  ),
                 ],
               )
             else
@@ -606,10 +617,12 @@ class _TheoryCardAudioPlayerWidget extends StatefulWidget {
   });
 
   @override
-  State<_TheoryCardAudioPlayerWidget> createState() => _TheoryCardAudioPlayerWidgetState();
+  State<_TheoryCardAudioPlayerWidget> createState() =>
+      _TheoryCardAudioPlayerWidgetState();
 }
 
-class _TheoryCardAudioPlayerWidgetState extends State<_TheoryCardAudioPlayerWidget> {
+class _TheoryCardAudioPlayerWidgetState
+    extends State<_TheoryCardAudioPlayerWidget> {
   late AudioPlayer _audioPlayer;
   bool _isPlaying = false;
   bool _isLoading = false;
@@ -637,7 +650,8 @@ class _TheoryCardAudioPlayerWidgetState extends State<_TheoryCardAudioPlayerWidg
     _audioPlayer.processingStateStream.listen((state) {
       if (mounted) {
         setState(() {
-          if (state == ProcessingState.ready || state == ProcessingState.completed) {
+          if (state == ProcessingState.ready ||
+              state == ProcessingState.completed) {
             _isLoading = false;
             _isUrlLoaded = true;
           }
@@ -738,11 +752,15 @@ class _TheoryCardAudioPlayerWidgetState extends State<_TheoryCardAudioPlayerWidg
                         borderRadius: BorderRadius.circular(4),
                         child: LinearProgressIndicator(
                           value: _duration.inMilliseconds > 0
-                              ? _position.inMilliseconds / _duration.inMilliseconds
+                              ? _position.inMilliseconds /
+                                    _duration.inMilliseconds
                               : 0,
                           minHeight: 4,
-                          backgroundColor: widget.theme.colorScheme.outline.withOpacity(0.3),
-                          valueColor: AlwaysStoppedAnimation(widget.theme.colorScheme.primary),
+                          backgroundColor: widget.theme.colorScheme.outline
+                              .withOpacity(0.3),
+                          valueColor: AlwaysStoppedAnimation(
+                            widget.theme.colorScheme.primary,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -780,7 +798,8 @@ class TheoryCardAudioRecorderScreen extends StatefulWidget {
       _TheoryCardAudioRecorderScreenState();
 }
 
-class _TheoryCardAudioRecorderScreenState extends State<TheoryCardAudioRecorderScreen> {
+class _TheoryCardAudioRecorderScreenState
+    extends State<TheoryCardAudioRecorderScreen> {
   final AdminRepository _adminRepo = AdminRepository();
   final AudioRecorder _audioRecorder = AudioRecorder();
   late AudioPlayer _audioPlayer;
@@ -835,7 +854,8 @@ class _TheoryCardAudioRecorderScreenState extends State<TheoryCardAudioRecorderS
     try {
       if (await _audioRecorder.hasPermission()) {
         final dir = await getApplicationDocumentsDirectory();
-        final recordingPath = '${dir.path}/theory_audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
+        final recordingPath =
+            '${dir.path}/theory_audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
 
         await _audioRecorder.start(
           RecordConfig(
@@ -860,9 +880,9 @@ class _TheoryCardAudioRecorderScreenState extends State<TheoryCardAudioRecorderS
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error starting recording: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error starting recording: $e')));
       }
     }
   }
@@ -886,9 +906,9 @@ class _TheoryCardAudioRecorderScreenState extends State<TheoryCardAudioRecorderS
       setState(() => _isPaused = true);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error pausing recording: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error pausing recording: $e')));
       }
     }
   }
@@ -899,9 +919,9 @@ class _TheoryCardAudioRecorderScreenState extends State<TheoryCardAudioRecorderS
       setState(() => _isPaused = false);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error resuming recording: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error resuming recording: $e')));
       }
     }
   }
@@ -929,9 +949,9 @@ class _TheoryCardAudioRecorderScreenState extends State<TheoryCardAudioRecorderS
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error stopping recording: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error stopping recording: $e')));
       }
     }
   }
@@ -947,14 +967,20 @@ class _TheoryCardAudioRecorderScreenState extends State<TheoryCardAudioRecorderS
       if (result != null && result.files.single.path != null) {
         final filePath = result.files.single.path!;
         final fileName = result.files.single.name;
-        
+
         final audioExtensions = ['.m4a', '.mp3', '.wav', '.aac', '.m4b'];
-        final isAudioFile = audioExtensions.any((ext) => fileName.toLowerCase().endsWith(ext));
-        
+        final isAudioFile = audioExtensions.any(
+          (ext) => fileName.toLowerCase().endsWith(ext),
+        );
+
         if (!isAudioFile) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Please select an audio file (.m4a, .mp3, .wav, .aac)')),
+              const SnackBar(
+                content: Text(
+                  'Please select an audio file (.m4a, .mp3, .wav, .aac)',
+                ),
+              ),
             );
           }
           return;
@@ -968,16 +994,16 @@ class _TheoryCardAudioRecorderScreenState extends State<TheoryCardAudioRecorderS
         try {
           await _audioPlayer.setFilePath(filePath);
         } catch (e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error loading audio: $e')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Error loading audio: $e')));
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error picking file: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error picking file: $e')));
       }
     }
   }
@@ -985,7 +1011,7 @@ class _TheoryCardAudioRecorderScreenState extends State<TheoryCardAudioRecorderS
   Future<void> _togglePlayPause() async {
     try {
       String? audioPath;
-      
+
       if (_selectedAudioSource == 0 && widget.existingAudioUrl != null) {
         audioPath = widget.existingAudioUrl;
       } else if (_selectedAudioSource == 1 && _recordedFilePath != null) {
@@ -999,8 +1025,9 @@ class _TheoryCardAudioRecorderScreenState extends State<TheoryCardAudioRecorderS
       if (_isPlaying) {
         await _audioPlayer.pause();
       } else {
-        if (_audioPlayer.audioSource == null || 
-            (_playbackPosition == _totalDuration && _totalDuration != Duration.zero)) {
+        if (_audioPlayer.audioSource == null ||
+            (_playbackPosition == _totalDuration &&
+                _totalDuration != Duration.zero)) {
           if (audioPath.startsWith('http')) {
             await _audioPlayer.setUrl(audioPath);
           } else {
@@ -1012,9 +1039,9 @@ class _TheoryCardAudioRecorderScreenState extends State<TheoryCardAudioRecorderS
     } catch (e) {
       debugPrint('Playback error: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
@@ -1026,7 +1053,7 @@ class _TheoryCardAudioRecorderScreenState extends State<TheoryCardAudioRecorderS
 
     try {
       String? audioPath;
-      
+
       if (_selectedAudioSource == 1 && _recordedFilePath != null) {
         audioPath = _recordedFilePath;
       } else if (_selectedAudioSource == 2 && _uploadedFilePath != null) {
@@ -1036,7 +1063,9 @@ class _TheoryCardAudioRecorderScreenState extends State<TheoryCardAudioRecorderS
       if (audioPath == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Please record or upload an audio file')),
+            const SnackBar(
+              content: Text('Please record or upload an audio file'),
+            ),
           );
           setState(() => _isUploading = false);
         }
@@ -1067,7 +1096,9 @@ class _TheoryCardAudioRecorderScreenState extends State<TheoryCardAudioRecorderS
 
         if (success) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('✓ Audio uploaded and saved successfully')),
+            const SnackBar(
+              content: Text('✓ Audio uploaded and saved successfully'),
+            ),
           );
           Navigator.pop(context, true);
         } else {
@@ -1076,7 +1107,7 @@ class _TheoryCardAudioRecorderScreenState extends State<TheoryCardAudioRecorderS
               content: Text(
                 'Audio uploaded but failed to save to database.\n'
                 'URL: $audioUrl\n'
-                'Check: theory_cards table RLS policy'
+                'Check: theory_cards table RLS policy',
               ),
               duration: const Duration(seconds: 5),
             ),
@@ -1086,9 +1117,9 @@ class _TheoryCardAudioRecorderScreenState extends State<TheoryCardAudioRecorderS
     } catch (e) {
       if (mounted) {
         setState(() => _isUploading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Upload error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Upload error: $e')));
       }
     }
   }
@@ -1128,7 +1159,7 @@ class _TheoryCardAudioRecorderScreenState extends State<TheoryCardAudioRecorderS
               ),
             ),
             const SizedBox(height: 12),
-            
+
             // Existing audio option
             if (widget.existingAudioUrl != null) ...[
               _buildAudioSourceTile(
@@ -1140,33 +1171,37 @@ class _TheoryCardAudioRecorderScreenState extends State<TheoryCardAudioRecorderS
               ),
               const SizedBox(height: 8),
             ],
-            
+
             // Record new option
             _buildAudioSourceTile(
               theme: theme,
               index: 1,
               icon: Icons.mic,
               title: 'Record New',
-              subtitle: _recordedFilePath != null ? 'Recording ready' : 'Tap to record',
+              subtitle: _recordedFilePath != null
+                  ? 'Recording ready'
+                  : 'Tap to record',
             ),
-            
+
             // Recording controls (when record option selected)
             if (_selectedAudioSource == 1) ...[
               const SizedBox(height: 16),
               _buildRecordingControls(theme),
             ],
-            
+
             const SizedBox(height: 8),
-            
+
             // Upload option
             _buildAudioSourceTile(
               theme: theme,
               index: 2,
               icon: Icons.upload_file,
               title: 'Upload from Files',
-              subtitle: _uploadedFilePath != null ? 'File selected' : 'Choose audio file',
+              subtitle: _uploadedFilePath != null
+                  ? 'File selected'
+                  : 'Choose audio file',
             ),
-            
+
             // File picker button (when upload option selected)
             if (_selectedAudioSource == 2) ...[
               const SizedBox(height: 16),
@@ -1175,24 +1210,30 @@ class _TheoryCardAudioRecorderScreenState extends State<TheoryCardAudioRecorderS
                 child: OutlinedButton.icon(
                   onPressed: _pickAudioFile,
                   icon: const Icon(Icons.folder_open),
-                  label: Text(_uploadedFilePath != null ? 'Change File' : 'Select Audio File'),
+                  label: Text(
+                    _uploadedFilePath != null
+                        ? 'Change File'
+                        : 'Select Audio File',
+                  ),
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 48),
                   ),
                 ),
               ),
             ],
-            
+
             const SizedBox(height: 24),
-            
+
             // Playback controls
             if (_selectedAudioSource == 0 && widget.existingAudioUrl != null ||
-                _selectedAudioSource == 1 && _recordedFilePath != null && !_isRecording ||
+                _selectedAudioSource == 1 &&
+                    _recordedFilePath != null &&
+                    !_isRecording ||
                 _selectedAudioSource == 2 && _uploadedFilePath != null)
               _buildPlaybackControls(theme),
-            
+
             const SizedBox(height: 24),
-            
+
             // Upload button
             if (_selectedAudioSource != 0 &&
                 (_recordedFilePath != null || _uploadedFilePath != null))
@@ -1229,8 +1270,8 @@ class _TheoryCardAudioRecorderScreenState extends State<TheoryCardAudioRecorderS
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
               decoration: BoxDecoration(
-                color: _isRecording 
-                    ? AppTheme.errorRed.withOpacity(0.1) 
+                color: _isRecording
+                    ? AppTheme.errorRed.withOpacity(0.1)
                     : theme.colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(20),
               ),
@@ -1246,8 +1287,7 @@ class _TheoryCardAudioRecorderScreenState extends State<TheoryCardAudioRecorderS
                         shape: BoxShape.circle,
                       ),
                     ),
-                  if (_isRecording && !_isPaused)
-                    const SizedBox(width: 8),
+                  if (_isRecording && !_isPaused) const SizedBox(width: 8),
                   Text(
                     _formatDuration(_recordingDuration),
                     style: theme.textTheme.headlineSmall?.copyWith(
@@ -1259,7 +1299,7 @@ class _TheoryCardAudioRecorderScreenState extends State<TheoryCardAudioRecorderS
               ),
             ),
             const SizedBox(height: 16),
-            
+
             // Recording buttons
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -1330,8 +1370,8 @@ class _TheoryCardAudioRecorderScreenState extends State<TheoryCardAudioRecorderS
             ),
             const SizedBox(height: 12),
             Text(
-              _isRecording 
-                  ? (_isPaused ? 'Recording paused' : 'Recording...') 
+              _isRecording
+                  ? (_isPaused ? 'Recording paused' : 'Recording...')
                   : 'Tap to start recording',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
@@ -1361,7 +1401,9 @@ class _TheoryCardAudioRecorderScreenState extends State<TheoryCardAudioRecorderS
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           border: Border.all(
-            color: isSelected ? theme.colorScheme.primary : theme.colorScheme.outline,
+            color: isSelected
+                ? theme.colorScheme.primary
+                : theme.colorScheme.outline,
             width: isSelected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(12),
@@ -1381,7 +1423,9 @@ class _TheoryCardAudioRecorderScreenState extends State<TheoryCardAudioRecorderS
               ),
               child: Icon(
                 icon,
-                color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
+                color: isSelected
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(width: 16),
@@ -1444,7 +1488,8 @@ class _TheoryCardAudioRecorderScreenState extends State<TheoryCardAudioRecorderS
               borderRadius: BorderRadius.circular(8),
               child: LinearProgressIndicator(
                 value: _totalDuration.inMilliseconds > 0
-                    ? _playbackPosition.inMilliseconds / _totalDuration.inMilliseconds
+                    ? _playbackPosition.inMilliseconds /
+                          _totalDuration.inMilliseconds
                     : 0,
                 minHeight: 6,
               ),
@@ -1453,8 +1498,14 @@ class _TheoryCardAudioRecorderScreenState extends State<TheoryCardAudioRecorderS
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(_formatDuration(_playbackPosition), style: theme.textTheme.bodySmall),
-                Text(_formatDuration(_totalDuration), style: theme.textTheme.bodySmall),
+                Text(
+                  _formatDuration(_playbackPosition),
+                  style: theme.textTheme.bodySmall,
+                ),
+                Text(
+                  _formatDuration(_totalDuration),
+                  style: theme.textTheme.bodySmall,
+                ),
               ],
             ),
           ],

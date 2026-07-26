@@ -91,7 +91,10 @@ class _TheoryChaptersScreenState extends State<TheoryChaptersScreen> {
     }
   }
 
-  Future<void> _navigateToChapter(int chapterId, {int startCardIndex = 0}) async {
+  Future<void> _navigateToChapter(
+    int chapterId, {
+    int startCardIndex = 0,
+  }) async {
     HapticFeedback.mediumImpact();
 
     await Navigator.push(
@@ -125,7 +128,7 @@ class _TheoryChaptersScreenState extends State<TheoryChaptersScreen> {
             Navigator.pop(context);
           },
         ),
-        title: Text( 
+        title: Text(
           'ALL THEORY',
           style: theme.textTheme.headlineMedium?.copyWith(
             color: theme.colorScheme.onSurface,
@@ -157,7 +160,7 @@ class _TheoryChaptersScreenState extends State<TheoryChaptersScreen> {
                       ),
                     ),
                     const SizedBox(height: 32),
-                    
+
                     // Loading Text
                     Text(
                       'Loading theory content...',
@@ -176,21 +179,22 @@ class _TheoryChaptersScreenState extends State<TheoryChaptersScreen> {
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    
+
                     const SizedBox(height: 24),
-                    
+
                     // Animated Progress Bar
                     ClipRRect(
                       borderRadius: BorderRadius.circular(8),
                       child: LinearProgressIndicator(
-                        backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                        backgroundColor:
+                            theme.colorScheme.surfaceContainerHighest,
                         color: theme.colorScheme.primary,
                         minHeight: 6,
                       ),
                     ),
-                    
+
                     const SizedBox(height: 16),
-                    
+
                     // Additional Encouragement Text
                     Text(
                       '📚 Get ready to learn!',
@@ -205,10 +209,9 @@ class _TheoryChaptersScreenState extends State<TheoryChaptersScreen> {
               ),
             )
           : _errorMessage != null
-              ? _buildErrorView()
-              : _buildContent(),
+          ? _buildErrorView()
+          : _buildContent(),
     );
-    
   }
 
   Widget _buildErrorView() {
@@ -227,18 +230,20 @@ class _TheoryChaptersScreenState extends State<TheoryChaptersScreen> {
               style: TextStyle(color: theme.colorScheme.onSurface),
             ),
             const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: _loadData,
-              child: const Text('Retry'),
-            ),
+            ElevatedButton(onPressed: _loadData, child: const Text('Retry')),
           ],
         ),
       ),
     );
   }
-  
 
   Widget _buildContent() {
+    final width = MediaQuery.of(context).size.width;
+    final gridWidth = width - 32; // 16 padding on each side
+    final columns = (gridWidth / 500).ceil();
+    final columnWidth = (gridWidth - (columns - 1) * 12) / columns;
+    final childAspectRatio = columnWidth / 96.0;
+
     return RefreshIndicator(
       onRefresh: _loadData,
       child: ListView(
@@ -258,9 +263,9 @@ class _TheoryChaptersScreenState extends State<TheoryChaptersScreen> {
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+            gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
               maxCrossAxisExtent: 500,
-              childAspectRatio: 3.2,
+              childAspectRatio: childAspectRatio,
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
             ),
@@ -277,12 +282,11 @@ class _TheoryChaptersScreenState extends State<TheoryChaptersScreen> {
     return Text(
       title,
       style: theme.textTheme.bodyLarge?.copyWith(
-            color: theme.colorScheme.onSurface,
-            fontWeight: FontWeight.w600,
-          ),
+        color: theme.colorScheme.onSurface,
+        fontWeight: FontWeight.w600,
+      ),
     );
   }
-
 
   Widget _buildContinueLearningCard(ChapterWithProgress chapterProgress) {
     final l10n = context.l10n;
@@ -298,7 +302,10 @@ class _TheoryChaptersScreenState extends State<TheoryChaptersScreen> {
           // Resume from last read position
           final lastPosition = await _theoryService.getLastReadPosition();
           final startIndex = lastPosition?.$2 ?? 0;
-          await _navigateToChapter(chapterProgress.chapter.id, startCardIndex: startIndex);
+          await _navigateToChapter(
+            chapterProgress.chapter.id,
+            startCardIndex: startIndex,
+          );
         },
         borderRadius: BorderRadius.circular(16),
         child: Padding(
@@ -310,11 +317,11 @@ class _TheoryChaptersScreenState extends State<TheoryChaptersScreen> {
                 children: [
                   Expanded(
                     child: Text(
-                    'Lezione ${chapterProgress.chapter.id}: $chapterName',
+                      'Lezione ${chapterProgress.chapter.id}: $chapterName',
                       style: theme.textTheme.bodyLarge?.copyWith(
-                            color: theme.colorScheme.onSurface,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        color: theme.colorScheme.onSurface,
+                        fontWeight: FontWeight.bold,
+                      ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -351,8 +358,8 @@ class _TheoryChaptersScreenState extends State<TheoryChaptersScreen> {
               Text(
                 '${chapterProgress.progressPercentage.toStringAsFixed(0)}% Completed',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.7),
-                    ),
+                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                ),
               ),
             ],
           ),
@@ -363,9 +370,11 @@ class _TheoryChaptersScreenState extends State<TheoryChaptersScreen> {
 
   Widget _buildChapterCard(ChapterWithProgress chapterProgress) {
     final languageCode = Localizations.localeOf(context).languageCode;
-    final primaryName = chapterProgress.chapter.getLocalizedName('it'); // Always show Italian
+    final primaryName = chapterProgress.chapter.getLocalizedName(
+      'it',
+    ); // Always show Italian
     final theme = Theme.of(context);
-    
+
     // Show English/Bangla as secondary based on current language
     String secondaryName = '';
     if (languageCode == 'en' && chapterProgress.chapter.nameEn != null) {
@@ -381,51 +390,53 @@ class _TheoryChaptersScreenState extends State<TheoryChaptersScreen> {
         onTap: () => _navigateToChapter(chapterProgress.chapter.id),
         borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
           child: Row(
             children: [
               // Chapter Number
               Container(
-                width: 56,
-                height: 56,
+                width: 48,
+                height: 48,
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                  child: Center(
+                child: Center(
                   child: Text(
                     chapterProgress.chapter.id.toString().padLeft(2, '0'),
-                    style: theme.textTheme.displaySmall?.copyWith(
-                          color: theme.colorScheme.primary,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    style: TextStyle(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
               // Chapter Info
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
                       primaryName,
-                      style: theme.textTheme.headlineMedium?.copyWith(
-                            color: theme.colorScheme.onSurface,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: theme.colorScheme.onSurface,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                     if (secondaryName.isNotEmpty) ...[
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 2),
                       Text(
                         secondaryName,
                         style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onSurface.withOpacity(0.6),
-                              fontSize: 13,
-                            ),
+                          color: theme.colorScheme.onSurface.withOpacity(0.6),
+                          fontSize: 12,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -433,7 +444,7 @@ class _TheoryChaptersScreenState extends State<TheoryChaptersScreen> {
                   ],
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               // Status Indicator
               _buildStatusIndicator(chapterProgress),
             ],
@@ -454,11 +465,7 @@ class _TheoryChaptersScreenState extends State<TheoryChaptersScreen> {
           color: AppTheme.successGreen.withOpacity(0.2),
           shape: BoxShape.circle,
         ),
-        child: Icon(
-          Icons.check,
-          color: AppTheme.successGreen,
-          size: 24,
-        ),
+        child: Icon(Icons.check, color: AppTheme.successGreen, size: 24),
       );
     } else if (chapterProgress.isInProgress) {
       // In Progress: Circular progress indicator
@@ -477,10 +484,10 @@ class _TheoryChaptersScreenState extends State<TheoryChaptersScreen> {
             Text(
               '${chapterProgress.progressPercentage.toInt()}',
               style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                  ),
+                color: theme.colorScheme.onSurface,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ],
         ),

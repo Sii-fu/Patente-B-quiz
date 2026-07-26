@@ -132,6 +132,7 @@ class _CustomQuizScreenState extends State<CustomQuizScreen> {
       if (widget.preloadedQuestions != null) {
         // Use pre-loaded questions directly (e.g. from theory card)
         questions = widget.preloadedQuestions!;
+        print(questions);
       } else {
         // Use the new fetchCustomQuiz method from QuizService
         questions = await _quizService.fetchCustomQuiz(
