@@ -113,6 +113,54 @@ class AppLocalizationsEn extends AppLocalizations {
       'Registration complete! Check your email to verify your account.';
 
   @override
+  String get forgotPasswordTitle => 'Forgot Password?';
+
+  @override
+  String get forgotPasswordSubtitle =>
+      'Enter your email address and we will send you instructions to reset your password.';
+
+  @override
+  String get forgotPasswordLink => 'Forgot password?';
+
+  @override
+  String get sendResetLink => 'Send Reset Instructions';
+
+  @override
+  String get resetEmailSentSuccess =>
+      'We have sent reset instructions to your email.';
+
+  @override
+  String get openEmailApp => 'Open Email App';
+
+  @override
+  String get enterOtpCode => 'Enter the 8-digit code';
+
+  @override
+  String get otpCodeHint => '8-digit code';
+
+  @override
+  String get verifyCode => 'Verify Code';
+
+  @override
+  String get resendResetEmail => 'Resend email';
+
+  @override
+  String get newPasswordTitle => 'Set New Password';
+
+  @override
+  String get newPasswordLabel => 'New Password';
+
+  @override
+  String get confirmPasswordLabel => 'Confirm New Password';
+
+  @override
+  String get passwordsDoNotMatch => 'Passwords do not match';
+
+  @override
+  String get passwordResetSuccess =>
+      'Password updated successfully! Please log in with your new password.';
+
+  @override
   String get signupTitle => 'Create Account';
 
   @override

@@ -6,6 +6,7 @@ import '../../utils/theme.dart';
 import '../../providers/language_provider.dart';
 import 'package:provider/provider.dart';
 import 'quiz_cards_screen.dart';
+import '../../services/admin_selection_state.dart';
 
 class QuizChaptersScreen extends StatefulWidget {
   const QuizChaptersScreen({super.key});
@@ -182,6 +183,7 @@ class _QuizChaptersScreenState extends State<QuizChaptersScreen> {
       child: InkWell(
         onTap: () {
           HapticFeedback.lightImpact();
+          AdminSelectionState.rememberChapter(chapter['id'] as int);
           Navigator.push(
             context,
             MaterialPageRoute(

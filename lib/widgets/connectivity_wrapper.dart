@@ -7,11 +7,8 @@ import '../l10n/app_localizations.dart';
 /// when there is no internet connection.
 class ConnectivityWrapper extends StatefulWidget {
   final Widget child;
-  
-  const ConnectivityWrapper({
-    super.key,
-    required this.child,
-  });
+
+  const ConnectivityWrapper({super.key, required this.child});
 
   @override
   State<ConnectivityWrapper> createState() => _ConnectivityWrapperState();
@@ -59,10 +56,10 @@ class _ConnectivityWrapperState extends State<ConnectivityWrapper> {
     setState(() {
       _isChecking = true;
     });
-    
+
     await Future.delayed(const Duration(milliseconds: 500));
     final result = await Connectivity().checkConnectivity();
-    
+
     if (mounted) {
       setState(() {
         _isOnline = result != ConnectivityResult.none;
@@ -74,11 +71,7 @@ class _ConnectivityWrapperState extends State<ConnectivityWrapper> {
   @override
   Widget build(BuildContext context) {
     if (_isChecking) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (!_isOnline) {
@@ -91,7 +84,7 @@ class _ConnectivityWrapperState extends State<ConnectivityWrapper> {
   Widget _buildOfflineScreen(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
-    
+
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       body: SafeArea(
@@ -114,9 +107,9 @@ class _ConnectivityWrapperState extends State<ConnectivityWrapper> {
                     color: theme.colorScheme.error,
                   ),
                 ),
-                
+
                 const SizedBox(height: 32),
-                
+
                 // Title
                 Text(
                   l10n?.noInternetTitle ?? 'No Internet Connection',
@@ -126,21 +119,21 @@ class _ConnectivityWrapperState extends State<ConnectivityWrapper> {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 // Description
                 Text(
-                  l10n?.noInternetDescription ?? 
+                  l10n?.noInternetDescription ??
                       'This app requires an internet connection to work. Please check your connection and try again.',
                   style: theme.textTheme.bodyLarge?.copyWith(
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                   textAlign: TextAlign.center,
                 ),
-                
+
                 const SizedBox(height: 48),
-                
+
                 // Retry Button
                 SizedBox(
                   width: double.infinity,

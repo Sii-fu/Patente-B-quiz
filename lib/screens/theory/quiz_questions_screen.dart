@@ -12,15 +12,18 @@ import '../../services/tts_helper.dart';
 import '../../features/admin/services/admin_repository.dart';
 import '../../models/profile.dart';
 import 'edit_question_screen.dart';
+import '../admin/add_quiz_screen.dart';
 
 class QuizQuestionsScreen extends StatefulWidget {
   final int subtopicId;
   final String cardTitle;
+  final int? chapterId;
 
   const QuizQuestionsScreen({
     super.key,
     required this.subtopicId,
     required this.cardTitle,
+    this.chapterId,
   });
 
   @override
@@ -81,7 +84,9 @@ class _QuizQuestionsScreenState extends State<QuizQuestionsScreen> {
 
       final response = await _supabase
           .from('questions')
-          .select('id, text_it, text_en, text_bn, image_url, is_true, explanation_it, explanation_en, explanation_bn, difficulty_level, explanation_audio_url, audio_it_url, audio_en_url, audio_bn_url')
+          .select(
+            'id, text_it, text_en, text_bn, image_url, is_true, explanation_it, explanation_en, explanation_bn, difficulty_level, explanation_audio_url, audio_it_url, audio_en_url, audio_bn_url',
+          )
           .eq('subtopic_id', widget.subtopicId)
           .order('id', ascending: true);
 
@@ -113,19 +118,25 @@ class _QuizQuestionsScreenState extends State<QuizQuestionsScreen> {
           final textEn = q['text_en']?.toString().toLowerCase() ?? '';
           final textBn = q['text_bn']?.toString().toLowerCase() ?? '';
           final searchLower = query.toLowerCase();
-          
+
           return textIt.contains(searchLower) ||
-                 textEn.contains(searchLower) ||
-                 textBn.contains(searchLower);
+              textEn.contains(searchLower) ||
+              textBn.contains(searchLower);
         }).toList();
       }
     });
   }
 
-  String _getLocalizedText(Map<String, dynamic> question, String languageCode, String field) {
+  String _getLocalizedText(
+    Map<String, dynamic> question,
+    String languageCode,
+    String field,
+  ) {
     final fieldName = '${field}_$languageCode';
     final fallbackField = '${field}_it';
-    return question[fieldName]?.toString() ?? question[fallbackField]?.toString() ?? '';
+    return question[fieldName]?.toString() ??
+        question[fallbackField]?.toString() ??
+        '';
   }
 
   String _getQuestionLanguage(int questionId, String defaultLanguage) {
@@ -148,14 +159,18 @@ class _QuizQuestionsScreenState extends State<QuizQuestionsScreen> {
     });
   }
 
-  Future<void> _speakText(String text, String languageCode, {String? audioUrl}) async {
+  Future<void> _speakText(
+    String text,
+    String languageCode, {
+    String? audioUrl,
+  }) async {
     // Toggle off if already playing
     if (_isTtsPlaying) {
       await _ttsAudioPlayer?.stop();
       setState(() => _isTtsPlaying = false);
       return;
     }
-    
+
     // Try to play from URL first, fall back to device TTS
     if (audioUrl != null && audioUrl.isNotEmpty) {
       await _playTtsFromUrl(audioUrl);
@@ -168,20 +183,20 @@ class _QuizQuestionsScreenState extends State<QuizQuestionsScreen> {
     // Initialize TTS audio player if needed
     if (_ttsAudioPlayer == null) {
       _ttsAudioPlayer = AudioPlayer();
-      
+
       _ttsAudioPlayer!.playerStateStream.listen((state) {
         if (mounted) {
           setState(() => _isTtsPlaying = state.playing);
         }
       });
-      
+
       _ttsAudioPlayer!.processingStateStream.listen((state) {
         if (mounted && state == ProcessingState.completed) {
           setState(() => _isTtsPlaying = false);
         }
       });
     }
-    
+
     try {
       setState(() => _isTtsPlaying = true);
       await _ttsAudioPlayer!.setUrl(audioUrl);
@@ -290,15 +305,24 @@ class _QuizQuestionsScreenState extends State<QuizQuestionsScreen> {
         ],
       ),
       body: _buildBody(theme, l10n, currentLanguage),
+      floatingActionButton: _isAdmin
+          ? FloatingActionButton.extended(
+              onPressed: _navigateToAddQuiz,
+              icon: const Icon(Icons.add),
+              label: const Text('Add Quiz'),
+            )
+          : null,
     );
   }
 
-  Widget _buildBody(ThemeData theme, AppLocalizations l10n, String currentLanguage) {
+  Widget _buildBody(
+    ThemeData theme,
+    AppLocalizations l10n,
+    String currentLanguage,
+  ) {
     if (_isLoading) {
       return Center(
-        child: CircularProgressIndicator(
-          color: theme.colorScheme.primary,
-        ),
+        child: CircularProgressIndicator(color: theme.colorScheme.primary),
       );
     }
 
@@ -307,11 +331,7 @@ class _QuizQuestionsScreenState extends State<QuizQuestionsScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 64,
-              color: theme.colorScheme.error,
-            ),
+            Icon(Icons.error_outline, size: 64, color: theme.colorScheme.error),
             const SizedBox(height: 16),
             Text(
               l10n.theoryCardQuizErrorLoading,
@@ -384,7 +404,11 @@ class _QuizQuestionsScreenState extends State<QuizQuestionsScreen> {
     final questionId = question['id'] as int;
     final questionLang = _getQuestionLanguage(questionId, currentLanguage);
     final questionText = _getLocalizedText(question, questionLang, 'text');
-    final explanation = _getLocalizedText(question, questionLang, 'explanation');
+    final explanation = _getLocalizedText(
+      question,
+      questionLang,
+      'explanation',
+    );
     final isTrue = question['is_true'] as bool;
     final imageUrl = question['image_url'] as String?;
     final showExplanation = _visibleExplanations.contains(questionId);
@@ -393,15 +417,19 @@ class _QuizQuestionsScreenState extends State<QuizQuestionsScreen> {
     final correctColor = AppTheme.successGreen;
     final incorrectColor = AppTheme.errorRed;
     final audioUrl = question['explanation_audio_url'] as String?;
-    
+
     // Get question audio URL based on language
     String? questionAudioUrl;
     switch (questionLang) {
       case 'en':
-        questionAudioUrl = question['audio_en_url'] as String? ?? question['audio_it_url'] as String?;
+        questionAudioUrl =
+            question['audio_en_url'] as String? ??
+            question['audio_it_url'] as String?;
         break;
       case 'bn':
-        questionAudioUrl = question['audio_bn_url'] as String? ?? question['audio_it_url'] as String?;
+        questionAudioUrl =
+            question['audio_bn_url'] as String? ??
+            question['audio_it_url'] as String?;
         break;
       default:
         questionAudioUrl = question['audio_it_url'] as String?;
@@ -412,9 +440,7 @@ class _QuizQuestionsScreenState extends State<QuizQuestionsScreen> {
       child: Card(
         margin: const EdgeInsets.only(bottom: 16),
         elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -424,7 +450,10 @@ class _QuizQuestionsScreenState extends State<QuizQuestionsScreen> {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.primaryContainer,
                       borderRadius: BorderRadius.circular(20),
@@ -445,7 +474,11 @@ class _QuizQuestionsScreenState extends State<QuizQuestionsScreen> {
                   IconButton(
                     icon: const Icon(Icons.volume_up, size: 20),
                     color: theme.colorScheme.primary,
-                    onPressed: () => _speakText(questionText, questionLang, audioUrl: questionAudioUrl),
+                    onPressed: () => _speakText(
+                      questionText,
+                      questionLang,
+                      audioUrl: questionAudioUrl,
+                    ),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                   ),
@@ -465,146 +498,162 @@ class _QuizQuestionsScreenState extends State<QuizQuestionsScreen> {
               ),
               const SizedBox(height: 12),
 
-              // Question text
-              Text(
-                questionText,
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: theme.colorScheme.onSurface,
-                  height: 1.5,
-                ),
-              ),
-
-              // Image if available
-              if (imageUrl != null && imageUrl.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                GestureDetector(
-                  onTap: () => _showImageFullscreen(imageUrl),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: CachedNetworkImage(
-                      imageUrl: imageUrl,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        height: 200,
-                      color: theme.colorScheme.surfaceContainerHighest,
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          color: theme.colorScheme.primary,
+              // Question text, with a small image thumbnail on the right
+              // (if available) that opens fullscreen when tapped.
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      questionText,
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: theme.colorScheme.onSurface,
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                  if (imageUrl != null && imageUrl.isNotEmpty) ...[
+                    const SizedBox(width: 12),
+                    GestureDetector(
+                      onTap: () => _showImageFullscreen(imageUrl),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: CachedNetworkImage(
+                          imageUrl: imageUrl,
+                          width: 64,
+                          height: 64,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                            width: 64,
+                            height: 64,
+                            color: theme.colorScheme.surfaceContainerHighest,
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: theme.colorScheme.primary,
+                              ),
+                            ),
+                          ),
+                          errorWidget: (context, url, error) => Container(
+                            width: 64,
+                            height: 64,
+                            color: theme.colorScheme.surfaceContainerHighest,
+                            child: Icon(
+                              Icons.broken_image,
+                              size: 24,
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                    errorWidget: (context, url, error) => Container(
-                      height: 200,
-                      color: theme.colorScheme.surfaceContainerHighest,
-                      child: Icon(
-                        Icons.broken_image,
-                        size: 64,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
+                  ],
+                ],
+              ),
+
+              const SizedBox(height: 16),
+
+              // Answer badge
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isTrue ? correctColor : incorrectColor,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          isTrue ? Icons.check_circle : Icons.cancel,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          isTrue ? 'VERO' : 'FALSO',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-              ),
-            ],
-
-            const SizedBox(height: 16),
-
-            // Answer badge
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: isTrue ? correctColor : incorrectColor,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        isTrue ? Icons.check_circle : Icons.cancel,
-                        color: Colors.white,
+                  const SizedBox(width: 12),
+                  // Explanation toggle
+                  if (explanation.isNotEmpty)
+                    TextButton.icon(
+                      onPressed: () => _toggleExplanation(questionId),
+                      icon: Icon(
+                        showExplanation ? Icons.expand_less : Icons.expand_more,
                         size: 18,
                       ),
-                      const SizedBox(width: 6),
-                      Text(
-                        isTrue ? 'VERO' : 'FALSO',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
+                      label: Text(
+                        showExplanation
+                            ? 'Hide Explanation'
+                            : 'Show Explanation',
+                      ),
+                    ),
+                ],
+              ),
+
+              // Explanation
+              if (showExplanation && explanation.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.lightbulb_outline,
+                        size: 20,
+                        color: theme.colorScheme.primary,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          explanation,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurface,
+                            height: 1.4,
+                          ),
                         ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.volume_up, size: 18),
+                        color: theme.colorScheme.primary,
+                        onPressed: () => _speakText(explanation, questionLang),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 12),
-                // Explanation toggle
-                if (explanation.isNotEmpty)
-                  TextButton.icon(
-                    onPressed: () => _toggleExplanation(questionId),
-                    icon: Icon(
-                      showExplanation ? Icons.expand_less : Icons.expand_more,
-                      size: 18,
-                    ),
-                    label: Text(
-                      showExplanation ? 'Hide Explanation' : 'Show Explanation',
-                    ),
-                  ),
               ],
-            ),
-
-            // Explanation
-            if (showExplanation && explanation.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(
-                      Icons.lightbulb_outline,
-                      size: 20,
-                      color: theme.colorScheme.primary,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        explanation,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurface,
-                          height: 1.4,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.volume_up, size: 18),
-                      color: theme.colorScheme.primary,
-                      onPressed: () => _speakText(explanation, questionLang),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                    ),
-                  ],
-                ),
-              ),
             ],
-          ],
+          ),
         ),
       ),
-      )
     );
   }
 
-  Widget _buildLanguageSwitcher(int questionId, String currentLang, ThemeData theme) {
+  Widget _buildLanguageSwitcher(
+    int questionId,
+    String currentLang,
+    ThemeData theme,
+  ) {
     return PopupMenuButton<String>(
-      icon: Icon(
-        Icons.language,
-        size: 20,
-        color: theme.colorScheme.primary,
-      ),
+      icon: Icon(Icons.language, size: 20, color: theme.colorScheme.primary),
       padding: EdgeInsets.zero,
       onSelected: (lang) => _setQuestionLanguage(questionId, lang),
       itemBuilder: (context) => [
@@ -645,6 +694,24 @@ class _QuizQuestionsScreenState extends State<QuizQuestionsScreen> {
     );
   }
 
+  Future<void> _navigateToAddQuiz() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            AddQuizScreen(
+              initialSubtopicId: widget.subtopicId,
+              initialChapterId: widget.chapterId,
+            ),
+      ),
+    );
+
+    // Reload questions if a new question was added
+    if (result == true) {
+      _loadQuestions();
+    }
+  }
+
   Future<void> _navigateToEdit(Map<String, dynamic> question) async {
     final result = await Navigator.push(
       context,
@@ -682,9 +749,9 @@ class _QuizQuestionsScreenState extends State<QuizQuestionsScreen> {
       );
     } catch (e) {
       debugPrint('Error playing audio: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
     }
   }
 }
@@ -693,10 +760,7 @@ class _QuizQuestionsScreenState extends State<QuizQuestionsScreen> {
 class QuestionAudioPlayer extends StatefulWidget {
   final String audioUrl;
 
-  const QuestionAudioPlayer({
-    super.key,
-    required this.audioUrl,
-  });
+  const QuestionAudioPlayer({super.key, required this.audioUrl});
 
   @override
   State<QuestionAudioPlayer> createState() => _QuestionAudioPlayerState();

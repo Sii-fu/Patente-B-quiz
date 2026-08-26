@@ -115,6 +115,54 @@ class AppLocalizationsIt extends AppLocalizations {
       'Registrazione completata! Controlla la tua email per verificare l\'account.';
 
   @override
+  String get forgotPasswordTitle => 'Password dimenticata?';
+
+  @override
+  String get forgotPasswordSubtitle =>
+      'Inserisci il tuo indirizzo email e ti invieremo le istruzioni per reimpostare la password.';
+
+  @override
+  String get forgotPasswordLink => 'Password dimenticata?';
+
+  @override
+  String get sendResetLink => 'Invia istruzioni';
+
+  @override
+  String get resetEmailSentSuccess =>
+      'Abbiamo inviato le istruzioni alla tua email.';
+
+  @override
+  String get openEmailApp => 'Apri app email';
+
+  @override
+  String get enterOtpCode => 'Inserisci il codice a 8 cifre';
+
+  @override
+  String get otpCodeHint => 'Codice a 8 cifre';
+
+  @override
+  String get verifyCode => 'Verifica codice';
+
+  @override
+  String get resendResetEmail => 'Invia di nuovo';
+
+  @override
+  String get newPasswordTitle => 'Imposta nuova password';
+
+  @override
+  String get newPasswordLabel => 'Nuova password';
+
+  @override
+  String get confirmPasswordLabel => 'Conferma nuova password';
+
+  @override
+  String get passwordsDoNotMatch => 'Le password non corrispondono';
+
+  @override
+  String get passwordResetSuccess =>
+      'Password aggiornata con successo! Accedi con la tua nuova password.';
+
+  @override
   String get signupTitle => 'Crea Account';
 
   @override

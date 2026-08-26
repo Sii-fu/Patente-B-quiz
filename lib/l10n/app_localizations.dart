@@ -304,6 +304,96 @@ abstract class AppLocalizations {
   /// **'Registration complete! Check your email to verify your account.'**
   String get authSignupSuccess;
 
+  /// No description provided for @forgotPasswordTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgot Password?'**
+  String get forgotPasswordTitle;
+
+  /// No description provided for @forgotPasswordSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your email address and we will send you instructions to reset your password.'**
+  String get forgotPasswordSubtitle;
+
+  /// No description provided for @forgotPasswordLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgot password?'**
+  String get forgotPasswordLink;
+
+  /// No description provided for @sendResetLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Send Reset Instructions'**
+  String get sendResetLink;
+
+  /// No description provided for @resetEmailSentSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'We have sent reset instructions to your email.'**
+  String get resetEmailSentSuccess;
+
+  /// No description provided for @openEmailApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Email App'**
+  String get openEmailApp;
+
+  /// No description provided for @enterOtpCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the 8-digit code'**
+  String get enterOtpCode;
+
+  /// No description provided for @otpCodeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'8-digit code'**
+  String get otpCodeHint;
+
+  /// No description provided for @verifyCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify Code'**
+  String get verifyCode;
+
+  /// No description provided for @resendResetEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend email'**
+  String get resendResetEmail;
+
+  /// No description provided for @newPasswordTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set New Password'**
+  String get newPasswordTitle;
+
+  /// No description provided for @newPasswordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'New Password'**
+  String get newPasswordLabel;
+
+  /// No description provided for @confirmPasswordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm New Password'**
+  String get confirmPasswordLabel;
+
+  /// No description provided for @passwordsDoNotMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords do not match'**
+  String get passwordsDoNotMatch;
+
+  /// No description provided for @passwordResetSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Password updated successfully! Please log in with your new password.'**
+  String get passwordResetSuccess;
+
   /// No description provided for @signupTitle.
   ///
   /// In en, this message translates to:

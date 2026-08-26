@@ -9,6 +9,7 @@ import 'quiz_questions_screen.dart';
 import '../../features/admin/services/admin_repository.dart';
 import '../../models/profile.dart';
 import 'edit_theory_card_screen.dart';
+import '../../services/admin_selection_state.dart';
 
 class QuizCardsScreen extends StatefulWidget {
   final int chapterId;
@@ -250,12 +251,14 @@ class _QuizCardsScreenState extends State<QuizCardsScreen> {
           }
 
           HapticFeedback.lightImpact();
+          AdminSelectionState.rememberSubtopic(widget.chapterId, subtopicId);
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => QuizQuestionsScreen(
                 subtopicId: subtopicId,
                 cardTitle: cardTitle,
+                chapterId: widget.chapterId,
               ),
             ),
           );

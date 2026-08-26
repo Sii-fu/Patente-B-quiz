@@ -113,6 +113,54 @@ class AppLocalizationsBn extends AppLocalizations {
       'নিবন্ধন সম্পন্ন! আপনার অ্যাকাউন্ট যাচাই করতে আপনার ইমেইল চেক করুন।';
 
   @override
+  String get forgotPasswordTitle => 'পাসওয়ার্ড ভুলে গেছেন?';
+
+  @override
+  String get forgotPasswordSubtitle =>
+      'আপনার ইমেইল ঠিকানা লিখুন, আমরা পাসওয়ার্ড রিসেট করার নির্দেশনা পাঠাব।';
+
+  @override
+  String get forgotPasswordLink => 'পাসওয়ার্ড ভুলে গেছেন?';
+
+  @override
+  String get sendResetLink => 'রিসেট নির্দেশনা পাঠান';
+
+  @override
+  String get resetEmailSentSuccess =>
+      'আমরা আপনার ইমেইলে রিসেট নির্দেশনা পাঠিয়েছি।';
+
+  @override
+  String get openEmailApp => 'ইমেইল অ্যাপ খুলুন';
+
+  @override
+  String get enterOtpCode => '৮ সংখ্যার কোড লিখুন';
+
+  @override
+  String get otpCodeHint => '৮ সংখ্যার কোড';
+
+  @override
+  String get verifyCode => 'কোড যাচাই করুন';
+
+  @override
+  String get resendResetEmail => 'আবার পাঠান';
+
+  @override
+  String get newPasswordTitle => 'নতুন পাসওয়ার্ড সেট করুন';
+
+  @override
+  String get newPasswordLabel => 'নতুন পাসওয়ার্ড';
+
+  @override
+  String get confirmPasswordLabel => 'নতুন পাসওয়ার্ড নিশ্চিত করুন';
+
+  @override
+  String get passwordsDoNotMatch => 'পাসওয়ার্ড মিলছে না';
+
+  @override
+  String get passwordResetSuccess =>
+      'পাসওয়ার্ড সফলভাবে আপডেট হয়েছে! নতুন পাসওয়ার্ড দিয়ে লগইন করুন।';
+
+  @override
   String get signupTitle => 'অ্যাকাউন্ট তৈরি করুন';
 
   @override

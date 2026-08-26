@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -14,6 +15,8 @@ import 'features/auth/screens/splash_screen.dart';
 import 'features/auth/screens/setup_wizard_screen.dart';
 import 'features/auth/screens/auth_screen.dart';
 import 'features/auth/screens/signup_screen.dart';
+import 'features/auth/screens/forgot_password_screen.dart';
+import 'features/auth/screens/reset_password_screen.dart';
 import 'features/auth/screens/pending_verification_screen.dart';
 import 'features/admin/auth/admin_pin_screen.dart';
 import 'features/admin/dashboard/admin_dashboard_screen.dart';
@@ -83,6 +86,39 @@ class PatenteQuizApp extends StatefulWidget {
 }
 
 class _PatenteQuizAppState extends State<PatenteQuizApp> {
+  /// Lets the auth listener navigate without needing a BuildContext.
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
+
+  StreamSubscription<AuthState>? _authSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _listenForPasswordRecovery();
+  }
+
+  /// When the user taps the reset link in their email, Supabase opens the app
+  /// via the deep link and emits `passwordRecovery` with a recovery session.
+  /// Send them straight to the reset screen.
+  void _listenForPasswordRecovery() {
+    _authSubscription =
+        Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      if (data.event == AuthChangeEvent.passwordRecovery) {
+        navigatorKey.currentState?.pushNamedAndRemoveUntil(
+          AppConstants.routeResetPassword,
+          (route) => false,
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _authSubscription?.cancel();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer2<LanguageProvider, ThemeProvider>(
@@ -90,6 +126,7 @@ class _PatenteQuizAppState extends State<PatenteQuizApp> {
         return MaterialApp(
           title: 'Desh Bangla Patente',
           debugShowCheckedModeBanner: false,
+          navigatorKey: navigatorKey,
           
           // Localization configuration
           locale: languageProvider.locale,
@@ -120,6 +157,8 @@ class _PatenteQuizAppState extends State<PatenteQuizApp> {
             AppConstants.routeSetupWizard: (context) => const ConnectivityWrapper(child: SetupWizardScreen()),
             AppConstants.routeAuth: (context) => const ConnectivityWrapper(child: AuthScreen()),
             AppConstants.routeSignup: (context) => const ConnectivityWrapper(child: SignupScreen()),
+            AppConstants.routeForgotPassword: (context) => const ConnectivityWrapper(child: ForgotPasswordScreen()),
+            AppConstants.routeResetPassword: (context) => const ConnectivityWrapper(child: ResetPasswordScreen()),
             AppConstants.routeHome: (context) => const ConnectivityWrapper(child: DashboardScreen()),
             AppConstants.routeSettings: (context) => const ConnectivityWrapper(child: SettingsScreen()),
             AppConstants.routePendingVerification: (context) => const ConnectivityWrapper(child: PendingVerificationScreen()),

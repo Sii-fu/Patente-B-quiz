@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../l10n/app_localizations.dart';
@@ -18,12 +20,19 @@ class _AuthScreenState extends State<AuthScreen> {
   
   bool _isLoading = false;
   bool _obscurePassword = true;
+  StreamSubscription<AuthState>? _authSubscription;
 
   @override
   void initState() {
     super.initState();
     // Listen to auth state changes
-    Supabase.instance.client.auth.onAuthStateChange.listen((data) async {
+    _authSubscription =
+        Supabase.instance.client.auth.onAuthStateChange.listen((data) async {
+      // A password recovery session is NOT a normal login: main.dart routes
+      // it to ResetPasswordScreen, so ignore it here or we would hijack
+      // navigation and send the user to the dashboard instead.
+      if (data.event == AuthChangeEvent.passwordRecovery) return;
+
       final session = data.session;
       if (session != null && mounted) {
         // User logged in successfully - check if admin or regular user
@@ -67,6 +76,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
   @override
   void dispose() {
+    _authSubscription?.cancel();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -280,7 +290,24 @@ class _AuthScreenState extends State<AuthScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 8),
+
+                // Forgot Password
+                Align(
+                  alignment: AlignmentDirectional.centerEnd,
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.pushNamed(
+                        context,
+                        AppConstants.routeForgotPassword,
+                      );
+                    },
+                    child: Text(
+                      AppLocalizations.of(context)!.forgotPasswordLink,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
 
                 // Submit Button
                 SizedBox(

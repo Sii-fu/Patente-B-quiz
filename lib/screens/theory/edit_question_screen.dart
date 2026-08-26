@@ -16,9 +16,11 @@ class EditQuestionScreen extends StatefulWidget {
 
   const EditQuestionScreen({
     super.key,
-    required this.question,
+    this.question = const {},
     required this.subtopicId,
   });
+
+  bool get isNewQuestion => question['id'] == null;
 
   @override
   State<EditQuestionScreen> createState() => _EditQuestionScreenState();
@@ -37,10 +39,11 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
   late TextEditingController _explanationBnController;
   late bool _isTrue;
   bool _isSaving = false;
-  
+  bool _isDeleting = false;
+
   String? imageUrl;
   File? selectedImageFile;
-  
+
   // Store fresh question data from DB
   Map<String, dynamic> _freshQuestion = {};
   bool _isLoadingFreshData = true;
@@ -55,6 +58,10 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
 
   /// Fetch fresh question data from database (includes newly uploaded audio URL)
   Future<void> _refreshQuestionData() async {
+    if (widget.isNewQuestion) {
+      setState(() => _isLoadingFreshData = false);
+      return;
+    }
     try {
       final supabase = Supabase.instance.client;
       final response = await supabase
@@ -62,7 +69,7 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
           .select()
           .eq('id', widget.question['id'])
           .single();
-      
+
       if (mounted) {
         setState(() {
           _freshQuestion = response;
@@ -83,10 +90,16 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
     _textItController = TextEditingController(text: widget.question['text_it']);
     _textEnController = TextEditingController(text: widget.question['text_en']);
     _textBnController = TextEditingController(text: widget.question['text_bn']);
-    _explanationItController = TextEditingController(text: widget.question['explanation_it']);
-    _explanationEnController = TextEditingController(text: widget.question['explanation_en']);
-    _explanationBnController = TextEditingController(text: widget.question['explanation_bn']);
-    _isTrue = widget.question['is_true'] as bool;
+    _explanationItController = TextEditingController(
+      text: widget.question['explanation_it'],
+    );
+    _explanationEnController = TextEditingController(
+      text: widget.question['explanation_en'],
+    );
+    _explanationBnController = TextEditingController(
+      text: widget.question['explanation_bn'],
+    );
+    _isTrue = widget.question['is_true'] as bool? ?? true;
     imageUrl = widget.question['image_url'];
   }
 
@@ -117,9 +130,9 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error picking image: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error picking image: $e')));
       }
     }
   }
@@ -137,8 +150,12 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
     if (selectedImageFile != null) {
       final bytes = await selectedImageFile!.readAsBytes();
       final fileName = 'questions/${DateTime.now().millisecondsSinceEpoch}.jpg';
-      finalImageUrl = await _adminRepo.uploadImage('quiz_images', fileName, bytes);
-      
+      finalImageUrl = await _adminRepo.uploadImage(
+        'quiz_images',
+        fileName,
+        bytes,
+      );
+
       if (finalImageUrl == null) {
         if (mounted) {
           setState(() => _isSaving = false);
@@ -151,31 +168,153 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
     }
 
     final success = await _adminRepo.upsertQuestion(
-      id: widget.question['id'] as int,
+      id: widget.question['id'] as int?,
       subtopicId: widget.subtopicId,
       textIt: _textItController.text.trim(),
-      textEn: _textEnController.text.trim().isEmpty ? null : _textEnController.text.trim(),
-      textBn: _textBnController.text.trim().isEmpty ? null : _textBnController.text.trim(),
+      textEn: _textEnController.text.trim().isEmpty
+          ? null
+          : _textEnController.text.trim(),
+      textBn: _textBnController.text.trim().isEmpty
+          ? null
+          : _textBnController.text.trim(),
       imageUrl: finalImageUrl,
       isTrue: _isTrue,
-      explanationIt: _explanationItController.text.trim().isEmpty ? null : _explanationItController.text.trim(),
-      explanationEn: _explanationEnController.text.trim().isEmpty ? null : _explanationEnController.text.trim(),
-      explanationBn: _explanationBnController.text.trim().isEmpty ? null : _explanationBnController.text.trim(),
+      explanationIt: _explanationItController.text.trim().isEmpty
+          ? null
+          : _explanationItController.text.trim(),
+      explanationEn: _explanationEnController.text.trim().isEmpty
+          ? null
+          : _explanationEnController.text.trim(),
+      explanationBn: _explanationBnController.text.trim().isEmpty
+          ? null
+          : _explanationBnController.text.trim(),
     );
 
     if (mounted) {
       setState(() => _isSaving = false);
-      
-      if (success) {
+
+      if (success != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Question updated successfully')),
+          SnackBar(
+            content: Text(
+              widget.isNewQuestion
+                  ? 'Question added successfully'
+                  : 'Question updated successfully',
+            ),
+          ),
         );
         Navigator.pop(context, true); // Return true to indicate success
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to update question')),
+          SnackBar(
+            content: Text(
+              widget.isNewQuestion
+                  ? 'Failed to add question'
+                  : 'Failed to update question',
+            ),
+          ),
         );
       }
+    }
+  }
+
+  Future<void> _confirmDelete() async {
+    final theme = Theme.of(context);
+    final confirmed = await showModalBottomSheet<bool>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 20),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.outlineVariant,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                Icon(
+                  Icons.warning_amber_rounded,
+                  size: 48,
+                  color: theme.colorScheme.error,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Delete this question?',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'This action cannot be undone. The question and its associated audio will be permanently removed.',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(sheetContext, false),
+                        child: const Text('Cancel'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(sheetContext, true),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: theme.colorScheme.error,
+                          foregroundColor: theme.colorScheme.onError,
+                        ),
+                        child: const Text('Delete'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      await _deleteQuestion();
+    }
+  }
+
+  Future<void> _deleteQuestion() async {
+    setState(() => _isDeleting = true);
+
+    final success = await _adminRepo.deleteQuestion(
+      widget.question['id'] as int,
+    );
+
+    if (!mounted) return;
+
+    setState(() => _isDeleting = false);
+
+    if (success) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Question deleted')));
+      Navigator.pop(context, true);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to delete question')),
+      );
     }
   }
 
@@ -187,20 +326,41 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
     return Scaffold(
       backgroundColor: theme.colorScheme.surfaceContainerLowest,
       appBar: AppBar(
-        backgroundColor: theme.colorScheme.surface,
+        backgroundColor: theme.colorScheme.primary,
         elevation: 0,
         title: Text(
-          'Edit Question',
+          widget.isNewQuestion ? 'Add Question' : 'Edit Question',
           style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.bold,
-            color: theme.colorScheme.onSurface,
+            color: theme.colorScheme.surface,
           ),
         ),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: theme.colorScheme.onSurface),
+          icon: Icon(Icons.arrow_back, color: theme.colorScheme.surface),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
+          if (!widget.isNewQuestion)
+            if (_isDeleting)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+              )
+            else
+              IconButton(
+                icon: Icon(
+                  Icons.delete_outline,
+                  color: theme.colorScheme.error,
+                ),
+                onPressed: _confirmDelete,
+                tooltip: 'Delete',
+              ),
           if (_isSaving)
             const Center(
               child: Padding(
@@ -313,18 +473,18 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
                         ),
                       )
                     : imageUrl != null && imageUrl!.isNotEmpty
-                        ? ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.network(
-                              imageUrl!,
-                              fit: BoxFit.contain,
-                              width: double.infinity,
-                              errorBuilder: (context, error, stack) {
-                                return _buildImagePlaceholder(theme);
-                              },
-                            ),
-                          )
-                        : _buildImagePlaceholder(theme),
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.network(
+                          imageUrl!,
+                          fit: BoxFit.contain,
+                          width: double.infinity,
+                          errorBuilder: (context, error, stack) {
+                            return _buildImagePlaceholder(theme);
+                          },
+                        ),
+                      )
+                    : _buildImagePlaceholder(theme),
               ),
             ),
             const SizedBox(height: 8),
@@ -447,7 +607,7 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
   Widget _buildAudioSection(ThemeData theme) {
     final audioUrl = _freshQuestion['explanation_audio_url'];
     final hasAudio = audioUrl != null && audioUrl.toString().trim().isNotEmpty;
-    
+
     debugPrint('🎙️ Audio Section Debug:');
     debugPrint('  - Audio URL: $audioUrl');
     debugPrint('  - Has Audio: $hasAudio');
@@ -484,10 +644,7 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
                     ),
                     child: Row(
                       children: [
-                        Icon(
-                          Icons.check_circle,
-                          color: AppTheme.successGreen,
-                        ),
+                        Icon(Icons.check_circle, color: AppTheme.successGreen),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
@@ -519,14 +676,16 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
               )
             else
               Text(
-                'Add a custom voice explanation for this question',
+                widget.isNewQuestion
+                    ? 'Save the question first to add a voice explanation'
+                    : 'Add a custom voice explanation for this question',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
             const SizedBox(height: 12),
             ElevatedButton.icon(
-              onPressed: _openAudioRecorder,
+              onPressed: widget.isNewQuestion ? null : _openAudioRecorder,
               icon: Icon(hasAudio ? Icons.edit : Icons.mic),
               label: Text(hasAudio ? 'Edit Audio' : 'Record Audio'),
               style: ElevatedButton.styleFrom(
@@ -577,19 +736,22 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
           duration: Duration(seconds: 2),
         ),
       );
-      
+
       if (await canLaunchUrl(Uri.parse(audioUrl))) {
-        await launchUrl(Uri.parse(audioUrl), mode: LaunchMode.externalApplication);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not open audio')),
+        await launchUrl(
+          Uri.parse(audioUrl),
+          mode: LaunchMode.externalApplication,
         );
+      } else {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Could not open audio')));
       }
     } catch (e) {
       debugPrint('Error playing audio: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
     }
   }
 }
@@ -599,10 +761,7 @@ class _AudioPlayerWidget extends StatefulWidget {
   final String audioUrl;
   final ThemeData theme;
 
-  const _AudioPlayerWidget({
-    required this.audioUrl,
-    required this.theme,
-  });
+  const _AudioPlayerWidget({required this.audioUrl, required this.theme});
 
   @override
   State<_AudioPlayerWidget> createState() => _AudioPlayerWidgetState();
@@ -643,7 +802,8 @@ class _AudioPlayerWidgetState extends State<_AudioPlayerWidget> {
       if (mounted) {
         setState(() {
           // Stop loading when done loading
-          if (state == ProcessingState.ready || state == ProcessingState.completed) {
+          if (state == ProcessingState.ready ||
+              state == ProcessingState.completed) {
             _isLoading = false;
             _isUrlLoaded = true; // Mark as loaded once ready
           }
@@ -692,9 +852,9 @@ class _AudioPlayerWidgetState extends State<_AudioPlayerWidget> {
       debugPrint('Error: $e');
       setState(() => _isLoading = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error playing audio: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error playing audio: $e')));
       }
     }
   }
@@ -770,11 +930,11 @@ class _AudioPlayerWidgetState extends State<_AudioPlayerWidget> {
                             child: LinearProgressIndicator(
                               value: _duration.inMilliseconds > 0
                                   ? _position.inMilliseconds /
-                                      _duration.inMilliseconds
+                                        _duration.inMilliseconds
                                   : 0,
                               minHeight: 4,
-                              backgroundColor:
-                                  widget.theme.colorScheme.outline.withOpacity(0.3),
+                              backgroundColor: widget.theme.colorScheme.outline
+                                  .withOpacity(0.3),
                               valueColor: AlwaysStoppedAnimation(
                                 widget.theme.colorScheme.primary,
                               ),

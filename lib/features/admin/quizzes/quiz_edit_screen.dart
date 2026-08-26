@@ -217,7 +217,7 @@ class _QuizEditScreenState extends State<QuizEditScreen> {
       _isSaving = false;
     });
 
-    if (success) {
+    if (success != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(AppLocalizations.of(context)!.adminQuestionSaved),

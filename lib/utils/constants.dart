@@ -52,6 +52,8 @@ class AppConstants {
   static const String routeSetupWizard = '/setup';
   static const String routeAuth = '/auth';
   static const String routeSignup = '/signup';
+  static const String routeForgotPassword = '/forgot-password';
+  static const String routeResetPassword = '/reset-password';
   static const String routeHome = '/home';
   static const String routeSettings = '/settings';
   static const String routePendingVerification = '/pending-verification';

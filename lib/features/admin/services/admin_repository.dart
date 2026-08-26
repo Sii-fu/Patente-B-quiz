@@ -25,7 +25,7 @@ class AdminRepository {
       return false;
     }
   }
- 
+
   /// Get current user's profile
   Future<Profile?> getCurrentUserProfile() async {
     try {
@@ -65,10 +65,7 @@ class AdminRepository {
     try {
       await _supabase.rpc(
         'func_admin_verify_user',
-        params: {
-          'target_user_id': userId,
-          'verify_status': isVerified,
-        },
+        params: {'target_user_id': userId, 'verify_status': isVerified},
       );
       return true;
     } catch (e) {
@@ -235,12 +232,28 @@ class AdminRepository {
           .from('subtopics')
           .select()
           .eq('topic_id', topicId)
-          .order('display_order')
+          .order('display_order', ascending: true)
+          .order('id', ascending: true)
           .timeout(const Duration(seconds: 10));
       return List<Map<String, dynamic>>.from(response);
     } catch (e) {
       debugPrint('Error fetching subtopics by topic: $e');
       return [];
+    }
+  }
+
+  /// Get a single subtopic by its id
+  Future<Map<String, dynamic>?> getSubtopicById(int subtopicId) async {
+    try {
+      final response = await _supabase
+          .from('subtopics')
+          .select('id, topic_id, name_it, display_order')
+          .eq('id', subtopicId)
+          .maybeSingle();
+      return response;
+    } catch (e) {
+      debugPrint('Error fetching subtopic by id: $e');
+      return null;
     }
   }
 
@@ -318,7 +331,9 @@ class AdminRepository {
       }
 
       if (searchQuery != null && searchQuery.isNotEmpty) {
-        query = query.or('text_it.ilike.%$searchQuery%,text_en.ilike.%$searchQuery%');
+        query = query.or(
+          'text_it.ilike.%$searchQuery%,text_en.ilike.%$searchQuery%',
+        );
       }
 
       final response = await query
@@ -334,7 +349,9 @@ class AdminRepository {
   }
 
   /// Get questions by subtopic ID
-  Future<List<Map<String, dynamic>>> getQuestionsBySubtopic(int subtopicId) async {
+  Future<List<Map<String, dynamic>>> getQuestionsBySubtopic(
+    int subtopicId,
+  ) async {
     try {
       final response = await _supabase
           .from('questions')
@@ -368,7 +385,7 @@ class AdminRepository {
 
   /// Upload a local audio file to the [quiz_audio] Supabase Storage bucket.
   /// Returns the public URL on success, or null on failure.
-  /// 
+  ///
   /// Note: Requires RLS policy on quiz_audio bucket:
   /// - Allow authenticated users to INSERT
   /// - Path prefix: /questions/
@@ -377,14 +394,14 @@ class AdminRepository {
       final file = File(localFilePath);
       final bytes = await file.readAsBytes();
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      
+
       // Get current user ID for file organization
       final user = _supabase.auth.currentUser;
       if (user == null) {
         debugPrint('Error uploading audio: User not authenticated');
         return null;
       }
-      
+
       // Organize files by user and timestamp: questions/admin_user_id/timestamp.m4a
       final fileName = 'questions/${user.id}/$timestamp.m4a';
 
@@ -410,7 +427,7 @@ class AdminRepository {
   /// If [explanationAudioUrl] is provided, it is written to the
   /// `explanation_audio_url` column via a secondary direct update after
   /// the main RPC completes.
-  Future<bool> upsertQuestion({
+  Future<int?> upsertQuestion({
     int? id,
     required int subtopicId,
     required String textIt,
@@ -422,9 +439,13 @@ class AdminRepository {
     String? explanationEn,
     String? explanationBn,
     String? explanationAudioUrl,
+    String? audioItUrl,
+    String? audioEnUrl,
+    String? audioBnUrl,
+    int difficultyLevel = 1,
   }) async {
     try {
-      await _supabase.rpc(
+      final response = await _supabase.rpc(
         'func_admin_upsert_question',
         params: {
           'p_id': id,
@@ -437,39 +458,27 @@ class AdminRepository {
           'p_explanation_it': explanationIt,
           'p_explanation_en': explanationEn,
           'p_explanation_bn': explanationBn,
+          'p_audio_it_url': audioItUrl,
+          'p_audio_en_url': audioEnUrl,
+          'p_audio_bn_url': audioBnUrl,
+          'p_difficulty_level': difficultyLevel,
         },
       );
 
+      final questionId = response as int?;
+
       // Secondary update for explanation_audio_url (not in the RPC).
-      if (explanationAudioUrl != null) {
-        int? targetId = id;
-
-        // For new questions we need to find the just-created row.
-        if (targetId == null) {
-          final rows = await _supabase
-              .from('questions')
-              .select('id')
-              .eq('subtopic_id', subtopicId)
-              .eq('text_it', textIt)
-              .order('created_at', ascending: false)
-              .limit(1);
-          if (rows.isNotEmpty) {
-            targetId = rows.first['id'] as int?;
-          }
-        }
-
-        if (targetId != null) {
-          await _supabase
-              .from('questions')
-              .update({'explanation_audio_url': explanationAudioUrl})
-              .eq('id', targetId);
-        }
+      if (explanationAudioUrl != null && questionId != null) {
+        await _supabase
+            .from('questions')
+            .update({'explanation_audio_url': explanationAudioUrl})
+            .eq('id', questionId);
       }
 
-      return true;
+      return questionId;
     } catch (e) {
       debugPrint('Error upserting question: $e');
-      return false;
+      return null;
     }
   }
 
@@ -492,7 +501,8 @@ class AdminRepository {
       final response = await _supabase
           .from('theory_chapters')
           .select()
-          .order('display_order')
+          .order('display_order', ascending: true)
+          .order('id', ascending: true)
           .timeout(const Duration(seconds: 10));
       return List<Map<String, dynamic>>.from(response);
     } catch (e) {
@@ -502,7 +512,9 @@ class AdminRepository {
   }
 
   /// Get subtopics linked to a theory chapter via its related_quiz_topic_id
-  Future<List<Map<String, dynamic>>> getSubtopicsByTheoryChapter(int chapterId) async {
+  Future<List<Map<String, dynamic>>> getSubtopicsByTheoryChapter(
+    int chapterId,
+  ) async {
     try {
       final chapter = await _supabase
           .from('theory_chapters')
@@ -517,6 +529,25 @@ class AdminRepository {
     } catch (e) {
       debugPrint('Error fetching subtopics by theory chapter: $e');
       return [];
+    }
+  }
+
+  /// Find the theory card (and therefore its chapter_id) linked to a
+  /// given subtopic id, used to reverse-resolve a chapter from a subtopic.
+  Future<Map<String, dynamic>?> getTheoryCardBySubtopicId(
+    int subtopicId,
+  ) async {
+    try {
+      final response = await _supabase
+          .from('theory_cards')
+          .select('id, chapter_id, subtopic_id')
+          .eq('subtopic_id', subtopicId)
+          .limit(1)
+          .maybeSingle();
+      return response;
+    } catch (e) {
+      debugPrint('Error fetching theory card by subtopic id: $e');
+      return null;
     }
   }
 
@@ -586,7 +617,9 @@ class AdminRepository {
       }
 
       if (searchQuery != null && searchQuery.isNotEmpty) {
-        query = query.or('title_it.ilike.%$searchQuery%,text_it.ilike.%$searchQuery%');
+        query = query.or(
+          'title_it.ilike.%$searchQuery%,text_it.ilike.%$searchQuery%',
+        );
       }
 
       final response = await query.order('display_order');
@@ -599,13 +632,16 @@ class AdminRepository {
   }
 
   /// Get theory cards by chapter ID
-  Future<List<Map<String, dynamic>>> getTheoryCardsByChapter(int chapterId) async {
+  Future<List<Map<String, dynamic>>> getTheoryCardsByChapter(
+    int chapterId,
+  ) async {
     try {
       final response = await _supabase
           .from('theory_cards')
           .select()
           .eq('chapter_id', chapterId)
-          .order('display_order')
+          .order('display_order', ascending: true)
+          .order('id', ascending: true)
           .timeout(const Duration(seconds: 10));
       return List<Map<String, dynamic>>.from(response);
     } catch (e) {
@@ -613,8 +649,6 @@ class AdminRepository {
       return [];
     }
   }
-
-
 
   /// Get theory card count by chapter
   Future<int> getTheoryCardCountByChapter(int chapterId) async {
@@ -812,7 +846,9 @@ class AdminRepository {
           .timeout(const Duration(seconds: 10));
 
       final videos = List<Map<String, dynamic>>.from(videosResponse as List);
-      final chapters = List<Map<String, dynamic>>.from(chaptersResponse as List);
+      final chapters = List<Map<String, dynamic>>.from(
+        chaptersResponse as List,
+      );
 
       int chapterIdOf(Map<String, dynamic> chapter) {
         final id = chapter['id'];
@@ -835,8 +871,9 @@ class AdminRepository {
       for (final video in videos) {
         final chapterId = video['chapter_id'];
         video['chapter'] = chapterId != null ? chapterById[chapterId] : null;
-        video['chapter_number'] =
-            chapterId != null ? chapterNumberById[chapterId] : null;
+        video['chapter_number'] = chapterId != null
+            ? chapterNumberById[chapterId]
+            : null;
       }
 
       int dateMillis(Map<String, dynamic> video) {
@@ -944,7 +981,9 @@ class AdminRepository {
     final extensionMatch = RegExp(r'\.([a-zA-Z0-9]+)$').firstMatch(rawName);
     final extension = extensionMatch != null
         ? extensionMatch.group(1)!.toLowerCase()
-        : (RegExp(r'^[a-zA-Z0-9]+$').hasMatch(rawName) ? rawName.toLowerCase() : 'jpg');
+        : (RegExp(r'^[a-zA-Z0-9]+$').hasMatch(rawName)
+              ? rawName.toLowerCase()
+              : 'jpg');
 
     final fileName = 'videos/${user.id}/$timestamp.$extension';
     return uploadImage(_videoThumbnailsBucket, fileName, bytes);
@@ -975,21 +1014,29 @@ class AdminRepository {
   // ==================== UTILITIES ====================
 
   /// Upload image to Supabase Storage
-  Future<String?> uploadImage(String bucket, String fileName, List<int> bytes) async {
+  Future<String?> uploadImage(
+    String bucket,
+    String fileName,
+    List<int> bytes,
+  ) async {
     final user = _supabase.auth.currentUser;
-    debugPrint('uploadImage called: bucket=$bucket file=$fileName user=${user?.id} bytes=${bytes.length}');
+    debugPrint(
+      'uploadImage called: bucket=$bucket file=$fileName user=${user?.id} bytes=${bytes.length}',
+    );
     if (user == null) {
       debugPrint('Error uploading image: User not authenticated');
       return null;
     }
 
     try {
-      await _supabase.storage.from(bucket).uploadBinary(
-        fileName,
-        bytes as dynamic,
-        fileOptions: const FileOptions(upsert: true),
-      );
-      
+      await _supabase.storage
+          .from(bucket)
+          .uploadBinary(
+            fileName,
+            bytes as dynamic,
+            fileOptions: const FileOptions(upsert: true),
+          );
+
       // Get public URL
       final publicUrl = _supabase.storage.from(bucket).getPublicUrl(fileName);
       debugPrint('uploadImage success: $publicUrl');
@@ -1017,20 +1064,28 @@ class AdminRepository {
     final extensionMatch = RegExp(r'\.([a-zA-Z0-9]+)$').firstMatch(rawName);
     final extension = extensionMatch != null
         ? extensionMatch.group(1)!.toLowerCase()
-        : (RegExp(r'^[a-zA-Z0-9]+$').hasMatch(rawName) ? rawName.toLowerCase() : 'jpg');
+        : (RegExp(r'^[a-zA-Z0-9]+$').hasMatch(rawName)
+              ? rawName.toLowerCase()
+              : 'jpg');
     final fileName = 'theory_cards/${user.id}/$timestamp.$extension';
     return uploadImage(_theoryImagesBucket, fileName, bytes);
   }
 
   /// Upload audio to Supabase Storage
-  Future<String?> uploadAudioBinary(String bucket, String fileName, List<int> bytes) async {
+  Future<String?> uploadAudioBinary(
+    String bucket,
+    String fileName,
+    List<int> bytes,
+  ) async {
     try {
-      await _supabase.storage.from(bucket).uploadBinary(
-        fileName,
-        bytes as dynamic,
-        fileOptions: const FileOptions(upsert: true),
-      );
-      
+      await _supabase.storage
+          .from(bucket)
+          .uploadBinary(
+            fileName,
+            bytes as dynamic,
+            fileOptions: const FileOptions(upsert: true),
+          );
+
       // Get public URL
       final publicUrl = _supabase.storage.from(bucket).getPublicUrl(fileName);
       return publicUrl;
@@ -1046,16 +1101,15 @@ class AdminRepository {
     required String audioUrl,
   }) async {
     try {
-      debugPrint('🎙️ Calling RPC: update_question_audio($questionId, $audioUrl)');
-      
+      debugPrint(
+        '🎙️ Calling RPC: update_question_audio($questionId, $audioUrl)',
+      );
+
       final result = await _supabase.rpc(
         'update_question_audio',
-        params: {
-          'p_question_id': questionId,
-          'p_audio_url': audioUrl,
-        },
+        params: {'p_question_id': questionId, 'p_audio_url': audioUrl},
       );
-      
+
       debugPrint('✅ RPC response: $result');
       return result == true;
     } catch (e) {
@@ -1070,16 +1124,15 @@ class AdminRepository {
     required String audioUrl,
   }) async {
     try {
-      debugPrint('🎙️ Calling RPC: update_theory_card_audio($cardId, $audioUrl)');
-      
+      debugPrint(
+        '🎙️ Calling RPC: update_theory_card_audio($cardId, $audioUrl)',
+      );
+
       final result = await _supabase.rpc(
         'update_theory_card_audio',
-        params: {
-          'p_card_id': cardId,
-          'p_audio_url': audioUrl,
-        },
+        params: {'p_card_id': cardId, 'p_audio_url': audioUrl},
       );
-      
+
       debugPrint('✅ RPC response: $result');
       return result == true;
     } catch (e) {
