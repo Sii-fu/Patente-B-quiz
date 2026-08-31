@@ -1,9 +1,123 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../utils/date_format_helper.dart';
 import '../services/admin_repository.dart';
 
-enum UserFilter { all, pending, verified }
+enum UserFilter { all, pending, active, expired, revoked }
+
+/// The four access states an account can be in, derived from `is_verified`
+/// and `verified_until`:
+///
+/// * [pending]  — never approved (`is_verified == false`, no `verified_until`)
+/// * [active]   — approved and inside the paid period (or lifetime)
+/// * [expired]  — approved but the paid period has passed
+/// * [revoked]  — approval withdrawn by an admin after having been granted
+///                (`is_verified == false` but `verified_until` survives)
+enum UserAccessStatus { pending, active, expired, revoked }
+
+/// Derives the access state from the two DB columns. A revoked account keeps
+/// its `verified_until`, which is what separates it from one that was never
+/// approved in the first place.
+UserAccessStatus accessStatusOf(bool isVerified, DateTime? verifiedUntil) {
+  if (!isVerified) {
+    return verifiedUntil == null
+        ? UserAccessStatus.pending
+        : UserAccessStatus.revoked;
+  }
+  if (verifiedUntil == null) return UserAccessStatus.active; // lifetime
+  return verifiedUntil.isAfter(DateTime.now())
+      ? UserAccessStatus.active
+      : UserAccessStatus.expired;
+}
+
+/// Whole days from now until [date]; negative once it is in the past.
+int daysUntil(DateTime date) {
+  final now = DateTime.now();
+  final startOfToday = DateTime(now.year, now.month, now.day);
+  final startOfTarget = DateTime(date.year, date.month, date.day);
+  return startOfTarget.difference(startOfToday).inDays;
+}
+
+/// Access expiring within this many days is highlighted amber so the admin
+/// can chase a renewal before the student is locked out.
+const int kAccessExpiringSoonDays = 14;
+
+/// Shared presentation for an access state, so the cards, the details dialog
+/// and the filter chips never drift apart.
+///
+/// The shade is picked per brightness: the mid-tone Material colours are
+/// tuned for light surfaces and lose contrast on dark ones (blue-grey and
+/// amber especially), so dark mode gets the lighter shades.
+Color accessStatusColor(
+  BuildContext context,
+  UserAccessStatus status, {
+  bool expiringSoon = false,
+}) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  switch (status) {
+    case UserAccessStatus.pending:
+      return isDark ? Colors.orange.shade300 : Colors.orange.shade800;
+    case UserAccessStatus.active:
+      if (expiringSoon) {
+        return isDark ? Colors.amber.shade300 : Colors.amber.shade800;
+      }
+      return isDark ? Colors.green.shade300 : Colors.green.shade700;
+    case UserAccessStatus.expired:
+      return isDark ? Colors.red.shade300 : Colors.red.shade700;
+    case UserAccessStatus.revoked:
+      return isDark ? Colors.blueGrey.shade200 : Colors.blueGrey.shade600;
+  }
+}
+
+/// Tinted fill for the same status. A flat 10% alpha disappears against a
+/// dark surface, so the tint is stronger there.
+Color accessStatusFill(
+  BuildContext context,
+  UserAccessStatus status, {
+  bool expiringSoon = false,
+}) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  return accessStatusColor(
+    context,
+    status,
+    expiringSoon: expiringSoon,
+  ).withValues(alpha: isDark ? 0.22 : 0.12);
+}
+
+IconData accessStatusIcon(UserAccessStatus status) {
+  switch (status) {
+    case UserAccessStatus.pending:
+      return Icons.hourglass_bottom_rounded;
+    case UserAccessStatus.active:
+      return Icons.verified;
+    case UserAccessStatus.expired:
+      return Icons.event_busy_rounded;
+    case UserAccessStatus.revoked:
+      return Icons.block_rounded;
+  }
+}
+
+String accessStatusLabel(UserAccessStatus status, AppLocalizations l10n) {
+  switch (status) {
+    case UserAccessStatus.pending:
+      return l10n.adminPending;
+    case UserAccessStatus.active:
+      return l10n.adminVerified;
+    case UserAccessStatus.expired:
+      return l10n.adminAccessExpired;
+    case UserAccessStatus.revoked:
+      return l10n.adminFilterRevoked;
+  }
+}
+
+/// Result of the course-duration picker. Wrapping the nullable month count in
+/// an object lets "Unlimited / Lifetime" (months == null) be told apart from
+/// the admin dismissing the dialog (a null [_DurationChoice]).
+class _DurationChoice {
+  final int? months;
+  const _DurationChoice(this.months);
+}
 
 class UserManagementScreen extends StatefulWidget {
   const UserManagementScreen({super.key});
@@ -72,7 +186,10 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     final email = (user['email'] ?? '').toString().toLowerCase();
     final phone = _phoneOf(user).toLowerCase();
 
-    if (name.contains(q) || username.contains(q) || email.contains(q) || phone.contains(q)) {
+    if (name.contains(q) ||
+        username.contains(q) ||
+        email.contains(q) ||
+        phone.contains(q)) {
       return true;
     }
 
@@ -91,10 +208,16 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     // Apply status filter
     switch (_currentFilter) {
       case UserFilter.pending:
-        result = result.where((u) => u['is_verified'] != true).toList();
+        result = _withStatus(result, UserAccessStatus.pending);
         break;
-      case UserFilter.verified:
-        result = result.where((u) => u['is_verified'] == true).toList();
+      case UserFilter.active:
+        result = _withStatus(result, UserAccessStatus.active);
+        break;
+      case UserFilter.expired:
+        result = _withStatus(result, UserAccessStatus.expired);
+        break;
+      case UserFilter.revoked:
+        result = _withStatus(result, UserAccessStatus.revoked);
         break;
       case UserFilter.all:
         break;
@@ -111,23 +234,279 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     });
   }
 
-  int get _totalCount => _allUsers.length;
-  int get _pendingCount => _allUsers.where((u) => u['is_verified'] != true).length;
-  int get _verifiedCount => _allUsers.where((u) => u['is_verified'] == true).length;
+  List<Map<String, dynamic>> _withStatus(
+    List<Map<String, dynamic>> users,
+    UserAccessStatus status,
+  ) => users.where((u) => _statusOf(u) == status).toList();
 
-  Future<void> _toggleUserVerification(String userId, bool newValue) async {
+  int _countOf(UserAccessStatus status) =>
+      _allUsers.where((u) => _statusOf(u) == status).length;
+
+  int get _totalCount => _allUsers.length;
+  int get _pendingCount => _countOf(UserAccessStatus.pending);
+  int get _activeCount => _countOf(UserAccessStatus.active);
+  int get _expiredCount => _countOf(UserAccessStatus.expired);
+  int get _revokedCount => _countOf(UserAccessStatus.revoked);
+
+  /// Reads `verified_until` off a raw user map. Returns null for lifetime
+  /// access, or when the admin RPC does not select the column.
+  DateTime? _verifiedUntilOf(Map<String, dynamic> user) {
+    final raw = user['verified_until'];
+    if (raw == null) return null;
+    return DateTime.tryParse(raw.toString())?.toLocal();
+  }
+
+  /// Single source of truth for a user's access state — used by the cards,
+  /// the details dialog, the filters and the counters alike.
+  UserAccessStatus _statusOf(Map<String, dynamic> user) =>
+      accessStatusOf(user['is_verified'] == true, _verifiedUntilOf(user));
+
+  /// Asks the admin how long the student's course access should last.
+  ///
+  /// [currentUntil] is the student's existing expiry, if any. It is shown at
+  /// the top of the dialog and used to preview the resulting date on each
+  /// option — mirroring the RPC, which anchors at
+  /// `GREATEST(now(), verified_until)` so extending never eats unused time.
+  /// Returns null if the dialog was dismissed.
+  Future<_DurationChoice?> _showDurationPicker(
+    String userName,
+    DateTime? currentUntil,
+  ) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return showDialog<_DurationChoice>(
+      context: context,
+      builder: (dialogContext) {
+        final theme = Theme.of(dialogContext);
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(l10n.adminSelectCourseDuration),
+              const SizedBox(height: 4),
+              Text(
+                userName,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                ),
+              ),
+            ],
+          ),
+          contentPadding: const EdgeInsets.symmetric(vertical: 8),
+          // Four tiles with date subtitles overflow a landscape phone.
+          content: SizedBox(
+            width: 320,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (currentUntil != null)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+                      child: Text(
+                        currentUntil.isAfter(DateTime.now())
+                            ? '${l10n.adminCurrentlyExpires}: '
+                                  '${formatExpiryDate(dialogContext, currentUntil)}'
+                            : '${l10n.adminAlreadyExpired} — '
+                                  '${formatExpiryDate(dialogContext, currentUntil)}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: currentUntil.isAfter(DateTime.now())
+                              ? theme.colorScheme.onSurface.withValues(
+                                  alpha: 0.7,
+                                )
+                              : Colors.red,
+                        ),
+                      ),
+                    ),
+                  _buildDurationTile(
+                    dialogContext,
+                    l10n.adminDuration3Months,
+                    3,
+                    currentUntil,
+                  ),
+                  _buildDurationTile(
+                    dialogContext,
+                    l10n.adminDuration6Months,
+                    6,
+                    currentUntil,
+                  ),
+                  _buildDurationTile(
+                    dialogContext,
+                    l10n.adminDuration1Year,
+                    12,
+                    currentUntil,
+                  ),
+                  _buildDurationTile(
+                    dialogContext,
+                    l10n.adminDurationUnlimited,
+                    null,
+                    currentUntil,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(l10n.profileCancel),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildDurationTile(
+    BuildContext dialogContext,
+    String label,
+    int? months,
+    DateTime? currentUntil,
+  ) {
+    final theme = Theme.of(dialogContext);
+    final l10n = AppLocalizations.of(dialogContext)!;
+    final isLifetime = months == null;
+    final preview = isLifetime
+        ? null
+        : addMonths(_extensionAnchor(currentUntil), months);
+
+    return ListTile(
+      leading: Icon(
+        isLifetime
+            ? Icons.all_inclusive_rounded
+            : Icons.event_available_rounded,
+        color: isLifetime ? Colors.blue : theme.colorScheme.primary,
+      ),
+      title: Text(label),
+      subtitle: preview == null
+          ? null
+          : Text(
+              '${l10n.adminNewExpiry}: '
+              '${formatExpiryDate(dialogContext, preview)}',
+              style: theme.textTheme.bodySmall,
+            ),
+      onTap: () {
+        HapticFeedback.selectionClick();
+        Navigator.pop(dialogContext, _DurationChoice(months));
+      },
+    );
+  }
+
+  /// Where an extension starts counting from: the later of now and the
+  /// student's current expiry, matching `GREATEST(now(), verified_until)`
+  /// in `func_admin_verify_user`.
+  DateTime _extensionAnchor(DateTime? currentUntil) {
+    final now = DateTime.now();
+    if (currentUntil == null || !currentUntil.isAfter(now)) return now;
+    return currentUntil;
+  }
+
+  /// Grants or extends access for a duration chosen by the admin. Used by the
+  /// verification switch and by the Extend Access button.
+  Future<void> _setAccessDuration(Map<String, dynamic> user) async {
     HapticFeedback.mediumImpact();
 
-    final success = await _adminRepository.updateUserVerification(userId, newValue);
+    final l10n = AppLocalizations.of(context)!;
+    final userName = (user['full_name'] ?? l10n.adminUnknownUser).toString();
+    final currentUntil = _verifiedUntilOf(user);
+
+    final choice = await _showDurationPicker(userName, currentUntil);
+    if (choice == null || !mounted) return; // admin cancelled
+
+    await _applyVerification(
+      user['id'].toString(),
+      true,
+      durationMonths: choice.months,
+      currentUntil: currentUntil,
+    );
+  }
+
+  /// Confirms before cutting a student off — a mis-tapped switch would
+  /// otherwise lock out a paying student instantly.
+  Future<bool> _confirmRevoke(String userName) async {
+    final l10n = AppLocalizations.of(context)!;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        icon: const Icon(Icons.block_rounded, color: Colors.red, size: 32),
+        title: Text(l10n.adminRevokeConfirmTitle),
+        content: Text(l10n.adminRevokeConfirmMessage(userName)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(l10n.profileCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            child: Text(l10n.adminRevoke),
+          ),
+        ],
+      ),
+    );
+
+    return confirmed ?? false;
+  }
+
+  Future<void> _toggleUserVerification(String userId, bool newValue) async {
+    final index = _allUsers.indexWhere((u) => u['id'] == userId);
+    if (index == -1) return;
+    final user = _allUsers[index];
+
+    if (newValue) {
+      // Verifying requires picking a course duration first.
+      await _setAccessDuration(user);
+      return;
+    }
+
+    HapticFeedback.mediumImpact();
+    final l10n = AppLocalizations.of(context)!;
+    final userName = (user['full_name'] ?? l10n.adminUnknownUser).toString();
+    if (!await _confirmRevoke(userName)) return;
+    if (!mounted) return;
+
+    await _applyVerification(userId, false);
+  }
+
+  Future<void> _applyVerification(
+    String userId,
+    bool newValue, {
+    int? durationMonths,
+    DateTime? currentUntil,
+  }) async {
+    final success = await _adminRepository.updateUserVerification(
+      userId,
+      newValue,
+      durationMonths: durationMonths,
+    );
 
     if (!mounted) return;
 
     if (success) {
-      // Update local state
+      // Update local state. The DB is the source of truth for verified_until;
+      // this only previews it until the next _loadUsers(). Revoking leaves
+      // verified_until intact — that is what marks the account as revoked
+      // rather than never-approved.
       final index = _allUsers.indexWhere((u) => u['id'] == userId);
       if (index != -1) {
         setState(() {
           _allUsers[index]['is_verified'] = newValue;
+          if (newValue) {
+            _allUsers[index]['verified_until'] = durationMonths == null
+                ? null // lifetime
+                : addMonths(
+                    _extensionAnchor(currentUntil),
+                    durationMonths,
+                  ).toIso8601String();
+          }
           _applyFilters();
         });
       }
@@ -135,9 +514,11 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           behavior: SnackBarBehavior.floating,
-          content: Text(newValue
-              ? AppLocalizations.of(context)!.adminUserVerified
-              : AppLocalizations.of(context)!.adminUserUnverified),
+          content: Text(
+            newValue
+                ? AppLocalizations.of(context)!.adminUserVerified
+                : AppLocalizations.of(context)!.adminUserUnverified,
+          ),
           backgroundColor: newValue ? Colors.green : Colors.orange,
         ),
       );
@@ -181,9 +562,16 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           ),
 
           // ── Stat cards (also act as filters) ──────────────────────────
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+          // Five states never fit side by side on a phone, so the row scrolls
+          // horizontally. A SingleChildScrollView (not a horizontal ListView)
+          // keeps the height driven by the chips themselves — a ListView
+          // imposes a tight cross-axis height, which stretches the pills and
+          // breaks as soon as the text scale grows.
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 _buildStatFilterCard(
                   label: l10n.adminFilterAll,
@@ -198,17 +586,35 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                   label: l10n.adminFilterPending,
                   count: _pendingCount,
                   icon: Icons.hourglass_bottom_rounded,
-                  color: Colors.orange,
+                  color: accessStatusColor(context, UserAccessStatus.pending),
                   filter: UserFilter.pending,
                   theme: theme,
                 ),
                 const SizedBox(width: 10),
                 _buildStatFilterCard(
-                  label: l10n.adminFilterVerified,
-                  count: _verifiedCount,
+                  label: l10n.adminFilterActive,
+                  count: _activeCount,
                   icon: Icons.verified_user_rounded,
-                  color: Colors.green,
-                  filter: UserFilter.verified,
+                  color: accessStatusColor(context, UserAccessStatus.active),
+                  filter: UserFilter.active,
+                  theme: theme,
+                ),
+                const SizedBox(width: 10),
+                _buildStatFilterCard(
+                  label: l10n.adminFilterExpired,
+                  count: _expiredCount,
+                  icon: Icons.event_busy_rounded,
+                  color: accessStatusColor(context, UserAccessStatus.expired),
+                  filter: UserFilter.expired,
+                  theme: theme,
+                ),
+                const SizedBox(width: 10),
+                _buildStatFilterCard(
+                  label: l10n.adminFilterRevoked,
+                  count: _revokedCount,
+                  icon: Icons.block_rounded,
+                  color: accessStatusColor(context, UserAccessStatus.revoked),
+                  filter: UserFilter.revoked,
                   theme: theme,
                 ),
               ],
@@ -221,8 +627,11 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
               child: Row(
                 children: [
-                  Icon(Icons.format_list_bulleted_rounded,
-                      size: 16, color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
+                  Icon(
+                    Icons.format_list_bulleted_rounded,
+                    size: 16,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                  ),
                   const SizedBox(width: 6),
                   Text(
                     '${_filteredUsers.length} / $_totalCount',
@@ -236,9 +645,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
             ),
 
           // ── User List ─────────────────────────────────────────────────
-          Expanded(
-            child: _buildUserList(),
-          ),
+          Expanded(child: _buildUserList()),
         ],
       ),
     );
@@ -252,7 +659,10 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       style: TextStyle(color: theme.colorScheme.onSurface),
       decoration: InputDecoration(
         hintText: l10n.adminSearchUsers,
-        prefixIcon: Icon(Icons.search_rounded, color: theme.colorScheme.primary),
+        prefixIcon: Icon(
+          Icons.search_rounded,
+          color: theme.colorScheme.primary,
+        ),
         suffixIcon: _searchController.text.isNotEmpty
             ? IconButton(
                 icon: const Icon(Icons.clear_rounded),
@@ -265,11 +675,15 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
               )
             : null,
         filled: true,
-        fillColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+        fillColor: theme.colorScheme.surfaceContainerHighest.withValues(
+          alpha: 0.4,
+        ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
+          borderSide: BorderSide(
+            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
@@ -292,7 +706,16 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     required ThemeData theme,
   }) {
     final isSelected = _currentFilter == filter;
-    return Expanded(
+
+    // The chip sizes to its own content, but a long translation at a large
+    // accessibility text scale would otherwise push it arbitrarily wide, so
+    // cap it and let the label ellipsize. The cap grows with the text scale
+    // so bigger type still gets more room rather than being cut off sooner.
+    final textScale = MediaQuery.textScalerOf(context).scale(1.0);
+    final maxChipWidth = 190.0 * textScale.clamp(1.0, 1.6);
+
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: maxChipWidth),
       child: GestureDetector(
         onTap: () {
           HapticFeedback.selectionClick();
@@ -303,40 +726,50 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
           decoration: BoxDecoration(
             color: isSelected
                 ? color.withValues(alpha: 0.16)
-                : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+                : theme.colorScheme.surfaceContainerHighest.withValues(
+                    alpha: 0.35,
+                  ),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: isSelected ? color : Colors.transparent,
-              width: 1.6,
+              width: 0,
             ),
           ),
-          child: Column(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: color, size: 22),
-              const SizedBox(height: 6),
+              Icon(icon, color: color, size: 20),
+              const SizedBox(width: 6),
               Text(
                 count.toString(),
+                maxLines: 1,
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
                   color: isSelected ? color : theme.colorScheme.onSurface,
                 ),
               ),
-              const SizedBox(height: 2),
-              Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: isSelected
-                      ? color
-                      : theme.colorScheme.onSurface.withValues(alpha: 0.7),
+              const SizedBox(width: 5),
+              // Flexible, not Expanded: the chip shrink-wraps its label until
+              // it hits maxChipWidth, and only then does the text ellipsize.
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  softWrap: false,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: isSelected
+                        ? color
+                        : theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                  ),
                 ),
               ),
             ],
@@ -424,16 +857,33 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     final phone = _phoneOf(user);
     final xp = user['xp'] ?? 0;
     final level = user['current_level'] ?? 1;
-    final isAdmin = (user['role'] ?? 'user').toString().toLowerCase() == 'admin';
-    final createdAt = user['created_at'] != null ? DateTime.tryParse(user['created_at'].toString()) : null;
-    final statusColor = isVerified ? Colors.green : Colors.orange;
+    final isAdmin =
+        (user['role'] ?? 'user').toString().toLowerCase() == 'admin';
+    final createdAt = user['created_at'] != null
+        ? DateTime.tryParse(user['created_at'].toString())
+        : null;
+    final status = _statusOf(user);
+    final verifiedUntil = _verifiedUntilOf(user);
+    // Green normally, amber when a renewal is due soon, red once expired,
+    // grey-blue for a revoked account.
+    final expiringSoon =
+        status == UserAccessStatus.active &&
+        verifiedUntil != null &&
+        daysUntil(verifiedUntil) <= kAccessExpiringSoonDays;
+    final statusColor = accessStatusColor(
+      context,
+      status,
+      expiringSoon: expiringSoon,
+    );
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4)),
+        side: BorderSide(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
+        ),
       ),
       child: InkWell(
         onTap: () => _showUserDetails(user),
@@ -477,9 +927,13 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            if (isVerified) ...[
+                            if (status != UserAccessStatus.pending) ...[
                               const SizedBox(width: 4),
-                              const Icon(Icons.verified, size: 16, color: Colors.green),
+                              Icon(
+                                accessStatusIcon(status),
+                                size: 16,
+                                color: statusColor,
+                              ),
                             ],
                             if (isAdmin) ...[
                               const SizedBox(width: 6),
@@ -491,7 +945,15 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                         if (phone.isNotEmpty)
                           _buildSubInfo(Icons.phone_rounded, phone, theme)
                         else if (username.isNotEmpty)
-                          _buildSubInfo(Icons.alternate_email_rounded, username, theme),
+                          _buildSubInfo(
+                            Icons.alternate_email_rounded,
+                            username,
+                            theme,
+                          ),
+                        if (status != UserAccessStatus.pending) ...[
+                          const SizedBox(height: 2),
+                          _buildAccessInfo(status, verifiedUntil, theme, l10n),
+                        ],
                       ],
                     ),
                   ),
@@ -501,31 +963,66 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                     children: [
                       Switch(
                         value: isVerified,
-                        onChanged: (value) => _toggleUserVerification(user['id'], value),
+                        onChanged: (value) =>
+                            _toggleUserVerification(user['id'], value),
                         activeColor: Colors.green,
                       ),
                       Text(
-                        isVerified ? l10n.adminVerified : l10n.adminPending,
+                        accessStatusLabel(status, l10n),
                         style: TextStyle(
                           fontSize: 10,
                           color: statusColor,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
+                      // Extend for anyone who already has a history; plain
+                      // "Set Access" for a never-approved account.
+                      if (status != UserAccessStatus.pending)
+                        TextButton.icon(
+                          onPressed: () => _setAccessDuration(user),
+                          icon: const Icon(
+                            Icons.event_repeat_rounded,
+                            size: 14,
+                          ),
+                          label: Text(
+                            status == UserAccessStatus.active
+                                ? l10n.adminExtendAccess
+                                : l10n.adminSetAccess,
+                            style: const TextStyle(fontSize: 11),
+                          ),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            minimumSize: const Size(0, 28),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            visualDensity: VisualDensity.compact,
+                          ),
+                        ),
                     ],
                   ),
                 ],
               ),
 
-              Divider(height: 20, color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4)),
+              Divider(
+                height: 20,
+                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
+              ),
 
               // Stats Row
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _buildUserStat(Icons.star_rounded, 'XP: $xp', Colors.amber, theme),
-                  _buildUserStat(Icons.trending_up_rounded, '${l10n.profileLevel}: $level',
-                      Colors.blue, theme),
+                  _buildUserStat(
+                    Icons.star_rounded,
+                    'XP: $xp',
+                    Colors.amber,
+                    theme,
+                  ),
+                  _buildUserStat(
+                    Icons.trending_up_rounded,
+                    '${l10n.profileLevel}: $level',
+                    Colors.blue,
+                    theme,
+                  ),
                   if (createdAt != null)
                     _buildUserStat(
                       Icons.calendar_today_rounded,
@@ -564,7 +1061,11 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   Widget _buildSubInfo(IconData icon, String text, ThemeData theme) {
     return Row(
       children: [
-        Icon(icon, size: 13, color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
+        Icon(
+          icon,
+          size: 13,
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+        ),
         const SizedBox(width: 4),
         Flexible(
           child: Text(
@@ -573,6 +1074,97 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
             style: TextStyle(
               color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
               fontSize: 13,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// One-line access summary for a verified user: lifetime, an expiry date,
+  /// or "Expired" in red once the course period has passed.
+  Widget _buildAccessInfo(
+    UserAccessStatus status,
+    DateTime? until,
+    ThemeData theme,
+    AppLocalizations l10n,
+  ) {
+    // Revoked: show when the access they had was set to end, if known.
+    if (status == UserAccessStatus.revoked) {
+      final label = until == null
+          ? l10n.adminAccessRevoked
+          : '${l10n.adminAccessRevoked} — ${formatExpiryDate(context, until)}';
+      return _buildAccessLine(
+        Icons.block_rounded,
+        label,
+        accessStatusColor(context, UserAccessStatus.revoked),
+        theme,
+        emphasised: true,
+      );
+    }
+
+    // Lifetime access.
+    if (until == null) {
+      return _buildSubInfo(
+        Icons.all_inclusive_rounded,
+        l10n.adminAccessLifetime,
+        theme,
+      );
+    }
+
+    final date = formatExpiryDate(context, until);
+
+    if (status == UserAccessStatus.expired) {
+      return _buildAccessLine(
+        Icons.event_busy_rounded,
+        '${l10n.adminAccessExpired}: $date',
+        accessStatusColor(context, UserAccessStatus.expired),
+        theme,
+        emphasised: true,
+      );
+    }
+
+    // Active — append the remaining time so renewals can be chased early.
+    final days = daysUntil(until);
+    final remaining = days <= 0
+        ? l10n.adminExpiresToday
+        : l10n.adminDaysLeft(days);
+    final label = '${l10n.adminAccessExpires}: $date · $remaining';
+
+    if (days <= kAccessExpiringSoonDays) {
+      return _buildAccessLine(
+        Icons.event_repeat_rounded,
+        label,
+        accessStatusColor(context, UserAccessStatus.active, expiringSoon: true),
+        theme,
+        emphasised: true,
+      );
+    }
+
+    return _buildSubInfo(Icons.event_available_rounded, label, theme);
+  }
+
+  /// A [_buildSubInfo]-shaped line that can carry its own colour, for the
+  /// states that need to stand out from the muted default.
+  Widget _buildAccessLine(
+    IconData icon,
+    String label,
+    Color color,
+    ThemeData theme, {
+    bool emphasised = false,
+  }) {
+    return Row(
+      children: [
+        Icon(icon, size: 13, color: color),
+        const SizedBox(width: 4),
+        Flexible(
+          child: Text(
+            label,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: color,
+              fontSize: 13,
+              fontWeight: emphasised ? FontWeight.w600 : FontWeight.normal,
             ),
           ),
         ),
@@ -590,11 +1182,20 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           Navigator.pop(context);
           await _toggleUserVerification(userId, newValue);
         },
+        onSetAccess: (u) async {
+          Navigator.pop(context);
+          await _setAccessDuration(u);
+        },
       ),
     );
   }
 
-  Widget _buildUserStat(IconData icon, String text, Color color, ThemeData theme) {
+  Widget _buildUserStat(
+    IconData icon,
+    String text,
+    Color color,
+    ThemeData theme,
+  ) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -616,10 +1217,12 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
 class _UserDetailsDialog extends StatefulWidget {
   final Map<String, dynamic> user;
   final Function(String userId, bool newValue) onToggleVerification;
+  final Function(Map<String, dynamic> user) onSetAccess;
 
   const _UserDetailsDialog({
     required this.user,
     required this.onToggleVerification,
+    required this.onSetAccess,
   });
 
   @override
@@ -637,17 +1240,55 @@ class _UserDetailsDialogState extends State<_UserDetailsDialog> {
 
   String _phone() {
     final raw =
-        widget.user['phone'] ?? widget.user['phone_number'] ?? widget.user['mobile'] ?? '';
+        widget.user['phone'] ??
+        widget.user['phone_number'] ??
+        widget.user['mobile'] ??
+        '';
     final value = raw.toString();
     return value.isEmpty ? 'N/A' : value;
+  }
+
+  DateTime? get _verifiedUntil {
+    final raw = widget.user['verified_until'];
+    if (raw == null) return null;
+    return DateTime.tryParse(raw.toString())?.toLocal();
+  }
+
+  UserAccessStatus get _status => accessStatusOf(_isVerified, _verifiedUntil);
+
+  bool get _isAccessExpired => _status == UserAccessStatus.expired;
+
+  String _accessLabel(BuildContext context, AppLocalizations l10n) {
+    final until = _verifiedUntil;
+
+    if (_status == UserAccessStatus.revoked) {
+      return until == null
+          ? l10n.adminAccessRevoked
+          : '${l10n.adminAccessRevoked} — ${formatExpiryDate(context, until)}';
+    }
+    if (until == null) return l10n.adminAccessLifetime;
+
+    final date = formatExpiryDate(context, until);
+    if (_isAccessExpired) return '${l10n.adminAccessExpired}: $date';
+
+    final days = daysUntil(until);
+    final remaining = days <= 0
+        ? l10n.adminExpiresToday
+        : l10n.adminDaysLeft(days);
+    return '${l10n.adminAccessExpires}: $date · $remaining';
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
+    final statusColor = accessStatusColor(context, _status);
+    // Everything in the header sits on primaryContainer, so it must be
+    // painted with onPrimaryContainer — not onSurface.
+    final onHeader = theme.colorScheme.onPrimaryContainer;
 
-    final fullName = (widget.user['full_name'] ?? l10n.adminUnknownUser).toString();
+    final fullName = (widget.user['full_name'] ?? l10n.adminUnknownUser)
+        .toString();
     final username = (widget.user['username'] ?? 'N/A').toString();
     final email = (widget.user['email'] ?? 'N/A').toString();
     final role = (widget.user['role'] ?? 'user').toString();
@@ -668,9 +1309,7 @@ class _UserDetailsDialogState extends State<_UserDetailsDialog> {
         : null;
 
     return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Container(
         constraints: const BoxConstraints(maxWidth: 500, maxHeight: 640),
         child: Column(
@@ -681,20 +1320,23 @@ class _UserDetailsDialogState extends State<_UserDetailsDialog> {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: theme.colorScheme.primaryContainer,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(20),
+                ),
               ),
               child: Row(
                 children: [
+                  // Opaque fill: a translucent status tint over the coloured
+                  // header blended into mud.
                   CircleAvatar(
                     radius: 32,
-                    backgroundColor:
-                        _isVerified ? Colors.green.withValues(alpha: 0.3) : Colors.orange.withValues(alpha: 0.3),
+                    backgroundColor: theme.colorScheme.surface,
                     child: Text(
                       (fullName.isNotEmpty ? fullName[0] : '?').toUpperCase(),
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 24,
-                        color: _isVerified ? Colors.green : Colors.orange,
+                        color: statusColor,
                       ),
                     ),
                   ),
@@ -708,23 +1350,54 @@ class _UserDetailsDialogState extends State<_UserDetailsDialog> {
                             Flexible(
                               child: Text(
                                 fullName,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 20,
+                                  color: onHeader,
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            if (_isVerified) ...[
-                              const SizedBox(width: 4),
-                              const Icon(Icons.verified, size: 20, color: Colors.green),
+                            if (_status != UserAccessStatus.pending) ...[
+                              const SizedBox(width: 6),
+                              // Status badge: an opaque pill so the status
+                              // colour is not diluted by the header tint.
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 3,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.surface,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      accessStatusIcon(_status),
+                                      size: 13,
+                                      color: statusColor,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      accessStatusLabel(_status, l10n),
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: statusColor,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ],
                           ],
                         ),
                         Text(
                           username,
                           style: TextStyle(
-                            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                            color: onHeader.withValues(alpha: 0.75),
                             fontSize: 14,
                           ),
                         ),
@@ -733,6 +1406,7 @@ class _UserDetailsDialogState extends State<_UserDetailsDialog> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.close),
+                    color: onHeader,
                     onPressed: () => Navigator.pop(context),
                   ),
                 ],
@@ -748,50 +1422,102 @@ class _UserDetailsDialogState extends State<_UserDetailsDialog> {
                   children: [
                     // Verification Toggle
                     Card(
-                      color: _isVerified
-                          ? Colors.green.withValues(alpha: 0.1)
-                          : Colors.orange.withValues(alpha: 0.1),
+                      elevation: 0,
+                      color: accessStatusFill(context, _status),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(
+                          color: statusColor.withValues(alpha: 0.4),
+                        ),
+                      ),
                       child: Padding(
                         padding: const EdgeInsets.all(16),
-                        child: Row(
+                        child: Column(
                           children: [
-                            Icon(
-                              _isVerified ? Icons.verified_user : Icons.pending,
-                              color: _isVerified ? Colors.green : Colors.orange,
+                            Row(
+                              children: [
+                                Icon(
+                                  accessStatusIcon(_status),
+                                  color: statusColor,
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        l10n.adminVerificationStatus,
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                          color: theme.colorScheme.onSurface,
+                                        ),
+                                      ),
+                                      Text(
+                                        accessStatusLabel(_status, l10n),
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: statusColor,
+                                        ),
+                                      ),
+                                      if (_status != UserAccessStatus.pending)
+                                        Text(
+                                          _accessLabel(context, l10n),
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: statusColor,
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                                Switch(
+                                  value: _isVerified,
+                                  onChanged: (value) {
+                                    HapticFeedback.mediumImpact();
+                                    // setState first: the callback pops this
+                                    // dialog.
+                                    setState(() {
+                                      _isVerified = value;
+                                    });
+                                    widget.onToggleVerification(
+                                      widget.user['id'],
+                                      value,
+                                    );
+                                  },
+                                  activeColor: Colors.green,
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    l10n.adminVerificationStatus,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14,
+                            // Change the course period without having to
+                            // toggle the switch off and on again.
+                            if (_status != UserAccessStatus.pending) ...[
+                              const SizedBox(height: 8),
+                              SizedBox(
+                                width: double.infinity,
+                                child: OutlinedButton.icon(
+                                  onPressed: () =>
+                                      widget.onSetAccess(widget.user),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: statusColor,
+                                    side: BorderSide(
+                                      color: statusColor.withValues(alpha: 0.6),
                                     ),
                                   ),
-                                  Text(
-                                    _isVerified ? l10n.adminVerified : l10n.adminPending,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: _isVerified ? Colors.green : Colors.orange,
-                                    ),
+                                  icon: const Icon(
+                                    Icons.event_repeat_rounded,
+                                    size: 18,
                                   ),
-                                ],
+                                  label: Text(
+                                    _status == UserAccessStatus.active
+                                        ? l10n.adminExtendAccess
+                                        : l10n.adminSetAccess,
+                                  ),
+                                ),
                               ),
-                            ),
-                            Switch(
-                              value: _isVerified,
-                              onChanged: (value) {
-                                HapticFeedback.mediumImpact();
-                                widget.onToggleVerification(widget.user['id'], value);
-                                setState(() {
-                                  _isVerified = value;
-                                });
-                              },
-                              activeColor: Colors.green,
-                            ),
+                            ],
                           ],
                         ),
                       ),
@@ -800,12 +1526,18 @@ class _UserDetailsDialogState extends State<_UserDetailsDialog> {
                     const SizedBox(height: 20),
 
                     // Account Information
-                    _buildSectionTitle(l10n.adminAccountInfo, Icons.account_circle),
+                    _buildSectionTitle(
+                      l10n.adminAccountInfo,
+                      Icons.account_circle,
+                    ),
                     const SizedBox(height: 12),
                     _buildInfoRow(l10n.profilePhone, _phone()),
                     _buildInfoRow(l10n.adminEmail, email),
                     _buildInfoRow(l10n.adminRole, role.toUpperCase()),
-                    _buildInfoRow(l10n.adminLicenseType, licenseType.toString()),
+                    _buildInfoRow(
+                      l10n.adminLicenseType,
+                      licenseType.toString(),
+                    ),
                     if (createdAt != null)
                       _buildInfoRow(
                         l10n.adminJoinedDate,
@@ -815,7 +1547,10 @@ class _UserDetailsDialogState extends State<_UserDetailsDialog> {
                     const SizedBox(height: 20),
 
                     // Progress Stats
-                    _buildSectionTitle(l10n.adminProgressStats, Icons.analytics),
+                    _buildSectionTitle(
+                      l10n.adminProgressStats,
+                      Icons.analytics,
+                    ),
                     const SizedBox(height: 12),
                     Row(
                       children: [
@@ -874,10 +1609,16 @@ class _UserDetailsDialogState extends State<_UserDetailsDialog> {
                     const SizedBox(height: 20),
 
                     // System Info
-                    _buildSectionTitle(l10n.adminSystemInfo, Icons.info_outline),
+                    _buildSectionTitle(
+                      l10n.adminSystemInfo,
+                      Icons.info_outline,
+                    ),
                     const SizedBox(height: 12),
-                    _buildInfoRow('User ID', (widget.user['id'] ?? 'N/A').toString(),
-                        isMonospace: true),
+                    _buildInfoRow(
+                      'User ID',
+                      (widget.user['id'] ?? 'N/A').toString(),
+                      isMonospace: true,
+                    ),
                     if (updatedAt != null)
                       _buildInfoRow(
                         l10n.adminLastUpdated,
@@ -912,10 +1653,7 @@ class _UserDetailsDialogState extends State<_UserDetailsDialog> {
         const SizedBox(width: 8),
         Text(
           title,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
       ],
     );
@@ -931,10 +1669,7 @@ class _UserDetailsDialogState extends State<_UserDetailsDialog> {
             width: 120,
             child: Text(
               label,
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 13,
-              ),
+              style: TextStyle(color: Colors.grey[600], fontSize: 13),
             ),
           ),
           Expanded(
@@ -952,7 +1687,12 @@ class _UserDetailsDialogState extends State<_UserDetailsDialog> {
     );
   }
 
-  Widget _buildStatCard(String label, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -975,10 +1715,7 @@ class _UserDetailsDialogState extends State<_UserDetailsDialog> {
           const SizedBox(height: 4),
           Text(
             label,
-            style: TextStyle(
-              fontSize: 11,
-              color: Colors.grey[600],
-            ),
+            style: TextStyle(fontSize: 11, color: Colors.grey[600]),
             textAlign: TextAlign.center,
           ),
         ],

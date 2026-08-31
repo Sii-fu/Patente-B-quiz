@@ -18,6 +18,7 @@ import 'features/auth/screens/signup_screen.dart';
 import 'features/auth/screens/forgot_password_screen.dart';
 import 'features/auth/screens/reset_password_screen.dart';
 import 'features/auth/screens/pending_verification_screen.dart';
+import 'features/auth/screens/access_expired_screen.dart';
 import 'features/admin/auth/admin_pin_screen.dart';
 import 'features/admin/dashboard/admin_dashboard_screen.dart';
 import 'screens/dashboard/dashboard_screen.dart';
@@ -162,6 +163,7 @@ class _PatenteQuizAppState extends State<PatenteQuizApp> {
             AppConstants.routeHome: (context) => const ConnectivityWrapper(child: DashboardScreen()),
             AppConstants.routeSettings: (context) => const ConnectivityWrapper(child: SettingsScreen()),
             AppConstants.routePendingVerification: (context) => const ConnectivityWrapper(child: PendingVerificationScreen()),
+            AppConstants.routeAccessExpired: (context) => const ConnectivityWrapper(child: AccessExpiredScreen()),
             AppConstants.routeAdminPin: (context) => const AdminPinScreen(),
             AppConstants.routeAdminDashboard: (context) => const AdminDashboardScreen(),
           },

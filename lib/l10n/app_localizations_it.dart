@@ -2040,4 +2040,95 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get homeworkRank => 'Posizione';
+
+  @override
+  String get adminSelectCourseDuration => 'Seleziona la durata del corso';
+
+  @override
+  String get adminSelectCourseDurationSubtitle =>
+      'Per quanto tempo questo studente deve avere accesso?';
+
+  @override
+  String get adminDuration3Months => '3 Mesi';
+
+  @override
+  String get adminDuration6Months => '6 Mesi';
+
+  @override
+  String get adminDuration1Year => '1 Anno';
+
+  @override
+  String get adminDurationUnlimited => 'Illimitato / A vita';
+
+  @override
+  String get adminSetAccess => 'Imposta accesso';
+
+  @override
+  String get adminAccessExpires => 'Scade il';
+
+  @override
+  String get adminAccessExpired => 'Scaduto';
+
+  @override
+  String get adminAccessLifetime => 'Accesso a vita';
+
+  @override
+  String get adminAccessUpdated => 'Periodo di accesso aggiornato';
+
+  @override
+  String get accessExpiredTitle => 'Accesso Scaduto';
+
+  @override
+  String get accessExpiredMessage =>
+      'Il periodo di accesso al tuo corso di guida è terminato. Tutti i tuoi dati di studio e la cronologia dei quiz sono salvati!';
+
+  @override
+  String get accessExpiredContact =>
+      'Contatta il tuo istruttore presso Desh Bangla Patente per rinnovare l\'abbonamento.';
+
+  @override
+  String get accessExpiredOn => 'Accesso terminato il';
+
+  @override
+  String get adminFilterActive => 'Attivi';
+
+  @override
+  String get adminFilterExpired => 'Scaduti';
+
+  @override
+  String get adminFilterRevoked => 'Revocati';
+
+  @override
+  String get adminAccessRevoked => 'Accesso revocato';
+
+  @override
+  String adminDaysLeft(int days) {
+    return '$days giorni rimasti';
+  }
+
+  @override
+  String get adminExpiresToday => 'Scade oggi';
+
+  @override
+  String get adminRevokeConfirmTitle => 'Revocare l\'accesso?';
+
+  @override
+  String adminRevokeConfirmMessage(String name) {
+    return '$name perderà immediatamente l\'accesso. I dati di studio e la cronologia dei quiz restano salvati.';
+  }
+
+  @override
+  String get adminRevoke => 'Revoca';
+
+  @override
+  String get adminCurrentlyExpires => 'Scadenza attuale';
+
+  @override
+  String get adminAlreadyExpired => 'Già scaduto';
+
+  @override
+  String get adminNewExpiry => 'Nuova scadenza';
+
+  @override
+  String get adminExtendAccess => 'Estendi accesso';
 }

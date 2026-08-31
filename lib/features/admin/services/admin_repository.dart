@@ -60,12 +60,23 @@ class AdminRepository {
     }
   }
 
-  /// Update user verification status (admin only)
-  Future<bool> updateUserVerification(String userId, bool isVerified) async {
+  /// Update user verification status (admin only).
+  ///
+  /// [durationMonths] sets how long the course access lasts from now.
+  /// Pass null for lifetime access (and when unverifying).
+  Future<bool> updateUserVerification(
+    String userId,
+    bool isVerified, {
+    int? durationMonths,
+  }) async {
     try {
       await _supabase.rpc(
         'func_admin_verify_user',
-        params: {'target_user_id': userId, 'verify_status': isVerified},
+        params: {
+          'target_user_id': userId,
+          'verify_status': isVerified,
+          'duration_months': durationMonths,
+        },
       );
       return true;
     } catch (e) {
@@ -337,7 +348,8 @@ class AdminRepository {
       }
 
       final response = await query
-          .order('id', ascending: false)
+          .order('display_order', ascending: true)
+          .order('id', ascending: true)
           .range(offset, offset + limit - 1)
           .timeout(const Duration(seconds: 15));
 
@@ -443,6 +455,7 @@ class AdminRepository {
     String? audioEnUrl,
     String? audioBnUrl,
     int difficultyLevel = 1,
+    int displayOrder = 0,
   }) async {
     try {
       final response = await _supabase.rpc(
@@ -462,6 +475,7 @@ class AdminRepository {
           'p_audio_en_url': audioEnUrl,
           'p_audio_bn_url': audioBnUrl,
           'p_difficulty_level': difficultyLevel,
+          'p_display_order': displayOrder,
         },
       );
 
@@ -479,6 +493,21 @@ class AdminRepository {
     } catch (e) {
       debugPrint('Error upserting question: $e');
       return null;
+    }
+  }
+
+  /// Reorder questions (admin only).
+  /// [questionIds] is the full list of question IDs in the desired order.
+  Future<bool> reorderQuestions(List<int> questionIds) async {
+    try {
+      await _supabase.rpc(
+        'admin_reorder_questions_secure',
+        params: {'p_question_ids': questionIds},
+      );
+      return true;
+    } catch (e) {
+      debugPrint('Error reordering questions: $e');
+      return false;
     }
   }
 

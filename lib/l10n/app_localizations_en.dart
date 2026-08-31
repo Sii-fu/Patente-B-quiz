@@ -2024,4 +2024,95 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeworkRank => 'Rank';
+
+  @override
+  String get adminSelectCourseDuration => 'Select Course Duration';
+
+  @override
+  String get adminSelectCourseDurationSubtitle =>
+      'How long should this student have access?';
+
+  @override
+  String get adminDuration3Months => '3 Months';
+
+  @override
+  String get adminDuration6Months => '6 Months';
+
+  @override
+  String get adminDuration1Year => '1 Year';
+
+  @override
+  String get adminDurationUnlimited => 'Unlimited / Lifetime';
+
+  @override
+  String get adminSetAccess => 'Set Access';
+
+  @override
+  String get adminAccessExpires => 'Expires';
+
+  @override
+  String get adminAccessExpired => 'Expired';
+
+  @override
+  String get adminAccessLifetime => 'Lifetime access';
+
+  @override
+  String get adminAccessUpdated => 'Access period updated';
+
+  @override
+  String get accessExpiredTitle => 'Access Expired';
+
+  @override
+  String get accessExpiredMessage =>
+      'Your driving course access period has ended. All your study data and quiz history are saved!';
+
+  @override
+  String get accessExpiredContact =>
+      'Please contact your instructor at Desh Bangla Patente to extend your subscription.';
+
+  @override
+  String get accessExpiredOn => 'Access ended on';
+
+  @override
+  String get adminFilterActive => 'Active';
+
+  @override
+  String get adminFilterExpired => 'Expired';
+
+  @override
+  String get adminFilterRevoked => 'Revoked';
+
+  @override
+  String get adminAccessRevoked => 'Access revoked';
+
+  @override
+  String adminDaysLeft(int days) {
+    return '$days days left';
+  }
+
+  @override
+  String get adminExpiresToday => 'Expires today';
+
+  @override
+  String get adminRevokeConfirmTitle => 'Revoke access?';
+
+  @override
+  String adminRevokeConfirmMessage(String name) {
+    return '$name will be locked out immediately. Their study data and quiz history are kept.';
+  }
+
+  @override
+  String get adminRevoke => 'Revoke';
+
+  @override
+  String get adminCurrentlyExpires => 'Currently expires';
+
+  @override
+  String get adminAlreadyExpired => 'Already expired';
+
+  @override
+  String get adminNewExpiry => 'New expiry';
+
+  @override
+  String get adminExtendAccess => 'Extend Access';
 }

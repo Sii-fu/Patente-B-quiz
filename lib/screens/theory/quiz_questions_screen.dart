@@ -13,6 +13,7 @@ import '../../features/admin/services/admin_repository.dart';
 import '../../models/profile.dart';
 import 'edit_question_screen.dart';
 import '../admin/add_quiz_screen.dart';
+import '../admin/reorder_quiz_questions_screen.dart';
 
 class QuizQuestionsScreen extends StatefulWidget {
   final int subtopicId;
@@ -88,6 +89,7 @@ class _QuizQuestionsScreenState extends State<QuizQuestionsScreen> {
             'id, text_it, text_en, text_bn, image_url, is_true, explanation_it, explanation_en, explanation_bn, difficulty_level, explanation_audio_url, audio_it_url, audio_en_url, audio_bn_url',
           )
           .eq('subtopic_id', widget.subtopicId)
+          .order('display_order', ascending: true)
           .order('id', ascending: true);
 
       // Debug: Log audio URLs
@@ -287,6 +289,12 @@ class _QuizQuestionsScreenState extends State<QuizQuestionsScreen> {
           },
         ),
         actions: [
+          if (_isAdmin && !_isSearching)
+            IconButton(
+              icon: Icon(Icons.swap_vert, color: theme.colorScheme.onSurface),
+              tooltip: 'Reorder Quizzes',
+              onPressed: _navigateToReorder,
+            ),
           IconButton(
             icon: Icon(
               _isSearching ? Icons.close : Icons.search,
@@ -698,15 +706,29 @@ class _QuizQuestionsScreenState extends State<QuizQuestionsScreen> {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) =>
-            AddQuizScreen(
-              initialSubtopicId: widget.subtopicId,
-              initialChapterId: widget.chapterId,
-            ),
+        builder: (context) => AddQuizScreen(
+          initialSubtopicId: widget.subtopicId,
+          initialChapterId: widget.chapterId,
+        ),
       ),
     );
 
     // Reload questions if a new question was added
+    if (result == true) {
+      _loadQuestions();
+    }
+  }
+
+  Future<void> _navigateToReorder() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            ReorderQuizQuestionsScreen(subtopicId: widget.subtopicId),
+      ),
+    );
+
+    // Reload questions if the order was changed
     if (result == true) {
       _loadQuestions();
     }

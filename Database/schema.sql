@@ -8,6 +8,8 @@ CREATE TABLE public.profiles (
   avatar_url text,
   license_type text DEFAULT 'B'::text,
   is_verified boolean DEFAULT false,
+  verified_until timestamp with time zone, -- NULL = lifetime access
+
   current_level integer DEFAULT 1,
   daily_streak integer DEFAULT 0,
   last_study_date timestamp with time zone,

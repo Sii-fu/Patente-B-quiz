@@ -2027,4 +2027,95 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get homeworkRank => 'র‍্যাঙ্ক';
+
+  @override
+  String get adminSelectCourseDuration => 'কোর্সের মেয়াদ নির্বাচন করুন';
+
+  @override
+  String get adminSelectCourseDurationSubtitle =>
+      'এই শিক্ষার্থী কতদিন অ্যাক্সেস পাবেন?';
+
+  @override
+  String get adminDuration3Months => '৩ মাস';
+
+  @override
+  String get adminDuration6Months => '৬ মাস';
+
+  @override
+  String get adminDuration1Year => '১ বছর';
+
+  @override
+  String get adminDurationUnlimited => 'আজীবন / অসীম';
+
+  @override
+  String get adminSetAccess => 'অ্যাক্সেস সেট করুন';
+
+  @override
+  String get adminAccessExpires => 'মেয়াদ শেষ';
+
+  @override
+  String get adminAccessExpired => 'মেয়াদ শেষ হয়েছে';
+
+  @override
+  String get adminAccessLifetime => 'আজীবন অ্যাক্সেস';
+
+  @override
+  String get adminAccessUpdated => 'অ্যাক্সেসের মেয়াদ আপডেট হয়েছে';
+
+  @override
+  String get accessExpiredTitle => 'অ্যাক্সেসের মেয়াদ শেষ';
+
+  @override
+  String get accessExpiredMessage =>
+      'আপনার ড্রাইভিং কোর্সের মেয়াদ শেষ হয়েছে। আপনার সমস্ত পড়াশোনা ও কুইজের রেকর্ড সংরক্ষিত আছে!';
+
+  @override
+  String get accessExpiredContact =>
+      'সাবস্ক্রিপশন বাড়াতে অনুগ্রহ করে দেশ বাংলা পাতেন্তে-তে আপনার ইনস্ট্রাক্টরের সাথে যোগাযোগ করুন।';
+
+  @override
+  String get accessExpiredOn => 'মেয়াদ শেষ হয়েছে';
+
+  @override
+  String get adminFilterActive => 'সক্রিয়';
+
+  @override
+  String get adminFilterExpired => 'মেয়াদোত্তীর্ণ';
+
+  @override
+  String get adminFilterRevoked => 'বাতিল';
+
+  @override
+  String get adminAccessRevoked => 'অ্যাক্সেস বাতিল করা হয়েছে';
+
+  @override
+  String adminDaysLeft(int days) {
+    return '$days দিন বাকি';
+  }
+
+  @override
+  String get adminExpiresToday => 'আজ মেয়াদ শেষ';
+
+  @override
+  String get adminRevokeConfirmTitle => 'অ্যাক্সেস বাতিল করবেন?';
+
+  @override
+  String adminRevokeConfirmMessage(String name) {
+    return '$name তাৎক্ষণিকভাবে অ্যাক্সেস হারাবেন। তাঁর পড়াশোনা ও কুইজের রেকর্ড সংরক্ষিত থাকবে।';
+  }
+
+  @override
+  String get adminRevoke => 'বাতিল করুন';
+
+  @override
+  String get adminCurrentlyExpires => 'বর্তমান মেয়াদ';
+
+  @override
+  String get adminAlreadyExpired => 'ইতিমধ্যে মেয়াদ শেষ';
+
+  @override
+  String get adminNewExpiry => 'নতুন মেয়াদ';
+
+  @override
+  String get adminExtendAccess => 'মেয়াদ বাড়ান';
 }

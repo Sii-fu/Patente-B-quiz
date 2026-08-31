@@ -5,6 +5,7 @@ class Profile {
   final String? avatarUrl;
   final String licenseType;
   final bool isVerified;
+  final DateTime? verifiedUntil;
   final int xp;
   final int currentLevel;
   final int dailyStreak;
@@ -22,6 +23,7 @@ class Profile {
     this.avatarUrl,
     this.licenseType = 'B',
     this.isVerified = false,
+    this.verifiedUntil,
     this.xp = 0,
     this.currentLevel = 1,
     this.dailyStreak = 0,
@@ -35,6 +37,16 @@ class Profile {
 
   bool get isAdmin => role == 'admin';
 
+  /// True when the account is approved AND the course period has not ended.
+  /// A null [verifiedUntil] means lifetime access.
+  bool get isAccessValid =>
+      isVerified && (verifiedUntil == null || verifiedUntil!.isAfter(DateTime.now()));
+
+  /// True only for an approved account whose course period has already ended.
+  /// Distinguishes "expired" from "never approved" for the access gates.
+  bool get isAccessExpired =>
+      isVerified && verifiedUntil != null && !verifiedUntil!.isAfter(DateTime.now());
+
   factory Profile.fromJson(Map<String, dynamic> json) {
     return Profile(
       id: json['id'] as String,
@@ -43,6 +55,9 @@ class Profile {
       avatarUrl: json['avatar_url'] as String?,
       licenseType: json['license_type'] as String? ?? 'B',
       isVerified: json['is_verified'] as bool? ?? false,
+      verifiedUntil: json['verified_until'] != null
+          ? DateTime.parse(json['verified_until'] as String)
+          : null,
       xp: json['xp'] as int? ?? 0,
       currentLevel: json['current_level'] as int? ?? 1,
       dailyStreak: json['daily_streak'] as int? ?? 0,
@@ -65,6 +80,7 @@ class Profile {
       'avatar_url': avatarUrl,
       'license_type': licenseType,
       'is_verified': isVerified,
+      'verified_until': verifiedUntil?.toIso8601String(),
       'xp': xp,
       'current_level': currentLevel,
       'daily_streak': dailyStreak,
@@ -84,6 +100,7 @@ class Profile {
     String? avatarUrl,
     String? licenseType,
     bool? isVerified,
+    DateTime? verifiedUntil,
     int? xp,
     int? currentLevel,
     int? dailyStreak,
@@ -101,6 +118,7 @@ class Profile {
       avatarUrl: avatarUrl ?? this.avatarUrl,
       licenseType: licenseType ?? this.licenseType,
       isVerified: isVerified ?? this.isVerified,
+      verifiedUntil: verifiedUntil ?? this.verifiedUntil,
       xp: xp ?? this.xp,
       currentLevel: currentLevel ?? this.currentLevel,
       dailyStreak: dailyStreak ?? this.dailyStreak,

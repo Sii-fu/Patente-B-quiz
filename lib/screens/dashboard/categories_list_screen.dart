@@ -47,9 +47,7 @@ class _CategoriesListScreenState extends State<CategoriesListScreen> {
       final response = await _repository.getCategories();
 
       setState(() {
-        _categories = response
-            .map((json) => Category.fromJson(json))
-            .toList();
+        _categories = response.map((json) => Category.fromJson(json)).toList();
         _isLoading = false;
       });
     } catch (e) {
@@ -82,9 +80,7 @@ class _CategoriesListScreenState extends State<CategoriesListScreen> {
 
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
-          gradient: AppTheme.primaryGradient,
-        ),
+        decoration: BoxDecoration(gradient: AppTheme.primaryGradient),
         child: SafeArea(
           child: Column(
             children: [
@@ -94,7 +90,10 @@ class _CategoriesListScreenState extends State<CategoriesListScreen> {
                 child: Row(
                   children: [
                     IconButton(
-                      icon: Icon(Icons.arrow_back, color: theme.colorScheme.onPrimary),
+                      icon: Icon(
+                        Icons.arrow_back,
+                        color: theme.colorScheme.onPrimary,
+                      ),
                       onPressed: () {
                         HapticFeedback.lightImpact();
                         Navigator.pop(context);
@@ -116,7 +115,9 @@ class _CategoriesListScreenState extends State<CategoriesListScreen> {
                           Text(
                             l10n.categoriesSubtitle,
                             style: TextStyle(
-                              color: theme.colorScheme.onPrimary.withValues(alpha: 0.9),
+                              color: theme.colorScheme.onPrimary.withValues(
+                                alpha: 0.9,
+                              ),
                               fontSize: 14,
                             ),
                           ),
@@ -133,7 +134,9 @@ class _CategoriesListScreenState extends State<CategoriesListScreen> {
                   margin: const EdgeInsets.only(top: 8),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.surface,
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(30),
+                    ),
                   ),
                   child: _isLoading
                       ? const ShimmerCardList(
@@ -143,163 +146,178 @@ class _CategoriesListScreenState extends State<CategoriesListScreen> {
                           showImage: false,
                         )
                       : _error != null
-                          ? Center(
-                              child: Padding(
-                                padding: const EdgeInsets.all(24),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.error_outline,
-                                      size: 64,
-                                      color: theme.colorScheme.error,
-                                    ),
-                                    const SizedBox(height: 16),
-                                    Text(
-                                      l10n.errorLoading,
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w600,
-                                        color: theme.colorScheme.onSurface,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      _error!,
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                    const SizedBox(height: 24),
-                                    FilledButton.icon(
-                                      onPressed: _loadCategories,
-                                      icon: const Icon(Icons.refresh),
-                                      label: const Text('Retry'),
-                                      style: FilledButton.styleFrom(
-                                        backgroundColor: theme.colorScheme.primary,
-                                      ),
-                                    ),
-                                  ],
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.error_outline,
+                                  size: 64,
+                                  color: theme.colorScheme.error,
                                 ),
-                              ),
-                            )
-                          : _categories.isEmpty
-                              ? Center(
-                                  child: Text(
-                                    l10n.noQuestionsAvailable,
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                                    ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  l10n.errorLoading,
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w600,
+                                    color: theme.colorScheme.onSurface,
                                   ),
-                                )
-                              : ListView.builder(
-                                  padding: const EdgeInsets.all(20),
-                                  itemCount: _categories.length,
-                                  itemBuilder: (context, index) {
-                                    final category = _categories[index];
-                                    final color = _parseColor(category.colorHex);
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  _error!,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: theme.colorScheme.onSurface
+                                        .withValues(alpha: 0.6),
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 24),
+                                FilledButton.icon(
+                                  onPressed: _loadCategories,
+                                  icon: const Icon(Icons.refresh),
+                                  label: const Text('Retry'),
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: theme.colorScheme.primary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      : _categories.isEmpty
+                      ? Center(
+                          child: Text(
+                            l10n.noQuestionsAvailable,
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.6,
+                              ),
+                            ),
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.all(20),
+                          itemCount: _categories.length,
+                          itemBuilder: (context, index) {
+                            final category = _categories[index];
+                            final color = _parseColor(category.colorHex);
 
-                                    // Category icons mapping
-                                    IconData categoryIcon;
-                                    switch (index) {
-                                      case 0:
-                                        categoryIcon = Icons.local_shipping; // Segnali Stradali
-                                        break;
-                                      case 1:
-                                        categoryIcon = Icons.warning; // Norme di Circtazion
-                                        break;
-                                      case 2:
-                                        categoryIcon = Icons.local_parking; // Segnali di Obbligo
-                                        break;
-                                      case 3:
-                                        categoryIcon = Icons.build; // Manutenzione Veicolo
-                                        break;
-                                      case 4:
-                                        categoryIcon = Icons.security; // Guida Sicura
-                                        break;
-                                      case 5:
-                                        categoryIcon = Icons.contact_emergency; // Primo Soccorso
-                                        break;
-                                      default:
-                                        categoryIcon = Icons.folder;
-                                    }
+                            // Category icons mapping
+                            IconData categoryIcon;
+                            switch (index) {
+                              case 0:
+                                categoryIcon =
+                                    Icons.local_shipping; // Segnali Stradali
+                                break;
+                              case 1:
+                                categoryIcon =
+                                    Icons.warning; // Norme di Circtazion
+                                break;
+                              case 2:
+                                categoryIcon =
+                                    Icons.local_parking; // Segnali di Obbligo
+                                break;
+                              case 3:
+                                categoryIcon =
+                                    Icons.build; // Manutenzione Veicolo
+                                break;
+                              case 4:
+                                categoryIcon = Icons.security; // Guida Sicura
+                                break;
+                              case 5:
+                                categoryIcon =
+                                    Icons.contact_emergency; // Primo Soccorso
+                                break;
+                              default:
+                                categoryIcon = Icons.folder;
+                            }
 
-                                    return Container(
-                                      margin: const EdgeInsets.only(bottom: 12),
-                                      child: Material(
-                                        color: theme.colorScheme.surface,
-                                        borderRadius: BorderRadius.circular(16),
-                                        elevation: 0,
-                                        child: InkWell(
-                                          onTap: () {
-                                            HapticFeedback.mediumImpact();
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) => TopicsListScreen(
-                                                  category: category,
-                                                ),
-                                              ),
-                                            );
-                                          },
-                                          borderRadius: BorderRadius.circular(16),
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 16,
-                                              vertical: 18,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              border: Border.all(
-                                                color: theme.colorScheme.onSurface.withValues(alpha: 0.1),
-                                                width: 1,
-                                              ),
-                                              borderRadius: BorderRadius.circular(16),
-                                            ),
-                                            child: Row(
-                                              children: [
-                                                // Category Icon
-                                                Container(
-                                                  width: 40,
-                                                  height: 40,
-                                                  decoration: BoxDecoration(
-                                                    color: color.withValues(alpha: 0.15),
-                                                    borderRadius: BorderRadius.circular(10),
-                                                  ),
-                                                  child: Icon(
-                                                    categoryIcon,
-                                                    color: color,
-                                                    size: 22,
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 14),
-                                                // Category Name
-                                                Expanded(
-                                                  child: Text(
-                                                    category.getName(_currentLanguage),
-                                                    style: TextStyle(
-                                                      fontSize: 16,
-                                                      fontWeight: FontWeight.w600,
-                                                      color: theme.colorScheme.onSurface,
-                                                    ),
-                                                  ),
-                                                ),
-                                                // Arrow Icon
-                                                Icon(
-                                                  Icons.chevron_right,
-                                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
-                                                  size: 24,
-                                                ),
-                                              ],
-                                            ),
-                                          ),
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              child: Material(
+                                color: theme.colorScheme.surface,
+                                borderRadius: BorderRadius.circular(16),
+                                elevation: 0,
+                                child: InkWell(
+                                  onTap: () {
+                                    HapticFeedback.mediumImpact();
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => TopicsListScreen(
+                                          category: category,
                                         ),
                                       ),
                                     );
                                   },
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 18,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                        color: theme.colorScheme.onSurface
+                                            .withValues(alpha: 0.1),
+                                        width: 1,
+                                      ),
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        // Category Icon
+                                        Container(
+                                          width: 40,
+                                          height: 40,
+                                          decoration: BoxDecoration(
+                                            color: color.withValues(
+                                              alpha: 0.15,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              10,
+                                            ),
+                                          ),
+                                          child: Icon(
+                                            categoryIcon,
+                                            color: color,
+                                            size: 22,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 14),
+                                        // Category Name
+                                        Expanded(
+                                          child: Text(
+                                            category.getName(_currentLanguage),
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                              color:
+                                                  theme.colorScheme.onSurface,
+                                            ),
+                                          ),
+                                        ),
+                                        // Arrow Icon
+                                        Icon(
+                                          Icons.chevron_right,
+                                          color: theme.colorScheme.onSurface
+                                              .withValues(alpha: 0.4),
+                                          size: 24,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
+                              ),
+                            );
+                          },
+                        ),
                 ),
               ),
             ],

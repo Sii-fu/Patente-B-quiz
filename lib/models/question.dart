@@ -18,6 +18,7 @@ class Question {
   final String? audioEnUrl;
   final String? audioBnUrl;
   final int difficultyLevel;
+  final int displayOrder;
   final DateTime createdAt;
 
   Question({
@@ -38,6 +39,7 @@ class Question {
     this.audioEnUrl,
     this.audioBnUrl,
     this.difficultyLevel = 1,
+    this.displayOrder = 0,
     required this.createdAt,
   });
 
@@ -65,6 +67,7 @@ class Question {
       audioEnUrl: json['audio_en_url'] as String?,
       audioBnUrl: json['audio_bn_url'] as String?,
       difficultyLevel: json['difficulty_level'] as int? ?? 1,
+      displayOrder: json['display_order'] as int? ?? 0,
       createdAt: DateTime.parse(json['created_at'] as String),
     );
   }
@@ -88,6 +91,7 @@ class Question {
       'audio_en_url': audioEnUrl,
       'audio_bn_url': audioBnUrl,
       'difficulty_level': difficultyLevel,
+      'display_order': displayOrder,
       'created_at': createdAt.toIso8601String(),
     };
   }

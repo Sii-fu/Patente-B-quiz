@@ -57,6 +57,7 @@ class AppConstants {
   static const String routeHome = '/home';
   static const String routeSettings = '/settings';
   static const String routePendingVerification = '/pending-verification';
+  static const String routeAccessExpired = '/access-expired';
   static const String routeAdminPin = '/admin/pin';
   static const String routeAdminDashboard = '/admin/dashboard';
 }

@@ -4029,6 +4029,174 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Rank'**
   String get homeworkRank;
+
+  /// No description provided for @adminSelectCourseDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Course Duration'**
+  String get adminSelectCourseDuration;
+
+  /// No description provided for @adminSelectCourseDurationSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How long should this student have access?'**
+  String get adminSelectCourseDurationSubtitle;
+
+  /// No description provided for @adminDuration3Months.
+  ///
+  /// In en, this message translates to:
+  /// **'3 Months'**
+  String get adminDuration3Months;
+
+  /// No description provided for @adminDuration6Months.
+  ///
+  /// In en, this message translates to:
+  /// **'6 Months'**
+  String get adminDuration6Months;
+
+  /// No description provided for @adminDuration1Year.
+  ///
+  /// In en, this message translates to:
+  /// **'1 Year'**
+  String get adminDuration1Year;
+
+  /// No description provided for @adminDurationUnlimited.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlimited / Lifetime'**
+  String get adminDurationUnlimited;
+
+  /// No description provided for @adminSetAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Set Access'**
+  String get adminSetAccess;
+
+  /// No description provided for @adminAccessExpires.
+  ///
+  /// In en, this message translates to:
+  /// **'Expires'**
+  String get adminAccessExpires;
+
+  /// No description provided for @adminAccessExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired'**
+  String get adminAccessExpired;
+
+  /// No description provided for @adminAccessLifetime.
+  ///
+  /// In en, this message translates to:
+  /// **'Lifetime access'**
+  String get adminAccessLifetime;
+
+  /// No description provided for @adminAccessUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Access period updated'**
+  String get adminAccessUpdated;
+
+  /// No description provided for @accessExpiredTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Access Expired'**
+  String get accessExpiredTitle;
+
+  /// No description provided for @accessExpiredMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your driving course access period has ended. All your study data and quiz history are saved!'**
+  String get accessExpiredMessage;
+
+  /// No description provided for @accessExpiredContact.
+  ///
+  /// In en, this message translates to:
+  /// **'Please contact your instructor at Desh Bangla Patente to extend your subscription.'**
+  String get accessExpiredContact;
+
+  /// No description provided for @accessExpiredOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Access ended on'**
+  String get accessExpiredOn;
+
+  /// No description provided for @adminFilterActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get adminFilterActive;
+
+  /// No description provided for @adminFilterExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired'**
+  String get adminFilterExpired;
+
+  /// No description provided for @adminFilterRevoked.
+  ///
+  /// In en, this message translates to:
+  /// **'Revoked'**
+  String get adminFilterRevoked;
+
+  /// No description provided for @adminAccessRevoked.
+  ///
+  /// In en, this message translates to:
+  /// **'Access revoked'**
+  String get adminAccessRevoked;
+
+  /// No description provided for @adminDaysLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{days} days left'**
+  String adminDaysLeft(int days);
+
+  /// No description provided for @adminExpiresToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Expires today'**
+  String get adminExpiresToday;
+
+  /// No description provided for @adminRevokeConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Revoke access?'**
+  String get adminRevokeConfirmTitle;
+
+  /// No description provided for @adminRevokeConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} will be locked out immediately. Their study data and quiz history are kept.'**
+  String adminRevokeConfirmMessage(String name);
+
+  /// No description provided for @adminRevoke.
+  ///
+  /// In en, this message translates to:
+  /// **'Revoke'**
+  String get adminRevoke;
+
+  /// No description provided for @adminCurrentlyExpires.
+  ///
+  /// In en, this message translates to:
+  /// **'Currently expires'**
+  String get adminCurrentlyExpires;
+
+  /// No description provided for @adminAlreadyExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Already expired'**
+  String get adminAlreadyExpired;
+
+  /// No description provided for @adminNewExpiry.
+  ///
+  /// In en, this message translates to:
+  /// **'New expiry'**
+  String get adminNewExpiry;
+
+  /// No description provided for @adminExtendAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Extend Access'**
+  String get adminExtendAccess;
 }
 
 class _AppLocalizationsDelegate

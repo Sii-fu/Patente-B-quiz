@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../models/profile.dart';
 import '../../../utils/constants.dart';
 import '../../../services/secure_storage_service.dart';
 
@@ -49,18 +50,19 @@ class _AuthScreenState extends State<AuthScreen> {
           .eq('id', userId)
           .single();
       
-      final role = profileData['role'] as String? ?? 'user';
-      final isVerified = profileData['is_verified'] as bool? ?? false;
-      final isAdmin = role == 'admin';
-      
+      final profile = Profile.fromJson(profileData);
+
       if (!mounted) return;
-      
-      if (isAdmin) {
+
+      if (profile.isAdmin) {
         // Admin user - navigate to PIN verification screen
         Navigator.pushReplacementNamed(context, AppConstants.routeAdminPin);
-      } else if (!isVerified) {
+      } else if (!profile.isVerified) {
         // Regular user but not verified - show pending verification screen
         Navigator.pushReplacementNamed(context, AppConstants.routePendingVerification);
+      } else if (profile.isAccessExpired) {
+        // Verified, but the paid course period has ended
+        Navigator.pushReplacementNamed(context, AppConstants.routeAccessExpired);
       } else {
         // Regular verified user - go to Home
         Navigator.pushReplacementNamed(context, AppConstants.routeHome);

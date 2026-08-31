@@ -15,6 +15,7 @@ import 'settings_screen.dart';
 import 'video_materials_screen.dart';
 import 'live_classes_screen.dart';
 import 'quick_practice_screen.dart';
+import '../../features/auth/screens/access_expired_screen.dart';
 import '../../features/profile/profile_screen.dart';
 import '../../services/profile_stats_service.dart';
 import '../../repositories/homework_repository.dart';
@@ -219,6 +220,14 @@ class _DashboardScreenState extends State<DashboardScreen>
     // Show pending verification if user is not verified
     if (_userProfile != null && !_userProfile!.isVerified && !_isGuest) {
       return _buildPendingVerificationScreen(context, l10n, theme);
+    }
+
+    // Verified, but the paid course access period has ended
+    if (_userProfile != null && _userProfile!.isAccessExpired && !_isGuest) {
+      return AccessExpiredScreen(
+        expiredOn: _userProfile!.verifiedUntil,
+        onRefresh: _loadUserProfile,
+      );
     }
 
     return Scaffold(

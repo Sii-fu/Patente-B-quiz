@@ -13,15 +13,23 @@ class PendingVerificationScreen extends StatelessWidget {
 
       final profileData = await Supabase.instance.client
           .from('profiles')
-          .select('is_verified')
+          .select('is_verified, verified_until')
           .eq('id', userId)
           .single();
 
       final isVerified = profileData['is_verified'] as bool? ?? false;
+      final verifiedUntil = profileData['verified_until'] != null
+          ? DateTime.parse(profileData['verified_until'] as String)
+          : null;
+      final isAccessValid =
+          isVerified && (verifiedUntil == null || verifiedUntil.isAfter(DateTime.now()));
 
-      if (context.mounted && isVerified) {
-        // User has been verified, navigate to home
+      if (context.mounted && isAccessValid) {
+        // User has been verified and their course period is still active
         Navigator.pushReplacementNamed(context, AppConstants.routeHome);
+      } else if (context.mounted && isVerified) {
+        // Verified, but the paid course period has already ended
+        Navigator.pushReplacementNamed(context, AppConstants.routeAccessExpired);
       } else if (context.mounted) {
         // Still not verified
         ScaffoldMessenger.of(context).showSnackBar(
